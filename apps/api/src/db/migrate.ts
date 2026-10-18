@@ -24,14 +24,14 @@ export async function runMigrations(
 
   try {
     await client.query(`
-      CREATE TABLE IF NOT EXISTS schema_migrations (
+      CREATE TABLE IF NOT EXISTS public.schema_migrations (
         version TEXT PRIMARY KEY,
         applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
     `);
 
     const { rows: existingRows } = await client.query<{ version: string }>(
-      'SELECT version FROM schema_migrations',
+      'SELECT version FROM public.schema_migrations ORDER BY version ASC',
     );
     const existingVersions = new Set(existingRows.map((r) => r.version));
 
@@ -53,7 +53,7 @@ export async function runMigrations(
       try {
         await client.query(sql);
         await client.query(
-          'INSERT INTO schema_migrations (version) VALUES ($1)',
+          'INSERT INTO public.schema_migrations (version) VALUES ($1)',
           [version],
         );
         await client.query('COMMIT');
@@ -72,7 +72,10 @@ export async function runMigrations(
   }
 }
 
-if (process.argv[1] && (process.argv[1].endsWith('migrate.ts') || process.argv[1].endsWith('migrate.js'))) {
+if (
+  process.argv[1] &&
+  (process.argv[1].endsWith('migrate.ts') || process.argv[1].endsWith('migrate.js'))
+) {
   runMigrations()
     .then((applied) => {
       console.log(`[MIGRATE] Selesai. Total migrasi baru: ${applied.length}`);

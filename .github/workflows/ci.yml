@@ -48,7 +48,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Run linter
         run: pnpm lint
@@ -56,8 +56,19 @@ jobs:
       - name: Run typecheck
         run: pnpm typecheck
 
-      - name: Run migrations on clean database
-        run: pnpm db:migrate
-
       - name: Run tests
         run: pnpm -w test
+
+      - name: Smoke test db:migrate on separate empty database
+        env:
+          SMOKE_DB_URL: postgres://jalur_rempah_test:test_password@localhost:5432/jalur_rempah_smoke
+        run: |
+          pnpm --filter @jalur-rempah/api exec node --input-type=module -e "
+            import pg from 'pg';
+            const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+            await client.connect();
+            await client.query('DROP DATABASE IF EXISTS jalur_rempah_smoke;');
+            await client.query('CREATE DATABASE jalur_rempah_smoke;');
+            await client.end();
+          "
+          DATABASE_URL="$SMOKE_DB_URL" pnpm db:migrate

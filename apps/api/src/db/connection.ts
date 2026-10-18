@@ -11,6 +11,24 @@ export function getDatabaseUrl(): string {
   );
 }
 
+export function getDatabaseNameFromUrl(connectionString: string = getDatabaseUrl()): string {
+  const url = new URL(connectionString);
+  const dbName = url.pathname.replace(/^\/+/, '');
+  if (!dbName) {
+    throw new Error(`Nama database tidak ditemukan pada URL koneksi: ${connectionString}`);
+  }
+  return decodeURIComponent(dbName);
+}
+
+export function replaceDatabaseInUrl(connectionString: string, dbName: string): string {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbName)) {
+    throw new Error(`Nama database tidak valid: ${dbName}`);
+  }
+  const url = new URL(connectionString);
+  url.pathname = `/${encodeURIComponent(dbName)}`;
+  return url.toString();
+}
+
 export function createPool(connectionString?: string): pg.Pool {
   return new Pool({
     connectionString: connectionString || getDatabaseUrl(),

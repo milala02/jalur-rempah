@@ -16,7 +16,7 @@ export async function seedWorld(pool: pg.Pool = getPool()): Promise<void> {
     // 1. Seed Commodities
     for (const com of COMMODITIES_SEED) {
       await client.query(
-        `INSERT INTO commodities (id, code, base_price)
+        `INSERT INTO public.commodities (id, code, base_price)
          VALUES ($1, $2, $3)
          ON CONFLICT (id) DO UPDATE
          SET code = EXCLUDED.code, base_price = EXCLUDED.base_price;`,
@@ -27,7 +27,7 @@ export async function seedWorld(pool: pg.Pool = getPool()): Promise<void> {
     // 2. Seed Ports
     for (const port of PORTS_SEED) {
       await client.query(
-        `INSERT INTO ports (id, code, name)
+        `INSERT INTO public.ports (id, code, name)
          VALUES ($1, $2, $3)
          ON CONFLICT (id) DO UPDATE
          SET code = EXCLUDED.code, name = EXCLUDED.name;`,
@@ -38,7 +38,7 @@ export async function seedWorld(pool: pg.Pool = getPool()): Promise<void> {
     // 3. Seed Routes
     for (const route of ROUTES_SEED) {
       await client.query(
-        `INSERT INTO routes (from_port, to_port, ticks)
+        `INSERT INTO public.routes (from_port, to_port, ticks)
          VALUES ($1, $2, $3)
          ON CONFLICT (from_port, to_port) DO UPDATE
          SET ticks = EXCLUDED.ticks;`,
@@ -49,7 +49,7 @@ export async function seedWorld(pool: pg.Pool = getPool()): Promise<void> {
     // 4. Seed Market
     for (const market of MARKET_SEED) {
       await client.query(
-        `INSERT INTO market (port_id, commodity_id, stock, target, production, consumption, capacity, price)
+        `INSERT INTO public.market (port_id, commodity_id, stock, target, production, consumption, capacity, price)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (port_id, commodity_id) DO UPDATE
          SET stock = EXCLUDED.stock,
@@ -84,7 +84,10 @@ export async function seedWorld(pool: pg.Pool = getPool()): Promise<void> {
   }
 }
 
-if (process.argv[1] && (process.argv[1].endsWith('seed.ts') || process.argv[1].endsWith('seed.js'))) {
+if (
+  process.argv[1] &&
+  (process.argv[1].endsWith('seed.ts') || process.argv[1].endsWith('seed.js'))
+) {
   seedWorld()
     .then(() => {
       console.log('[SEED] Selesai.');

@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import pg from 'pg';
-import { createPool } from '../src/db/connection.js';
+import {
+  createPool,
+  getDatabaseUrl,
+  getDatabaseNameFromUrl,
+  replaceDatabaseInUrl,
+} from '../src/db/connection.js';
 import { runMigrations } from '../src/db/migrate.js';
 import { seedWorld } from '../src/db/seed.js';
 import {
@@ -10,246 +15,383 @@ import {
   MARKET_SEED,
 } from '@jalur-rempah/shared';
 
-describe('M0 — Fondasi Repo: Database Schema, Migrations, & Seed', () => {
-  let pool: pg.Pool;
-  const testSchema = `test_m0_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+const EXPECTED_GAME_TABLES = [
+  'commodities',
+  'ports',
+  'routes',
+  'market',
+  'market_history',
+  'players',
+  'ships',
+  'ship_cargo',
+  'rule_sets',
+  'ledger',
+  'action_log',
+  'tick_state',
+  'refresh_tokens',
+  'schema_migrations',
+] as const;
+
+async function verifyAndLogActiveDatabase(
+  pool: pg.Pool,
+  testLabel: string,
+  expectedDbName: string,
+): Promise<string> {
+  const res = await pool.query<{ db_name: string }>(
+    'SELECT current_database() AS db_name',
+  );
+  const actualDbName = res.rows[0]?.db_name ?? '';
+  console.log(`[TEST-DB] ${testLabel} -> berjalan di database: ${actualDbName}`);
+  expect(actualDbName).toBe(expectedDbName);
+  return actualDbName;
+}
+
+describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB', () => {
+  const adminDbUrl = getDatabaseUrl();
+  const adminDbName = getDatabaseNameFromUrl(adminDbUrl);
+  const testDbName = `test_m0_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+  const testDbUrl = replaceDatabaseInUrl(adminDbUrl, testDbName);
+
+  let adminPool: pg.Pool;
+  let testPool: pg.Pool;
 
   beforeAll(async () => {
-    pool = createPool();
-
-    const client = await pool.connect();
-    try {
-      await client.query(`CREATE SCHEMA ${testSchema};`);
-      await client.query(`SET search_path TO ${testSchema}, public;`);
-    } finally {
-      client.release();
-    }
+    adminPool = createPool(adminDbUrl);
+    await adminPool.query(`CREATE DATABASE ${testDbName};`);
+    testPool = createPool(testDbUrl);
   });
 
   afterAll(async () => {
-    if (pool) {
-      const client = await pool.connect();
+    if (testPool) {
+      await testPool.end();
+    }
+    if (adminPool) {
       try {
-        await client.query(`DROP SCHEMA IF EXISTS ${testSchema} CASCADE;`);
-      } catch (err) {
-        console.warn(`Gagal drop schema ${testSchema}:`, err);
+        await adminPool.query(
+          `SELECT pg_terminate_backend(pid)
+           FROM pg_stat_activity
+           WHERE datname = $1 AND pid <> pg_backend_pid();`,
+          [testDbName],
+        );
+        await adminPool.query(`DROP DATABASE IF EXISTS ${testDbName};`);
       } finally {
-        client.release();
+        await adminPool.end();
       }
-      await pool.end();
     }
   });
 
-  it('1. Sukses menjalankan migrasi 0001 pada schema bersih', async () => {
-    const client = await pool.connect();
+  it('1. Variasi tanpa tabel public: query dan seedWorld gagal eksplisit (42P01) sebelum migrasi', async () => {
+    await verifyAndLogActiveDatabase(
+      testPool,
+      'Tes 1 (Variasi tanpa tabel public)',
+      testDbName,
+    );
+
+    const tablesBefore = await testPool.query<{ table_name: string }>(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public';
+    `);
+    expect(tablesBefore.rows.length).toBe(0);
+
+    let capturedCode = '';
+    let capturedMessage = '';
     try {
-      await client.query(`SET search_path TO ${testSchema}, public;`);
-      const applied = await runMigrations(pool);
-      expect(applied).toContain('0001_init');
+      await testPool.query('SELECT count(*) FROM public.commodities');
+    } catch (err) {
+      const pgErr = err as { code?: string; message?: string };
+      capturedCode = pgErr.code ?? '';
+      capturedMessage = pgErr.message ?? '';
+    }
 
-      const tablesRes = await client.query<{ table_name: string }>(`
-        SELECT table_name FROM information_schema.tables
-        WHERE table_schema = '${testSchema}';
-      `);
-      const tableNames = tablesRes.rows.map((r) => r.table_name);
+    console.log(
+      `[VARIASI-TANPA-PUBLIC] db=${testDbName} code=${capturedCode} message="${capturedMessage}"`,
+    );
+    expect(capturedCode).toBe('42P01');
+    expect(capturedMessage).toMatch(/public\.commodities/i);
 
-      expect(tableNames).toContain('commodities');
-      expect(tableNames).toContain('ports');
-      expect(tableNames).toContain('routes');
-      expect(tableNames).toContain('market');
-      expect(tableNames).toContain('players');
-      expect(tableNames).toContain('ships');
-      expect(tableNames).toContain('ship_cargo');
-      expect(tableNames).toContain('rule_sets');
-      expect(tableNames).toContain('ledger');
-      expect(tableNames).toContain('action_log');
-      expect(tableNames).toContain('tick_state');
-      expect(tableNames).toContain('refresh_tokens');
-      expect(tableNames).toContain('schema_migrations');
-    } finally {
-      client.release();
+    await expect(seedWorld(testPool)).rejects.toThrow(/public\.commodities/i);
+  });
+
+  it('2. Sukses menjalankan migrasi 0001 pada database tes bersih dan idempoten saat diulang', async () => {
+    await verifyAndLogActiveDatabase(
+      testPool,
+      'Tes 2 (Migrasi 0001 & idempotensi)',
+      testDbName,
+    );
+
+    const appliedFirst = await runMigrations(testPool);
+    expect(appliedFirst).toContain('0001_init');
+
+    // Eksekusi ulang migrasi pada DB yang sama harus menghasilkan [] (idempoten)
+    const appliedSecond = await runMigrations(testPool);
+    expect(appliedSecond).toEqual([]);
+
+    const tablesRes = await testPool.query<{ table_name: string }>(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public';
+    `);
+    const tableNames = tablesRes.rows.map((r) => r.table_name);
+
+    for (const expectedTable of EXPECTED_GAME_TABLES) {
+      expect(tableNames).toContain(expectedTable);
     }
   });
 
-  it('2. Sukses melakukan seed dunia dan idempoten jika dijalankan ulang', async () => {
-    const client = await pool.connect();
-    try {
-      await client.query(`SET search_path TO ${testSchema}, public;`);
+  it('3. Pembuktian isolasi: setelah migrasi di DB tes, tabel tidak ada di DB utama', async () => {
+    await verifyAndLogActiveDatabase(
+      testPool,
+      'Tes 3a (Verifikasi sisi DB tes)',
+      testDbName,
+    );
+    await verifyAndLogActiveDatabase(
+      adminPool,
+      'Tes 3b (Verifikasi sisi DB utama)',
+      adminDbName,
+    );
 
-      await seedWorld(pool);
+    expect(testDbName).not.toBe(adminDbName);
 
-      const comCount = await client.query('SELECT count(*) FROM commodities');
-      expect(Number(comCount.rows[0].count)).toBe(COMMODITIES_SEED.length);
+    const mainTablesRes = await adminPool.query<{ table_name: string }>(
+      `SELECT table_name
+       FROM information_schema.tables
+       WHERE table_schema = 'public'
+         AND table_name = ANY($1::text[]);`,
+      [EXPECTED_GAME_TABLES as unknown as string[]],
+    );
 
-      const portCount = await client.query('SELECT count(*) FROM ports');
-      expect(Number(portCount.rows[0].count)).toBe(PORTS_SEED.length);
-
-      const routeCount = await client.query('SELECT count(*) FROM routes');
-      expect(Number(routeCount.rows[0].count)).toBe(ROUTES_SEED.length);
-      expect(Number(routeCount.rows[0].count)).toBe(14); // 7 rute x 2 arah
-
-      const marketCount = await client.query('SELECT count(*) FROM market');
-      expect(Number(marketCount.rows[0].count)).toBe(MARKET_SEED.length);
-      expect(Number(marketCount.rows[0].count)).toBe(24); // 6 pelabuhan x 4 komoditas
-
-      // Jalankan seed kedua untuk menguji idempotensi
-      await seedWorld(pool);
-
-      const comCount2 = await client.query('SELECT count(*) FROM commodities');
-      expect(Number(comCount2.rows[0].count)).toBe(COMMODITIES_SEED.length);
-      const marketCount2 = await client.query('SELECT count(*) FROM market');
-      expect(Number(marketCount2.rows[0].count)).toBe(24);
-    } finally {
-      client.release();
-    }
+    console.log(
+      `[ISOLASI-DB] DB utama (${adminDbName}) memiliki ${mainTablesRes.rows.length} tabel game; DB tes (${testDbName}) terisolasi penuh.`,
+    );
+    expect(mainTablesRes.rows).toEqual([]);
   });
 
-  it('3. Menegakkan check constraint integer dan batas validitas data', async () => {
-    const client = await pool.connect();
-    try {
-      await client.query(`SET search_path TO ${testSchema}, public;`);
+  it('4. Sukses melakukan seed dunia dan idempoten jika dijalankan ulang di DB tes', async () => {
+    await verifyAndLogActiveDatabase(
+      testPool,
+      'Tes 4 (Seed dunia & idempotensi)',
+      testDbName,
+    );
 
-      // 3.1. Komoditas: base_price > 0
-      await expect(
-        client.query(`INSERT INTO commodities (id, code, base_price) VALUES (99, 'emas', 0)`),
-      ).rejects.toThrow();
+    await seedWorld(testPool);
 
-      // 3.2. Rute: ticks > 0
-      await expect(
-        client.query(`INSERT INTO routes (from_port, to_port, ticks) VALUES (1, 3, 0)`),
-      ).rejects.toThrow();
+    const comCount = await testPool.query<{ count: string }>(
+      'SELECT count(*) AS count FROM public.commodities',
+    );
+    expect(Number(comCount.rows[0]?.count)).toBe(COMMODITIES_SEED.length);
 
-      // 3.3. Pasar: stock >= 0
-      await expect(
-        client.query(`
-          INSERT INTO market (port_id, commodity_id, stock, target, production, consumption, capacity, price)
-          VALUES (1, 1, -1, 400, 20, 3, 1600, 70)
-        `),
-      ).rejects.toThrow();
+    const portCount = await testPool.query<{ count: string }>(
+      'SELECT count(*) AS count FROM public.ports',
+    );
+    expect(Number(portCount.rows[0]?.count)).toBe(PORTS_SEED.length);
 
-      // 3.4. Pasar: stock <= capacity
-      await expect(
-        client.query(`
-          INSERT INTO market (port_id, commodity_id, stock, target, production, consumption, capacity, price)
-          VALUES (1, 1, 1601, 400, 20, 3, 1600, 70)
-        `),
-      ).rejects.toThrow();
+    const routeCount = await testPool.query<{ count: string }>(
+      'SELECT count(*) AS count FROM public.routes',
+    );
+    expect(Number(routeCount.rows[0]?.count)).toBe(ROUTES_SEED.length);
+    expect(Number(routeCount.rows[0]?.count)).toBe(14);
 
-      // 3.5. Pemain: coins >= 0
-      await expect(
-        client.query(`
-          INSERT INTO players (email, password_hash, display_name, coins)
-          VALUES ('bad@example.com', 'hash', 'BadPlayer', -10)
-        `),
-      ).rejects.toThrow();
+    const marketCount = await testPool.query<{ count: string }>(
+      'SELECT count(*) AS count FROM public.market',
+    );
+    expect(Number(marketCount.rows[0]?.count)).toBe(MARKET_SEED.length);
+    expect(Number(marketCount.rows[0]?.count)).toBe(24);
 
-      // 3.6. Kapal: status harus salah satu dari ('docked', 'sailing', 'grounded')
-      const playerRes = await client.query<{ id: string }>(`
-        INSERT INTO players (email, password_hash, display_name, coins)
-        VALUES ('valid@example.com', 'hash', 'ValidPlayer', 1000)
-        RETURNING id;
-      `);
-      const playerId = playerRes.rows[0].id;
-
-      await expect(
-        client.query(`
-          INSERT INTO ships (player_id, name, capacity, status)
-          VALUES (${playerId}, 'Kapal Terbang', 20, 'flying')
-        `),
-      ).rejects.toThrow();
-
-      // 3.7. Kargo: qty >= 0
-      const shipRes = await client.query<{ id: string }>(`
-        INSERT INTO ships (player_id, name, capacity, status)
-        VALUES (${playerId}, 'Kapal Dagang 1', 20, 'docked')
-        RETURNING id;
-      `);
-      const shipId = shipRes.rows[0].id;
-
-      await expect(
-        client.query(`
-          INSERT INTO ship_cargo (ship_id, commodity_id, qty)
-          VALUES (${shipId}, 1, -5)
-        `),
-      ).rejects.toThrow();
-    } finally {
-      client.release();
+    // Verifikasi keseimbangan produksi = konsumsi global (23 per komoditas)
+    const balanceRes = await testPool.query<{
+      commodity_id: number;
+      total_prod: string;
+      total_cons: string;
+    }>(`
+      SELECT commodity_id,
+             SUM(production) AS total_prod,
+             SUM(consumption) AS total_cons
+      FROM public.market
+      GROUP BY commodity_id
+      ORDER BY commodity_id ASC;
+    `);
+    expect(balanceRes.rows.length).toBe(4);
+    for (const row of balanceRes.rows) {
+      expect(Number(row.total_prod)).toBe(23);
+      expect(Number(row.total_cons)).toBe(23);
     }
+
+    // Jalankan seed kedua untuk menguji idempotensi
+    await seedWorld(testPool);
+
+    const comCount2 = await testPool.query<{ count: string }>(
+      'SELECT count(*) AS count FROM public.commodities',
+    );
+    expect(Number(comCount2.rows[0]?.count)).toBe(COMMODITIES_SEED.length);
+
+    const marketCount2 = await testPool.query<{ count: string }>(
+      'SELECT count(*) AS count FROM public.market',
+    );
+    expect(Number(marketCount2.rows[0]?.count)).toBe(24);
   });
 
-  it('4. Menegakkan sifat append-only tabel ledger (tolak UPDATE, DELETE, dan TRUNCATE)', async () => {
-    const client = await pool.connect();
-    try {
-      await client.query(`SET search_path TO ${testSchema}, public;`);
+  it('5. Menegakkan check constraint integer dan batas validitas data di DB tes', async () => {
+    await verifyAndLogActiveDatabase(
+      testPool,
+      'Tes 5 (Check constraints & validitas data)',
+      testDbName,
+    );
 
-      const playerRes = await client.query<{ id: string }>(`
-        SELECT id FROM players WHERE email = 'valid@example.com' LIMIT 1;
-      `);
-      const playerId = playerRes.rows[0].id;
+    // 5.1. Komoditas: base_price > 0
+    await expect(
+      testPool.query(
+        `INSERT INTO public.commodities (id, code, base_price) VALUES (99, 'emas', 0)`,
+      ),
+    ).rejects.toThrow();
 
-      const ledgerRes = await client.query<{ id: string }>(`
-        INSERT INTO ledger (player_id, tick_no, delta, reason)
-        VALUES (${playerId}, 1, 1000, 'starter')
-        RETURNING id;
-      `);
-      const ledgerId = ledgerRes.rows[0].id;
-      expect(ledgerId).toBeDefined();
+    // 5.2. Rute: ticks > 0
+    await expect(
+      testPool.query(
+        `INSERT INTO public.routes (from_port, to_port, ticks) VALUES (1, 3, 0)`,
+      ),
+    ).rejects.toThrow();
 
-      // Tolak UPDATE
-      await expect(
-        client.query(`UPDATE ledger SET delta = 2000 WHERE id = ${ledgerId}`),
-      ).rejects.toThrow(/append-only/i);
+    // 5.3. Pasar: stock >= 0
+    await expect(
+      testPool.query(`
+        INSERT INTO public.market (port_id, commodity_id, stock, target, production, consumption, capacity, price)
+        VALUES (1, 1, -1, 400, 20, 3, 1600, 70)
+      `),
+    ).rejects.toThrow();
 
-      // Tolak DELETE
-      await expect(
-        client.query(`DELETE FROM ledger WHERE id = ${ledgerId}`),
-      ).rejects.toThrow(/append-only/i);
+    // 5.4. Pasar: stock <= capacity
+    await expect(
+      testPool.query(`
+        INSERT INTO public.market (port_id, commodity_id, stock, target, production, consumption, capacity, price)
+        VALUES (1, 1, 1601, 400, 20, 3, 1600, 70)
+      `),
+    ).rejects.toThrow();
 
-      // Tolak TRUNCATE
-      await expect(
-        client.query(`TRUNCATE TABLE ledger;`),
-      ).rejects.toThrow(/append-only/i);
+    // 5.5. Pemain: coins >= 0
+    await expect(
+      testPool.query(`
+        INSERT INTO public.players (email, password_hash, display_name, coins)
+        VALUES ('bad@example.com', 'hash', 'BadPlayer', -10)
+      `),
+    ).rejects.toThrow();
 
-      const verifyRes = await client.query(`SELECT count(*) FROM ledger WHERE id = ${ledgerId}`);
-      expect(Number(verifyRes.rows[0].count)).toBe(1);
-    } finally {
-      client.release();
-    }
+    // 5.6. Kapal: status harus salah satu dari ('docked', 'sailing', 'grounded')
+    const playerRes = await testPool.query<{ id: string }>(`
+      INSERT INTO public.players (email, password_hash, display_name, coins)
+      VALUES ('valid@example.com', 'hash', 'ValidPlayer', 1000)
+      RETURNING id;
+    `);
+    const playerId = playerRes.rows[0]?.id;
+    expect(playerId).toBeDefined();
+
+    await expect(
+      testPool.query(
+        `INSERT INTO public.ships (player_id, name, capacity, status)
+         VALUES ($1, 'Kapal Terbang', 20, 'flying')`,
+        [playerId],
+      ),
+    ).rejects.toThrow();
+
+    // 5.7. Kargo: qty >= 0
+    const shipRes = await testPool.query<{ id: string }>(
+      `INSERT INTO public.ships (player_id, name, capacity, status)
+       VALUES ($1, 'Kapal Dagang 1', 20, 'docked')
+       RETURNING id;`,
+      [playerId],
+    );
+    const shipId = shipRes.rows[0]?.id;
+    expect(shipId).toBeDefined();
+
+    await expect(
+      testPool.query(
+        `INSERT INTO public.ship_cargo (ship_id, commodity_id, qty)
+         VALUES ($1, 1, -5)`,
+        [shipId],
+      ),
+    ).rejects.toThrow();
   });
 
-  it('5. Pemeriksaan query konsistensi saldo vs ledger dan muatan vs kapasitas', async () => {
-    const client = await pool.connect();
-    try {
-      await client.query(`SET search_path TO ${testSchema}, public;`);
+  it('6. Menegakkan sifat append-only tabel ledger (tolak UPDATE, DELETE, dan TRUNCATE)', async () => {
+    await verifyAndLogActiveDatabase(
+      testPool,
+      'Tes 6 (Trigger append-only ledger)',
+      testDbName,
+    );
 
-      // 5.1. Konsistensi Saldo: players.coins == SUM(ledger.delta)
-      const auditSaldoQuery = `
-        SELECT p.id FROM players p
-        LEFT JOIN (SELECT player_id, SUM(delta) s FROM ledger GROUP BY 1) l ON l.player_id = p.id
-        WHERE p.coins <> COALESCE(l.s, 0);
-      `;
-      const auditSaldoRes = await client.query(auditSaldoQuery);
-      expect(auditSaldoRes.rows.length).toBe(0);
+    const playerRes = await testPool.query<{ id: string }>(`
+      SELECT id FROM public.players WHERE email = 'valid@example.com' LIMIT 1;
+    `);
+    const playerId = playerRes.rows[0]?.id;
+    expect(playerId).toBeDefined();
 
-      // 5.2. Konsistensi Muatan: SUM(ship_cargo.qty) <= ships.capacity
-      const shipRes = await client.query<{ id: string }>(`
-        SELECT id FROM ships WHERE name = 'Kapal Dagang 1' LIMIT 1;
-      `);
-      const shipId = shipRes.rows[0].id;
+    const ledgerRes = await testPool.query<{ id: string }>(
+      `INSERT INTO public.ledger (player_id, tick_no, delta, reason)
+       VALUES ($1, 1, 1000, 'starter')
+       RETURNING id;`,
+      [playerId],
+    );
+    const ledgerId = ledgerRes.rows[0]?.id;
+    expect(ledgerId).toBeDefined();
 
-      await client.query(`
-        INSERT INTO ship_cargo (ship_id, commodity_id, qty)
-        VALUES (${shipId}, 1, 15);
-      `);
+    // Tolak UPDATE (row-level trigger)
+    await expect(
+      testPool.query(`UPDATE public.ledger SET delta = 2000 WHERE id = $1`, [
+        ledgerId,
+      ]),
+    ).rejects.toThrow(/append-only/i);
 
-      const auditCargoQuery = `
-        SELECT s.id FROM ships s JOIN ship_cargo c ON c.ship_id = s.id
-        GROUP BY s.id, s.capacity HAVING SUM(c.qty) > s.capacity;
-      `;
-      const auditCargoRes = await client.query(auditCargoQuery);
-      expect(auditCargoRes.rows.length).toBe(0);
-    } finally {
-      client.release();
-    }
+    // Tolak DELETE (row-level trigger)
+    await expect(
+      testPool.query(`DELETE FROM public.ledger WHERE id = $1`, [ledgerId]),
+    ).rejects.toThrow(/append-only/i);
+
+    // Tolak TRUNCATE (statement-level trigger)
+    await expect(
+      testPool.query(`TRUNCATE TABLE public.ledger;`),
+    ).rejects.toThrow(/append-only/i);
+
+    const verifyRes = await testPool.query<{ count: string }>(
+      `SELECT count(*) AS count FROM public.ledger WHERE id = $1`,
+      [ledgerId],
+    );
+    expect(Number(verifyRes.rows[0]?.count)).toBe(1);
+  });
+
+  it('7. Pemeriksaan query konsistensi saldo vs ledger dan muatan vs kapasitas', async () => {
+    await verifyAndLogActiveDatabase(
+      testPool,
+      'Tes 7 (Kueri konsistensi saldo & muatan)',
+      testDbName,
+    );
+
+    // 7.1. Konsistensi Saldo: players.coins == SUM(ledger.delta)
+    const auditSaldoQuery = `
+      SELECT p.id FROM public.players p
+      LEFT JOIN (SELECT player_id, SUM(delta) s FROM public.ledger GROUP BY 1) l ON l.player_id = p.id
+      WHERE p.coins <> COALESCE(l.s, 0);
+    `;
+    const auditSaldoRes = await testPool.query(auditSaldoQuery);
+    expect(auditSaldoRes.rows.length).toBe(0);
+
+    // 7.2. Konsistensi Muatan: SUM(ship_cargo.qty) <= ships.capacity
+    const shipRes = await testPool.query<{ id: string }>(`
+      SELECT id FROM public.ships WHERE name = 'Kapal Dagang 1' LIMIT 1;
+    `);
+    const shipId = shipRes.rows[0]?.id;
+    expect(shipId).toBeDefined();
+
+    await testPool.query(
+      `INSERT INTO public.ship_cargo (ship_id, commodity_id, qty)
+       VALUES ($1, 1, 15);`,
+      [shipId],
+    );
+
+    const auditCargoQuery = `
+      SELECT s.id FROM public.ships s JOIN public.ship_cargo c ON c.ship_id = s.id
+      GROUP BY s.id, s.capacity HAVING SUM(c.qty) > s.capacity;
+    `;
+    const auditCargoRes = await testPool.query(auditCargoQuery);
+    expect(auditCargoRes.rows.length).toBe(0);
   });
 });
