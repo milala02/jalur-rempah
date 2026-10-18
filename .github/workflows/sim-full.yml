@@ -1,0 +1,53 @@
+name: Economy Simulation (Full)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticks:
+        description: 'Jumlah tick simulasi'
+        required: false
+        default: '10000'
+      bots:
+        description: 'Jumlah bot'
+        required: false
+        default: '50'
+      seeds:
+        description: 'Daftar seed dipisahkan koma'
+        required: false
+        default: '101,202,303,404,505'
+
+jobs:
+  simulate-economy:
+    name: Full Economy Simulation & Invariant Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.12.0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run full simulation and print JSON metrics
+        run: |
+          pnpm sim:run --ticks "${{ inputs.ticks || '10000' }}" --bots "${{ inputs.bots || '50' }}" --seed "${{ inputs.seeds || '101,202,303,404,505' }}" --out sim-metrics-full.json
+
+      - name: Upload simulation metrics JSON artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: economy-simulation-metrics
+          path: sim-metrics-full.json
+          if-no-files-found: warn
