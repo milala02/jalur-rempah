@@ -1,2 +1,0 @@
-# jalur-rempah
-awal
