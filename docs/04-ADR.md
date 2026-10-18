@@ -50,6 +50,17 @@ Format: Konteks → Keputusan → Konsekuensi. Status: Diterima / Diganti / Dito
 - **Keputusan:** MVP: harga semua pelabuhan terlihat real-time oleh aturan.
 - **Konsekuensi:** Arbitrase lebih mudah; evaluasi dampaknya di beta sebelum menambah kabut.
 
+## ADR-009 — Eksekusi transaksi simetris dan kas pelabuhan (treasury) tertutup
+- **Status:** Diterima
+- **Konteks:**
+  1. Jika jual 1 unit memakai `harga(stok)` sebelum `stok += 1` sedangkan beli 1 unit memakai `harga(stok)` sebelum `stok -= 1`, maka beli $n$ unit dari stok $S$ lalu jual $n$ unit dari stok $S-n$ mengevaluasi kurva harga pada indeks stok yang bergeser satu langkah ($\{S, \dots, S-n+1\}$ vs $\{S-n, \dots, S-1\}$), yang membuka celah arbitrase siklus di pelabuhan yang sama.
+  2. Tanpa kas pelabuhan (`treasury`) yang terbatas dan dengan biaya pelabuhan 2% sebagai pemusnah koin, dunia kehabisan uang beredar (deflasi) atau sebaliknya pelabuhan membeli barang tanpa batas likuiditas.
+- **Keputusan:**
+  1. **Eksekusi Simetris**: Beli 1 unit membayar `hitungHarga(stok)` lalu `stok -= 1`. Jual 1 unit melakukan `stok += 1` **lebih dulu**, lalu menerima `hitungHarga(stok)` (stok baru). Dengan demikian beli $n$ lalu jual $n$ di pelabuhan yang sama mengevaluasi himpunan harga satuan yang identik ($\{S, S-1, \dots, S-n+1\}$) sehingga nilai kotor pembelian dan penjualan selalu sama persis dan siklus beli-jual selalu rugi tepat sebesar biaya transaksi dua sisi.
+  2. **Kas Pelabuhan (`ports.treasury`)**: Setiap pelabuhan memiliki `treasury BIGINT NOT NULL CHECK (treasury >= 0)` (dan `initial_treasury` dari konfigurasi). Pembelian pemain menambah kas pelabuhan sebesar nilai kotor + biaya 2%; penjualan pemain dibayar dari kas pelabuhan (dibatasi secara deterministik oleh kas tersedia dan ruang gudang), sementara biaya 2% masuk/tetap di kas pelabuhan tempat transaksi.
+  3. **Invarian Konservasi Uang**: Biaya perawatan kapal (`upkeep`) adalah satu-satunya pengurang koin sistem (*money sink*) dan dicatat eksplisit di `ledger` (`reason = 'upkeep'`). Berlaku invarian ketat: `total koin pemain + total kas pelabuhan + pengurang kumulatif (upkeep) = total modal awal pemain + total kas awal pelabuhan`.
+- **Konsekuensi:** Arbitrase siklus beli-jual di pelabuhan yang sama mustahil menghasilkan untung pada seluruh rezim stok (termasuk batas clamp `0.25x` dan `4.0x`). Likuiditas tiap pelabuhan menjadi variabel ekonomi nyata yang mencegah eksploitasi penjualan tak terbatas ke satu pelabuhan, dan konservasi uang dapat diaudit secara eksak setiap tick.
+
 ## Template
 ```
 ## ADR-XXX — Judul

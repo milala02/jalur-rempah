@@ -1,8 +1,8 @@
-# 07 — Data Model v0.1
+# 07 — Data Model v0.2
 
 PostgreSQL 16. Semua uang/jumlah `BIGINT`. Waktu `TIMESTAMPTZ`. ID internal `BIGINT GENERATED ALWAYS AS IDENTITY`; ID publik (jika perlu) UUID.
 
-## Skema ringkas
+## Skema ringkas (Migrasi 0001 + 0002)
 ```sql
 -- Referensi dunia (di-seed dari packages/shared)
 CREATE TABLE commodities (
@@ -12,9 +12,11 @@ CREATE TABLE commodities (
 );
 
 CREATE TABLE ports (
-  id    SMALLINT PRIMARY KEY,
-  code  TEXT UNIQUE NOT NULL,              -- 'banda'
-  name  TEXT NOT NULL
+  id               SMALLINT PRIMARY KEY,
+  code             TEXT UNIQUE NOT NULL,   -- 'banda'
+  name             TEXT NOT NULL,
+  treasury         BIGINT NOT NULL DEFAULT 0 CHECK (treasury >= 0),
+  initial_treasury BIGINT NOT NULL DEFAULT 0 CHECK (initial_treasury >= 0)
 );
 
 CREATE TABLE routes (
@@ -132,29 +134,47 @@ CREATE TABLE refresh_tokens (
 ```
 
 ## Aturan data
-- `ledger` tidak pernah di-UPDATE atau DELETE (dijaga trigger atau izin role)
+- `ledger` tidak pernah di-UPDATE, DELETE, atau TRUNCATE (dijaga trigger per-baris dan per-statement)
 - `players.coins` hanya diubah worker dalam transaksi yang sama dengan insert `ledger`
+- `ports.treasury` diubah worker dalam transaksi yang sama dengan pembelian/penjualan pemain di pelabuhan tersebut
 - Kecuali pendaftaran: api membuat pemain + kapal awal + ledger `starter` dalam satu transaksi
 - `ship_cargo` memakai upsert; baris qty=0 boleh dibiarkan
 - `action_log` dan `market_history` di-prune (simpan 7 hari / 2.000 tick terakhir)
 
 ## Role database
 - `api_rw`: baca semua; tulis `players` (akun), `rule_sets`, `refresh_tokens`
-- `worker_rw`: tulis `market`, `ships`, `ship_cargo`, `ledger`, `action_log`, `tick_state`, `market_history`, `players.coins`
+- `worker_rw`: tulis `market`, `ports.treasury`, `ships`, `ship_cargo`, `ledger`, `action_log`, `tick_state`, `market_history`, `players.coins`
 - Migrasi dijalankan role terpisah
 
 ## Migrasi
-`db/migrations/NNNN_nama.sql`, maju saja. Perubahan destruktif butuh dua langkah (tambah dulu, hapus di rilis berikut).
+`db/migrations/NNNN_nama.sql`, maju saja (`0001_init.sql`, `0002_port_treasury_and_sinks.sql`). Perubahan destruktif butuh dua langkah (tambah dulu, hapus di rilis berikut).
 
 ## Pemeriksaan konsistensi (job terjadwal + tes)
 ```sql
--- Saldo = jumlah ledger
+-- 1. Saldo pemain = jumlah ledger
 SELECT p.id FROM players p
 LEFT JOIN (SELECT player_id, SUM(delta) s FROM ledger GROUP BY 1) l ON l.player_id = p.id
 WHERE p.coins <> COALESCE(l.s, 0);
 
--- Muatan <= kapasitas
+-- 2. Muatan <= kapasitas
 SELECT s.id FROM ships s JOIN ship_cargo c ON c.ship_id = s.id
 GROUP BY s.id, s.capacity HAVING SUM(c.qty) > s.capacity;
+
+-- 3. Konservasi Uang Global (ADR-009):
+-- total koin pemain + total kas pelabuhan + pengurang kumulatif (upkeep) = total awal
+SELECT
+  COALESCE((SELECT SUM(coins) FROM players), 0) AS total_player_coins,
+  COALESCE((SELECT SUM(treasury) FROM ports), 0) AS total_port_treasury,
+  COALESCE((SELECT SUM(-delta) FROM ledger WHERE reason = 'upkeep'), 0) AS cumulative_upkeep_sink,
+  COALESCE((SELECT SUM(delta) FROM ledger WHERE reason = 'starter'), 0)
+    + COALESCE((SELECT SUM(initial_treasury) FROM ports), 0) AS total_initial_money
+WHERE (
+  COALESCE((SELECT SUM(coins) FROM players), 0)
+  + COALESCE((SELECT SUM(treasury) FROM ports), 0)
+  + COALESCE((SELECT SUM(-delta) FROM ledger WHERE reason = 'upkeep'), 0)
+) <> (
+  COALESCE((SELECT SUM(delta) FROM ledger WHERE reason = 'starter'), 0)
+  + COALESCE((SELECT SUM(initial_treasury) FROM ports), 0)
+);
 ```
-Keduanya harus mengembalikan 0 baris.
+Ketiganya harus mengembalikan 0 baris.

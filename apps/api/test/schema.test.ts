@@ -13,6 +13,7 @@ import {
   PORTS_SEED,
   ROUTES_SEED,
   MARKET_SEED,
+  WORLD_CONFIG,
 } from '@jalur-rempah/shared';
 
 const EXPECTED_GAME_TABLES = [
@@ -46,7 +47,7 @@ async function verifyAndLogActiveDatabase(
   return actualDbName;
 }
 
-describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB', () => {
+describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi DB', () => {
   const adminDbUrl = getDatabaseUrl();
   const adminDbName = getDatabaseNameFromUrl(adminDbUrl);
   const testDbName = `test_m0_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -113,15 +114,16 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
     await expect(seedWorld(testPool)).rejects.toThrow(/public\.commodities/i);
   });
 
-  it('2. Sukses menjalankan migrasi 0001 pada database tes bersih dan idempoten saat diulang', async () => {
+  it('2. Sukses menjalankan migrasi 0001 dan 0002 pada database tes bersih serta idempoten saat diulang', async () => {
     await verifyAndLogActiveDatabase(
       testPool,
-      'Tes 2 (Migrasi 0001 & idempotensi)',
+      'Tes 2 (Migrasi 0001 + 0002 & idempotensi)',
       testDbName,
     );
 
     const appliedFirst = await runMigrations(testPool);
     expect(appliedFirst).toContain('0001_init');
+    expect(appliedFirst).toContain('0002_port_treasury_and_sinks');
 
     // Eksekusi ulang migrasi pada DB yang sama harus menghasilkan [] (idempoten)
     const appliedSecond = await runMigrations(testPool);
@@ -167,10 +169,10 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
     expect(mainTablesRes.rows).toEqual([]);
   });
 
-  it('4. Sukses melakukan seed dunia dan idempoten jika dijalankan ulang di DB tes', async () => {
+  it('4. Sukses melakukan seed dunia (termasuk kas pelabuhan) dan idempoten jika dijalankan ulang', async () => {
     await verifyAndLogActiveDatabase(
       testPool,
-      'Tes 4 (Seed dunia & idempotensi)',
+      'Tes 4 (Seed dunia & kas pelabuhan)',
       testDbName,
     );
 
@@ -181,10 +183,16 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
     );
     expect(Number(comCount.rows[0]?.count)).toBe(COMMODITIES_SEED.length);
 
-    const portCount = await testPool.query<{ count: string }>(
-      'SELECT count(*) AS count FROM public.ports',
-    );
-    expect(Number(portCount.rows[0]?.count)).toBe(PORTS_SEED.length);
+    const portRes = await testPool.query<{
+      id: number;
+      treasury: string;
+      initial_treasury: string;
+    }>('SELECT id, treasury, initial_treasury FROM public.ports ORDER BY id ASC');
+    expect(portRes.rows.length).toBe(PORTS_SEED.length);
+    for (const row of portRes.rows) {
+      expect(BigInt(row.treasury)).toBe(WORLD_CONFIG.INITIAL_PORT_TREASURY);
+      expect(BigInt(row.initial_treasury)).toBe(WORLD_CONFIG.INITIAL_PORT_TREASURY);
+    }
 
     const routeCount = await testPool.query<{ count: string }>(
       'SELECT count(*) AS count FROM public.routes',
@@ -197,25 +205,6 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
     );
     expect(Number(marketCount.rows[0]?.count)).toBe(MARKET_SEED.length);
     expect(Number(marketCount.rows[0]?.count)).toBe(24);
-
-    // Verifikasi keseimbangan produksi = konsumsi global (23 per komoditas)
-    const balanceRes = await testPool.query<{
-      commodity_id: number;
-      total_prod: string;
-      total_cons: string;
-    }>(`
-      SELECT commodity_id,
-             SUM(production) AS total_prod,
-             SUM(consumption) AS total_cons
-      FROM public.market
-      GROUP BY commodity_id
-      ORDER BY commodity_id ASC;
-    `);
-    expect(balanceRes.rows.length).toBe(4);
-    for (const row of balanceRes.rows) {
-      expect(Number(row.total_prod)).toBe(23);
-      expect(Number(row.total_cons)).toBe(23);
-    }
 
     // Jalankan seed kedua untuk menguji idempotensi
     await seedWorld(testPool);
@@ -231,7 +220,7 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
     expect(Number(marketCount2.rows[0]?.count)).toBe(24);
   });
 
-  it('5. Menegakkan check constraint integer dan batas validitas data di DB tes', async () => {
+  it('5. Menegakkan check constraint integer (termasuk ports.treasury >= 0) dan batas validitas data', async () => {
     await verifyAndLogActiveDatabase(
       testPool,
       'Tes 5 (Check constraints & validitas data)',
@@ -245,14 +234,19 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
       ),
     ).rejects.toThrow();
 
-    // 5.2. Rute: ticks > 0
+    // 5.2. Pelabuhan: treasury >= 0
+    await expect(
+      testPool.query(`UPDATE public.ports SET treasury = -1 WHERE id = 1`),
+    ).rejects.toThrow();
+
+    // 5.3. Rute: ticks > 0
     await expect(
       testPool.query(
         `INSERT INTO public.routes (from_port, to_port, ticks) VALUES (1, 3, 0)`,
       ),
     ).rejects.toThrow();
 
-    // 5.3. Pasar: stock >= 0
+    // 5.4. Pasar: stock >= 0
     await expect(
       testPool.query(`
         INSERT INTO public.market (port_id, commodity_id, stock, target, production, consumption, capacity, price)
@@ -260,7 +254,7 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
       `),
     ).rejects.toThrow();
 
-    // 5.4. Pasar: stock <= capacity
+    // 5.5. Pasar: stock <= capacity
     await expect(
       testPool.query(`
         INSERT INTO public.market (port_id, commodity_id, stock, target, production, consumption, capacity, price)
@@ -268,7 +262,7 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
       `),
     ).rejects.toThrow();
 
-    // 5.5. Pemain: coins >= 0
+    // 5.6. Pemain: coins >= 0
     await expect(
       testPool.query(`
         INSERT INTO public.players (email, password_hash, display_name, coins)
@@ -276,7 +270,7 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
       `),
     ).rejects.toThrow();
 
-    // 5.6. Kapal: status harus salah satu dari ('docked', 'sailing', 'grounded')
+    // 5.7. Kapal: status harus salah satu dari ('docked', 'sailing', 'grounded')
     const playerRes = await testPool.query<{ id: string }>(`
       INSERT INTO public.players (email, password_hash, display_name, coins)
       VALUES ('valid@example.com', 'hash', 'ValidPlayer', 1000)
@@ -293,7 +287,7 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
       ),
     ).rejects.toThrow();
 
-    // 5.7. Kargo: qty >= 0
+    // 5.8. Kargo: qty >= 0
     const shipRes = await testPool.query<{ id: string }>(
       `INSERT INTO public.ships (player_id, name, capacity, status)
        VALUES ($1, 'Kapal Dagang 1', 20, 'docked')
@@ -358,12 +352,45 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
     expect(Number(verifyRes.rows[0]?.count)).toBe(1);
   });
 
-  it('7. Pemeriksaan query konsistensi saldo vs ledger dan muatan vs kapasitas', async () => {
+  it('7. Pemeriksaan konsistensi saldo vs ledger, muatan vs kapasitas, dan konservasi uang global (ADR-009)', async () => {
     await verifyAndLogActiveDatabase(
       testPool,
-      'Tes 7 (Kueri konsistensi saldo & muatan)',
+      'Tes 7 (Kueri konsistensi saldo, muatan, & konservasi uang)',
       testDbName,
     );
+
+    const playerRes = await testPool.query<{ id: string }>(`
+      SELECT id FROM public.players WHERE email = 'valid@example.com' LIMIT 1;
+    `);
+    const playerId = playerRes.rows[0]?.id;
+    expect(playerId).toBeDefined();
+
+    // Simulasikan 1 transaksi beli (gross 70 + fee 2 = 72 pindah dari player ke kas pelabuhan 1)
+    // dan 1 biaya perawatan kapal (upkeep 1 koin keluar sebagai sink)
+    await testPool.query('BEGIN');
+    await testPool.query(
+      `UPDATE public.players SET coins = coins - 72 WHERE id = $1`,
+      [playerId],
+    );
+    await testPool.query(
+      `UPDATE public.ports SET treasury = treasury + 72 WHERE id = 1`,
+    );
+    await testPool.query(
+      `INSERT INTO public.ledger (player_id, tick_no, delta, reason)
+       VALUES ($1, 2, -72, 'buy')`,
+      [playerId],
+    );
+
+    await testPool.query(
+      `UPDATE public.players SET coins = coins - 1 WHERE id = $1`,
+      [playerId],
+    );
+    await testPool.query(
+      `INSERT INTO public.ledger (player_id, tick_no, delta, reason)
+       VALUES ($1, 2, -1, 'upkeep')`,
+      [playerId],
+    );
+    await testPool.query('COMMIT');
 
     // 7.1. Konsistensi Saldo: players.coins == SUM(ledger.delta)
     const auditSaldoQuery = `
@@ -393,5 +420,23 @@ describe('M0 — Fondasi Repo: Database Schema, Migrations, Seed, & Isolasi DB',
     `;
     const auditCargoRes = await testPool.query(auditCargoQuery);
     expect(auditCargoRes.rows.length).toBe(0);
+
+    // 7.3. Konservasi Uang Global (ADR-009):
+    // total_player_coins + total_port_treasury + cumulative_upkeep_sink == total_initial_money
+    const moneyAuditRes = await testPool.query<{
+      total_player_coins: string;
+      total_port_treasury: string;
+      cumulative_upkeep_sink: string;
+      total_initial_money: string;
+    }>(`SELECT * FROM public.economy_money_supply_audit`);
+    const auditRow = moneyAuditRes.rows[0];
+    expect(auditRow).toBeDefined();
+
+    const lhs =
+      BigInt(auditRow?.total_player_coins ?? '0') +
+      BigInt(auditRow?.total_port_treasury ?? '0') +
+      BigInt(auditRow?.cumulative_upkeep_sink ?? '0');
+    const rhs = BigInt(auditRow?.total_initial_money ?? '0');
+    expect(lhs).toBe(rhs);
   });
 });

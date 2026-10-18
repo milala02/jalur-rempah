@@ -24,14 +24,23 @@ export async function seedWorld(pool: pg.Pool = getPool()): Promise<void> {
       );
     }
 
-    // 2. Seed Ports
+    // 2. Seed Ports (termasuk treasury dan initial_treasury dari konfigurasi)
     for (const port of PORTS_SEED) {
       await client.query(
-        `INSERT INTO public.ports (id, code, name)
-         VALUES ($1, $2, $3)
+        `INSERT INTO public.ports (id, code, name, treasury, initial_treasury)
+         VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (id) DO UPDATE
-         SET code = EXCLUDED.code, name = EXCLUDED.name;`,
-        [port.id, port.code, port.name],
+         SET code = EXCLUDED.code,
+             name = EXCLUDED.name,
+             treasury = EXCLUDED.treasury,
+             initial_treasury = EXCLUDED.initial_treasury;`,
+        [
+          port.id,
+          port.code,
+          port.name,
+          port.treasury.toString(),
+          port.initial_treasury.toString(),
+        ],
       );
     }
 

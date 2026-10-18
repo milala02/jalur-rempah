@@ -18,6 +18,8 @@ export interface Port {
   id: number;
   code: PortCode;
   name: string;
+  treasury: bigint;
+  initial_treasury: bigint;
 }
 
 export interface Route {

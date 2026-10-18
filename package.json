@@ -15,7 +15,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:migrate": "pnpm --filter @jalur-rempah/api db:migrate",
-    "db:seed": "pnpm --filter @jalur-rempah/api db:seed"
+    "db:seed": "pnpm --filter @jalur-rempah/api db:seed",
+    "sim:run": "pnpm --filter @jalur-rempah/worker sim:run",
+    "sim:short": "pnpm --filter @jalur-rempah/worker sim:run -- --ticks 2000 --bots 10 --seed 11,29"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
