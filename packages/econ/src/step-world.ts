@@ -7,7 +7,6 @@ import {
   ShipStatus,
   MarketRow,
 } from '@jalur-rempah/shared';
-import { hitungHarga } from './price.js';
 import { stepProduksiKonsumsi } from './production.js';
 import { eksekusiBeli, eksekusiJual, TradeFailureCode } from './trade.js';
 import { periksaInvarianEkonomi, InvariantCheckResult } from './invariants.js';

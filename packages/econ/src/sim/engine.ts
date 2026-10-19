@@ -11,8 +11,6 @@ import { batasHargaAtas, batasHargaBawah } from '../price.js';
 import {
   eksekusiBeli,
   eksekusiJual,
-  hitungJumlahBeliMaks,
-  hitungNilaiKotorJual,
   hitungBiayaPelabuhan,
 } from '../trade.js';
 import {
