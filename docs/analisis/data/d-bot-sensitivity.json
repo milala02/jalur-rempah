@@ -1,0 +1,446 @@
+[
+  {
+    "configName": "static_cap20",
+    "bots": 10,
+    "allGatesPassed": false,
+    "avgMaxCommodityBoundsPct": 68.77,
+    "avgBankruptBotPct": 0,
+    "minPortTreasuryCoins": "33566",
+    "avgMaxStrategySharePct": 35.94,
+    "avgSkillGradientRatio": 4.07,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 35.94,
+        "avgMarginPerTx": 3606.18
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 25.48,
+        "avgMarginPerTx": 2982.15
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 26.37,
+        "avgMarginPerTx": 3082.59
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 8.84,
+        "avgMarginPerTx": 990.03
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 3.37,
+        "avgMarginPerTx": 1365.77
+      }
+    }
+  },
+  {
+    "configName": "static_cap20",
+    "bots": 25,
+    "allGatesPassed": false,
+    "avgMaxCommodityBoundsPct": 49.36,
+    "avgBankruptBotPct": 0,
+    "minPortTreasuryCoins": "19680",
+    "avgMaxStrategySharePct": 31.7,
+    "avgSkillGradientRatio": 3.07,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 31.7,
+        "avgMarginPerTx": 1774.4
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 26.22,
+        "avgMarginPerTx": 1563.36
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 26.32,
+        "avgMarginPerTx": 1513.16
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 10.32,
+        "avgMarginPerTx": 601.62
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 5.45,
+        "avgMarginPerTx": 873.08
+      }
+    }
+  },
+  {
+    "configName": "static_cap20",
+    "bots": 50,
+    "allGatesPassed": false,
+    "avgMaxCommodityBoundsPct": 35.31,
+    "avgBankruptBotPct": 0,
+    "minPortTreasuryCoins": "17145",
+    "avgMaxStrategySharePct": 31.65,
+    "avgSkillGradientRatio": 4.82,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 31.65,
+        "avgMarginPerTx": 1469.24
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 28.99,
+        "avgMarginPerTx": 1431.39
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 28.71,
+        "avgMarginPerTx": 1345.33
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 6.57,
+        "avgMarginPerTx": 334.98
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 4.08,
+        "avgMarginPerTx": 473.32
+      }
+    }
+  },
+  {
+    "configName": "static_cap20",
+    "bots": 100,
+    "allGatesPassed": true,
+    "avgMaxCommodityBoundsPct": 0,
+    "avgBankruptBotPct": 19.33,
+    "minPortTreasuryCoins": "34075",
+    "avgMaxStrategySharePct": 35.66,
+    "avgSkillGradientRatio": 3,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 24.26,
+        "avgMarginPerTx": 326.67
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 35.66,
+        "avgMarginPerTx": 232
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 28.1,
+        "avgMarginPerTx": 271.76
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 11.98,
+        "avgMarginPerTx": 96.01
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 0,
+        "avgMarginPerTx": 15.37
+      }
+    }
+  },
+  {
+    "configName": "static_cap45",
+    "bots": 10,
+    "allGatesPassed": false,
+    "avgMaxCommodityBoundsPct": 53.87,
+    "avgBankruptBotPct": 0,
+    "minPortTreasuryCoins": "9258",
+    "avgMaxStrategySharePct": 33.57,
+    "avgSkillGradientRatio": 11.84,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 32.91,
+        "avgMarginPerTx": 4003.3
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 31.89,
+        "avgMarginPerTx": 3876.87
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 29.66,
+        "avgMarginPerTx": 3570.48
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 2.86,
+        "avgMarginPerTx": 402.11
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 2.69,
+        "avgMarginPerTx": 990.06
+      }
+    }
+  },
+  {
+    "configName": "static_cap45",
+    "bots": 25,
+    "allGatesPassed": false,
+    "avgMaxCommodityBoundsPct": 38.89,
+    "avgBankruptBotPct": 1.33,
+    "minPortTreasuryCoins": "12683",
+    "avgMaxStrategySharePct": 32.2,
+    "avgSkillGradientRatio": 5.71,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 32.2,
+        "avgMarginPerTx": 2508.39
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 30.09,
+        "avgMarginPerTx": 2452.15
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 30.09,
+        "avgMarginPerTx": 2399.83
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 5.65,
+        "avgMarginPerTx": 425
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 1.98,
+        "avgMarginPerTx": 381.24
+      }
+    }
+  },
+  {
+    "configName": "static_cap45",
+    "bots": 50,
+    "allGatesPassed": true,
+    "avgMaxCommodityBoundsPct": 0.14,
+    "avgBankruptBotPct": 20,
+    "minPortTreasuryCoins": "20107",
+    "avgMaxStrategySharePct": 31.71,
+    "avgSkillGradientRatio": 3.74,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 30.05,
+        "avgMarginPerTx": 569.44
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 30,
+        "avgMarginPerTx": 369.77
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 31.43,
+        "avgMarginPerTx": 443.02
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 8.51,
+        "avgMarginPerTx": 130.42
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 0,
+        "avgMarginPerTx": -3.48
+      }
+    }
+  },
+  {
+    "configName": "static_cap45",
+    "bots": 100,
+    "allGatesPassed": false,
+    "avgMaxCommodityBoundsPct": 0,
+    "avgBankruptBotPct": 26,
+    "minPortTreasuryCoins": "27978",
+    "avgMaxStrategySharePct": 49.83,
+    "avgSkillGradientRatio": 4.56,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 17.73,
+        "avgMarginPerTx": 234.8
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 49.83,
+        "avgMarginPerTx": 143.65
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 21.41,
+        "avgMarginPerTx": 191.29
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 11.02,
+        "avgMarginPerTx": 38.89
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 0,
+        "avgMarginPerTx": -10.71
+      }
+    }
+  },
+  {
+    "configName": "adaptive_cap35",
+    "bots": 10,
+    "allGatesPassed": true,
+    "avgMaxCommodityBoundsPct": 0,
+    "avgBankruptBotPct": 10,
+    "minPortTreasuryCoins": "34249",
+    "avgMaxStrategySharePct": 31.68,
+    "avgSkillGradientRatio": 4.27,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 31.68,
+        "avgMarginPerTx": 1575.21
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 29.61,
+        "avgMarginPerTx": 1557.02
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 30.99,
+        "avgMarginPerTx": 1510.53
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 7.47,
+        "avgMarginPerTx": 338.46
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 0.25,
+        "avgMarginPerTx": 47.8
+      }
+    }
+  },
+  {
+    "configName": "adaptive_cap35",
+    "bots": 25,
+    "allGatesPassed": true,
+    "avgMaxCommodityBoundsPct": 0,
+    "avgBankruptBotPct": 9.33,
+    "minPortTreasuryCoins": "29207",
+    "avgMaxStrategySharePct": 32.23,
+    "avgSkillGradientRatio": 4.79,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 32.23,
+        "avgMarginPerTx": 935.32
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 30.25,
+        "avgMarginPerTx": 905.1
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 30.59,
+        "avgMarginPerTx": 865.91
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 6.73,
+        "avgMarginPerTx": 188.32
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 0.2,
+        "avgMarginPerTx": 34.07
+      }
+    }
+  },
+  {
+    "configName": "adaptive_cap35",
+    "bots": 50,
+    "allGatesPassed": true,
+    "avgMaxCommodityBoundsPct": 0,
+    "avgBankruptBotPct": 20,
+    "minPortTreasuryCoins": "28844",
+    "avgMaxStrategySharePct": 31.67,
+    "avgSkillGradientRatio": 3.34,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 28.54,
+        "avgMarginPerTx": 575.89
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 31.6,
+        "avgMarginPerTx": 426.85
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 30.38,
+        "avgMarginPerTx": 437.86
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 9.48,
+        "avgMarginPerTx": 147.6
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 0,
+        "avgMarginPerTx": -2.94
+      }
+    }
+  },
+  {
+    "configName": "adaptive_cap35",
+    "bots": 100,
+    "allGatesPassed": true,
+    "avgMaxCommodityBoundsPct": 0.02,
+    "avgBankruptBotPct": 18.33,
+    "minPortTreasuryCoins": "10147",
+    "avgMaxStrategySharePct": 32.92,
+    "avgSkillGradientRatio": 3.36,
+    "strategies": {
+      "hoarder": {
+        "avgWealth": null,
+        "avgSharePct": 27.82,
+        "avgMarginPerTx": 688.34
+      },
+      "adversarial": {
+        "avgWealth": null,
+        "avgSharePct": 32.92,
+        "avgMarginPerTx": 509.6
+      },
+      "margin_hunter": {
+        "avgWealth": null,
+        "avgSharePct": 29.42,
+        "avgMarginPerTx": 580.65
+      },
+      "naive": {
+        "avgWealth": null,
+        "avgSharePct": 9.79,
+        "avgMarginPerTx": 151.37
+      },
+      "random": {
+        "avgWealth": null,
+        "avgSharePct": 0.04,
+        "avgMarginPerTx": 18.42
+      }
+    }
+  }
+]

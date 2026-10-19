@@ -1,12 +1,12 @@
-# 13 — Roadmap & Pemecahan Tugas v0.1
+# 13 — Roadmap & Pemecahan Tugas v0.2
 
 Tiap milestone punya **gerbang lulus** terukur. Jangan mulai milestone berikut sebelum gerbang lulus. Satu tugas = satu sesi AI.
 
 ## M0 — Fondasi repo
-- [ ] Monorepo pnpm, TypeScript strict, ESLint/Prettier, Vitest
-- [ ] CI GitHub Actions (lint, typecheck, test)
-- [ ] Koneksi DB, runner migrasi, migrasi 0001 (skema `07`)
-- [ ] Seed dunia dari `packages/shared`
+- [x] Monorepo pnpm, TypeScript strict, ESLint/Prettier, Vitest
+- [x] CI GitHub Actions (lint, typecheck, test)
+- [x] Koneksi DB, runner migrasi, migrasi 0001 (skema `07`)
+- [x] Seed dunia dari `packages/shared`
 - **Gerbang:** CI hijau; `pnpm db:migrate` dari DB kosong sukses; tes skema lulus
 
 ## M1 — Ekonomi dan dunia tanpa pemain
@@ -14,7 +14,7 @@ Tiap milestone punya **gerbang lulus** terukur. Jangan mulai milestone berikut s
 - [ ] Eksekusi transaksi dengan slippage dan biaya
 - [ ] Simulator `sim:run` dengan bot sederhana
 - [ ] Tuning parameter awal (`06`)
-- **Gerbang:** simulasi 50 bot x 10.000 tick lulus semua invarian; harga hidup dan terbatas; catat hasil di PROGRESS
+- **Gerbang (diterapkan sebagai kode di `sim-cli`):** 50 bot x 10.000 tick x 5 seed lulus semua invarian; run panjang 200.000 tick (kas pelabuhan tidak habis, total koin pemain stabil); sensitivitas 10, 25, 50, 100 bot; harga hidup dan tidak menempel di batas; hasil dicatat di PROGRESS dan artifact CI
 
 ## M2 — Akun, kapal, ledger
 - [ ] Auth (daftar, login, refresh, logout) + tes otorisasi
@@ -36,7 +36,8 @@ Tiap milestone punya **gerbang lulus** terukur. Jangan mulai milestone berikut s
 - [ ] Tick: urutan `09` lengkap, aksi nyata ke DB, log aksi
 - [ ] `PUT rules`, `validate`, `simulate` (sandbox)
 - [ ] Invarian cepat dan metrik
-- **Gerbang:** tes kill -9 lulus; 100 kapal bot tick lag p95 < 20%; tes sandbox tidak menulis ke DB
+- [ ] Satu implementasi tick: `stepWorld` murni dipakai worker, simulator, dan sandbox (tanpa logika tick ganda)
+- **Gerbang:** tes kill -9 lulus; 100 kapal bot tick lag p95 < 20%; tes sandbox tidak menulis ke DB; tes kesetaraan `state_hash` worker == simulator
 
 ## M5 — Klien Flutter dan APK
 - [ ] Login/daftar, penyimpanan token aman
@@ -63,3 +64,12 @@ Tiap milestone punya **gerbang lulus** terukur. Jangan mulai milestone berikut s
 
 ## Aturan pergantian scope
 Fitur baru butuh: tujuan, dampak ekonomi, perubahan dokumen, tes. Catat di ADR bila mengubah arsitektur.
+
+## Definisi Release Candidate (siap CI dan build test)
+Satu commit di `main` dengan semua job CI hijau:
+1. `lint`, `typecheck`, `test` (unit, properti, integrasi dengan Postgres nyata)
+2. `sim:short` dengan semua gerbang kualitas
+3. `build` backend (`tsc -b`) dan smoke test `db:migrate` pada database kosong
+4. Workflow Flutter: `flutter analyze`, `flutter test`, `flutter build apk --release` menghasilkan artifact APK
+5. Simulasi penuh (`workflow_dispatch`) hijau pada commit yang sama, artifact tersimpan
+6. Tidak ada tes `skip`/`todo`, tidak ada rahasia di repo, `docs/PROGRESS.md` mutakhir

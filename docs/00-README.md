@@ -32,3 +32,8 @@ Judul kerja: **Jalur Rempah**. Ganti kapan saja.
 - Dokumen adalah sumber kebenaran, bukan percakapan.
 - Angka di dokumen ekonomi adalah **parameter tuning**, bukan hukum. Ubah lewat konfigurasi, catat di PROGRESS.
 - Bagian bertanda `[ASUMSI]` perlu kamu putuskan atau konfirmasi.
+
+## Riwayat revisi
+- v0.1: paket awal.
+- v0.2: agen M1 mengubah `04`, `06`, `07`, `PROGRESS` (transaksi simetris, kas pelabuhan, ADR-009).
+- v0.3: audit dokumen. Mengubah `03`, `05`, `08`, `09`, `10`, `13`, `CLAUDE.md`; menambah `AUDIT-v0.3.md` (temuan dan keputusan terbuka).

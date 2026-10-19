@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { WORLD_CONFIG } from '@jalur-rempah/shared';
+import {
+  WORLD_CONFIG,
+  COMMODITIES_SEED,
+  MARKET_SEED,
+} from '@jalur-rempah/shared';
 import {
   hitungHarga,
   batasHargaBawah,
@@ -8,7 +12,7 @@ import {
   stepProduksiKonsumsi,
 } from '../src/index.js';
 
-describe('M1 — packages/econ: hitungHarga & Produksi/Konsumsi (Property & Unit Tests)', () => {
+describe('M1 — packages/econ: hitungHarga, Produksi/Konsumsi, & Keseimbangan Seed', () => {
   it('1. Properti: hitungHarga selalu menghasilkan integer >= 1 dan berada dalam [round(dasar*0.25), round(dasar*4.0)]', () => {
     fc.assert(
       fc.property(
@@ -91,5 +95,18 @@ describe('M1 — packages/econ: hitungHarga & Produksi/Konsumsi (Property & Unit
       ),
       { numRuns: 500 },
     );
+  });
+
+  it('5. Keseimbangan produksi dan konsumsi global pada seed dunia (packages/shared): total_prod == total_cons == 23 untuk tiap komoditas', () => {
+    expect(MARKET_SEED.length).toBe(24);
+    for (const com of COMMODITIES_SEED) {
+      const rows = MARKET_SEED.filter((m) => m.commodity_id === com.id);
+      expect(rows.length).toBe(6);
+      const totalProd = rows.reduce((acc, r) => acc + r.production, 0n);
+      const totalCons = rows.reduce((acc, r) => acc + r.consumption, 0n);
+      expect(totalProd).toBe(23n);
+      expect(totalCons).toBe(23n);
+      expect(totalProd).toBe(totalCons);
+    }
   });
 });

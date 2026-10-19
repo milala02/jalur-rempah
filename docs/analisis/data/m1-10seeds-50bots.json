@@ -1,0 +1,5256 @@
+{
+  "tuning": [
+    {
+      "seed": 101,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "64600b2491efa9773dd5ebe3091809eab3443612675f70c725c597416c78d084",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3555,
+      "bankruptBotCount": 9,
+      "bankruptBotPct": 18,
+      "permanentlyDeadBotCount": 9,
+      "rescueGrantedTotal": 40,
+      "maxStrategyWealthSharePct": 33.06,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "30130",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 7393,
+      "skillGradient": {
+        "naiveAvgWealth": 31055.7,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 109367.3,
+        "skillGradientRatio": 3.52
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 2829073.43,
+        "q4MeanCoins": 3209665.47,
+        "relativeDriftPct": 13.45,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "35971637",
+        "cumulativePortIncomeSource": "35963637",
+        "cumulativeRescueSource": "8000",
+        "finalPlayerCoins": "3273095",
+        "finalPortTreasury": "296875",
+        "cumulativeUpkeepSink": "32751667",
+        "cumulativeShipUpkeepSink": "9355751",
+        "cumulativePortProducerPayoutSink": "23395916",
+        "lhsTotalAccounted": "36321637",
+        "rhsTotalExpected": "36321637"
+      },
+      "portTreasuries": {
+        "banda": "48413",
+        "ternate": "51101",
+        "surabaya": "51417",
+        "malaka": "48663",
+        "makassar": "50432",
+        "batavia": "46849"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "48413",
+          "minTreasury": "40169",
+          "minTreasuryTick": 8197,
+          "maxTreasury": "58611",
+          "meanTreasury": 49520,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "51101",
+          "minTreasury": "40076",
+          "minTreasuryTick": 197,
+          "maxTreasury": "62453",
+          "meanTreasury": 49482,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "51417",
+          "minTreasury": "36947",
+          "minTreasuryTick": 4155,
+          "maxTreasury": "54999",
+          "meanTreasury": 49617,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "48663",
+          "minTreasury": "37701",
+          "minTreasuryTick": 5947,
+          "maxTreasury": "55705",
+          "meanTreasury": 49749,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "50432",
+          "minTreasury": "41148",
+          "minTreasuryTick": 2395,
+          "maxTreasury": "56256",
+          "meanTreasury": 50116,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "46849",
+          "minTreasury": "30130",
+          "minTreasuryTick": 7393,
+          "maxTreasury": "54605",
+          "meanTreasury": 49011,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 88.08,
+          "stdDevPrice": 26.76,
+          "volatilityPct": 30.38,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 175,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 110.96,
+          "stdDevPrice": 31.12,
+          "volatilityPct": 28.05,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 228,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.84,
+          "stdDevPrice": 2.53,
+          "volatilityPct": 11.56,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 38,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 47.41,
+          "stdDevPrice": 3.87,
+          "volatilityPct": 8.16,
+          "minObservedPrice": 35,
+          "maxObservedPrice": 73,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1093673",
+          "avgWealth": 109367.3,
+          "wealthSharePct": 33.06,
+          "bankruptCount": 0,
+          "tradesCompleted": 9021,
+          "avgMarginPerTx": 442.47,
+          "avgTicksToDoubleCoins": 57
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "310557",
+          "avgWealth": 31055.7,
+          "wealthSharePct": 9.39,
+          "bankruptCount": 0,
+          "tradesCompleted": 7413,
+          "avgMarginPerTx": 155.74,
+          "avgTicksToDoubleCoins": 156
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "1000571",
+          "avgWealth": 100057.1,
+          "wealthSharePct": 30.25,
+          "bankruptCount": 0,
+          "tradesCompleted": 8432,
+          "avgMarginPerTx": 459.18,
+          "avgTicksToDoubleCoins": 57
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "903208",
+          "avgWealth": 90320.8,
+          "wealthSharePct": 27.3,
+          "bankruptCount": 0,
+          "tradesCompleted": 6102,
+          "avgMarginPerTx": 587.31,
+          "avgTicksToDoubleCoins": 40
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "61",
+          "avgWealth": 6.1,
+          "wealthSharePct": 0,
+          "bankruptCount": 9,
+          "tradesCompleted": 131,
+          "avgMarginPerTx": -5.04,
+          "avgTicksToDoubleCoins": null
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 2942,
+          "avgNetProfitPerTrip": 172.57,
+          "avgNetProfitPerTick": 34.51
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 133,
+          "avgNetProfitPerTrip": 1165.58,
+          "avgNetProfitPerTick": 116.56
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 31,
+          "avgNetProfitPerTrip": 979.23,
+          "avgNetProfitPerTick": 61.2
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2714,
+          "avgNetProfitPerTrip": 441.15,
+          "avgNetProfitPerTick": 73.53
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 489,
+          "avgNetProfitPerTrip": 1345.32,
+          "avgNetProfitPerTick": 112.11
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 2982,
+          "avgNetProfitPerTrip": 257.88,
+          "avgNetProfitPerTick": 51.58
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 209,
+          "avgNetProfitPerTrip": 1062.79,
+          "avgNetProfitPerTick": 118.09
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 66,
+          "avgNetProfitPerTrip": 964.98,
+          "avgNetProfitPerTick": 64.33
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2503,
+          "avgNetProfitPerTrip": 553.84,
+          "avgNetProfitPerTick": 110.77
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 677,
+          "avgNetProfitPerTrip": 1302.4,
+          "avgNetProfitPerTick": 118.4
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 666,
+          "avgNetProfitPerTrip": 143.81,
+          "avgNetProfitPerTick": 14.38
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 625,
+          "avgNetProfitPerTrip": 137.17,
+          "avgNetProfitPerTick": 15.24
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 450,
+          "avgNetProfitPerTrip": 77.38,
+          "avgNetProfitPerTick": 11.05
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 976,
+          "avgNetProfitPerTrip": 52.13,
+          "avgNetProfitPerTick": 13.03
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2969,
+          "avgNetProfitPerTrip": 96.91,
+          "avgNetProfitPerTick": 32.3
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 570,
+          "avgNetProfitPerTrip": 96.66,
+          "avgNetProfitPerTick": 6.04
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 547,
+          "avgNetProfitPerTrip": 105.98,
+          "avgNetProfitPerTick": 7.07
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 944,
+          "avgNetProfitPerTrip": 56.4,
+          "avgNetProfitPerTick": 8.06
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 119,
+          "avgNetProfitPerTrip": 130.99,
+          "avgNetProfitPerTick": 13.1
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 3074,
+          "avgNetProfitPerTrip": 158.14,
+          "avgNetProfitPerTick": 39.54
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 328,
+          "avgNetProfitPerTrip": 119.45,
+          "avgNetProfitPerTick": 19.91
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 322,
+          "avgNetProfitPerTrip": 118.17,
+          "avgNetProfitPerTick": 23.63
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1461,
+          "avgNetProfitPerTrip": 909.27,
+          "avgNetProfitPerTick": 227.32
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 656,
+          "avgNetProfitPerTrip": 1133.24,
+          "avgNetProfitPerTick": 113.32
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3205,
+          "avgNetProfitPerTrip": 1011.54,
+          "avgNetProfitPerTick": 168.59
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 224,
+          "avgNetProfitPerTrip": 127.42,
+          "avgNetProfitPerTick": 10.62
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 208,
+          "avgNetProfitPerTrip": 121.98,
+          "avgNetProfitPerTick": 11.09
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 184,
+          "avgNetProfitPerTrip": 39.98,
+          "avgNetProfitPerTick": 13.33
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 337,
+          "avgNetProfitPerTrip": 132.54,
+          "avgNetProfitPerTick": 33.14
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 13,
+          "avgNetProfitPerTrip": 97.08,
+          "avgNetProfitPerTick": 16.18
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 85164,
+        "roundingAttempts": 28388,
+        "pumpDumpAttempts": 28388,
+        "rescueFarmingAttempts": 7097,
+        "totalExploitAttempts": 120649,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-144"
+      },
+      "timeSeriesSamples": []
+    },
+    {
+      "seed": 202,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "492c02f321fdeb8de59ea7d5450d46cbb9b7dd2a49212c2015dab6d0e02ef1d6",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3688,
+      "bankruptBotCount": 10,
+      "bankruptBotPct": 20,
+      "permanentlyDeadBotCount": 10,
+      "rescueGrantedTotal": 38,
+      "maxStrategyWealthSharePct": 35.3,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "28844",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 1928,
+      "skillGradient": {
+        "naiveAvgWealth": 32513.5,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 115675.2,
+        "skillGradientRatio": 3.56
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 2931670.33,
+        "q4MeanCoins": 3114517.57,
+        "relativeDriftPct": 6.24,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "35555326",
+        "cumulativePortIncomeSource": "35547726",
+        "cumulativeRescueSource": "7600",
+        "finalPlayerCoins": "3240050",
+        "finalPortTreasury": "294694",
+        "cumulativeUpkeepSink": "32370582",
+        "cumulativeShipUpkeepSink": "9628083",
+        "cumulativePortProducerPayoutSink": "22742499",
+        "lhsTotalAccounted": "35905326",
+        "rhsTotalExpected": "35905326"
+      },
+      "portTreasuries": {
+        "banda": "47446",
+        "ternate": "51058",
+        "surabaya": "44356",
+        "malaka": "51067",
+        "makassar": "49200",
+        "batavia": "51567"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "47446",
+          "minTreasury": "38368",
+          "minTreasuryTick": 933,
+          "maxTreasury": "58571",
+          "meanTreasury": 49549,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "51058",
+          "minTreasury": "37771",
+          "minTreasuryTick": 3152,
+          "maxTreasury": "62372",
+          "meanTreasury": 49423,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "44356",
+          "minTreasury": "31606",
+          "minTreasuryTick": 392,
+          "maxTreasury": "54137",
+          "meanTreasury": 49552,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "51067",
+          "minTreasury": "38236",
+          "minTreasuryTick": 6627,
+          "maxTreasury": "55233",
+          "meanTreasury": 49783,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "49200",
+          "minTreasury": "38073",
+          "minTreasuryTick": 6009,
+          "maxTreasury": "57735",
+          "meanTreasury": 50115,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "51567",
+          "minTreasury": "28844",
+          "minTreasuryTick": 1928,
+          "maxTreasury": "58624",
+          "meanTreasury": 49028,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 90.36,
+          "stdDevPrice": 28.63,
+          "volatilityPct": 31.69,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 177,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 112.05,
+          "stdDevPrice": 32.42,
+          "volatilityPct": 28.94,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 222,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.15,
+          "stdDevPrice": 2.23,
+          "volatilityPct": 10.52,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 37,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 47.54,
+          "stdDevPrice": 3.76,
+          "volatilityPct": 7.9,
+          "minObservedPrice": 34,
+          "maxObservedPrice": 77,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1156752",
+          "avgWealth": 115675.2,
+          "wealthSharePct": 35.3,
+          "bankruptCount": 0,
+          "tradesCompleted": 9230,
+          "avgMarginPerTx": 469.57,
+          "avgTicksToDoubleCoins": 52
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "325135",
+          "avgWealth": 32513.5,
+          "wealthSharePct": 9.92,
+          "bankruptCount": 0,
+          "tradesCompleted": 6901,
+          "avgMarginPerTx": 176.05,
+          "avgTicksToDoubleCoins": 196
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "972704",
+          "avgWealth": 97270.4,
+          "wealthSharePct": 29.68,
+          "bankruptCount": 0,
+          "tradesCompleted": 8329,
+          "avgMarginPerTx": 460.77,
+          "avgTicksToDoubleCoins": 54
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "822759",
+          "avgWealth": 82275.9,
+          "wealthSharePct": 25.1,
+          "bankruptCount": 0,
+          "tradesCompleted": 5666,
+          "avgMarginPerTx": 609.37,
+          "avgTicksToDoubleCoins": 55
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "0",
+          "avgWealth": 0,
+          "wealthSharePct": 0,
+          "bankruptCount": 10,
+          "tradesCompleted": 292,
+          "avgMarginPerTx": 8.14,
+          "avgTicksToDoubleCoins": 595
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3030,
+          "avgNetProfitPerTrip": 202.67,
+          "avgNetProfitPerTick": 40.53
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 131,
+          "avgNetProfitPerTrip": 1281.09,
+          "avgNetProfitPerTick": 128.11
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 19,
+          "avgNetProfitPerTrip": 855.37,
+          "avgNetProfitPerTick": 53.46
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2398,
+          "avgNetProfitPerTrip": 464.72,
+          "avgNetProfitPerTick": 77.45
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 474,
+          "avgNetProfitPerTrip": 1470.24,
+          "avgNetProfitPerTick": 122.52
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3032,
+          "avgNetProfitPerTrip": 240.75,
+          "avgNetProfitPerTick": 48.15
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 168,
+          "avgNetProfitPerTrip": 1290.28,
+          "avgNetProfitPerTick": 143.36
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 36,
+          "avgNetProfitPerTrip": 990.36,
+          "avgNetProfitPerTick": 66.02
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2601,
+          "avgNetProfitPerTrip": 606.81,
+          "avgNetProfitPerTick": 121.36
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 560,
+          "avgNetProfitPerTrip": 1439.04,
+          "avgNetProfitPerTick": 130.82
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 598,
+          "avgNetProfitPerTrip": 138.71,
+          "avgNetProfitPerTick": 13.87
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 587,
+          "avgNetProfitPerTrip": 146.36,
+          "avgNetProfitPerTick": 16.26
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 397,
+          "avgNetProfitPerTrip": 65.85,
+          "avgNetProfitPerTick": 9.41
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 973,
+          "avgNetProfitPerTrip": 64.5,
+          "avgNetProfitPerTick": 16.13
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2919,
+          "avgNetProfitPerTrip": 100.51,
+          "avgNetProfitPerTick": 33.5
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 589,
+          "avgNetProfitPerTrip": 102.6,
+          "avgNetProfitPerTick": 6.41
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 589,
+          "avgNetProfitPerTrip": 111.68,
+          "avgNetProfitPerTick": 7.45
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 960,
+          "avgNetProfitPerTrip": 51.13,
+          "avgNetProfitPerTick": 7.3
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 104,
+          "avgNetProfitPerTrip": 124.55,
+          "avgNetProfitPerTick": 12.45
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 2944,
+          "avgNetProfitPerTrip": 153.6,
+          "avgNetProfitPerTick": 38.4
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 306,
+          "avgNetProfitPerTrip": 87.12,
+          "avgNetProfitPerTick": 14.52
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 321,
+          "avgNetProfitPerTrip": 116.31,
+          "avgNetProfitPerTick": 23.26
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1507,
+          "avgNetProfitPerTrip": 1018.4,
+          "avgNetProfitPerTick": 254.6
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 643,
+          "avgNetProfitPerTrip": 1082.41,
+          "avgNetProfitPerTick": 108.24
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3105,
+          "avgNetProfitPerTrip": 1057.07,
+          "avgNetProfitPerTick": 176.18
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 260,
+          "avgNetProfitPerTrip": 108.07,
+          "avgNetProfitPerTick": 9.01
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 249,
+          "avgNetProfitPerTrip": 102.41,
+          "avgNetProfitPerTick": 9.31
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 190,
+          "avgNetProfitPerTrip": 14.49,
+          "avgNetProfitPerTick": 4.83
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 392,
+          "avgNetProfitPerTrip": 81.65,
+          "avgNetProfitPerTick": 20.41
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 25,
+          "avgNetProfitPerTrip": 112.92,
+          "avgNetProfitPerTick": 18.82
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 86964,
+        "roundingAttempts": 28988,
+        "pumpDumpAttempts": 28988,
+        "rescueFarmingAttempts": 7247,
+        "totalExploitAttempts": 123199,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-142"
+      },
+      "timeSeriesSamples": []
+    },
+    {
+      "seed": 303,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "ee56a4ca06ec4750a5aa2c57428810613b1b9abba78a7df0a815c8a21e905ecf",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3472,
+      "bankruptBotCount": 10,
+      "bankruptBotPct": 20,
+      "permanentlyDeadBotCount": 10,
+      "rescueGrantedTotal": 40,
+      "maxStrategyWealthSharePct": 32.76,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "25149",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 5550,
+      "skillGradient": {
+        "naiveAvgWealth": 32586.2,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 107082.9,
+        "skillGradientRatio": 3.29
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 2955471.35,
+        "q4MeanCoins": 3144883.43,
+        "relativeDriftPct": 6.41,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "35986465",
+        "cumulativePortIncomeSource": "35978465",
+        "cumulativeRescueSource": "8000",
+        "finalPlayerCoins": "3234926",
+        "finalPortTreasury": "295561",
+        "cumulativeUpkeepSink": "32805978",
+        "cumulativeShipUpkeepSink": "9707831",
+        "cumulativePortProducerPayoutSink": "23098147",
+        "lhsTotalAccounted": "36336465",
+        "rhsTotalExpected": "36336465"
+      },
+      "portTreasuries": {
+        "banda": "50424",
+        "ternate": "50839",
+        "surabaya": "52054",
+        "malaka": "44588",
+        "makassar": "47753",
+        "batavia": "49903"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "50424",
+          "minTreasury": "36601",
+          "minTreasuryTick": 7958,
+          "maxTreasury": "60297",
+          "meanTreasury": 49534,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "50839",
+          "minTreasury": "42334",
+          "minTreasuryTick": 2088,
+          "maxTreasury": "62735",
+          "meanTreasury": 49437,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "52054",
+          "minTreasury": "32384",
+          "minTreasuryTick": 654,
+          "maxTreasury": "54088",
+          "meanTreasury": 49573,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "44588",
+          "minTreasury": "34449",
+          "minTreasuryTick": 4613,
+          "maxTreasury": "55008",
+          "meanTreasury": 49789,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "47753",
+          "minTreasury": "39371",
+          "minTreasuryTick": 4927,
+          "maxTreasury": "58238",
+          "meanTreasury": 50114,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "49903",
+          "minTreasury": "25149",
+          "minTreasuryTick": 5550,
+          "maxTreasury": "54859",
+          "meanTreasury": 48985,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 89.99,
+          "stdDevPrice": 28.56,
+          "volatilityPct": 31.73,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 174,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 111.93,
+          "stdDevPrice": 32.37,
+          "volatilityPct": 28.92,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 228,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.07,
+          "stdDevPrice": 2.2,
+          "volatilityPct": 10.44,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 36,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 47.4,
+          "stdDevPrice": 3.8,
+          "volatilityPct": 8.01,
+          "minObservedPrice": 35,
+          "maxObservedPrice": 85,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1070829",
+          "avgWealth": 107082.9,
+          "wealthSharePct": 32.76,
+          "bankruptCount": 0,
+          "tradesCompleted": 9092,
+          "avgMarginPerTx": 456.5,
+          "avgTicksToDoubleCoins": 55
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "325862",
+          "avgWealth": 32586.2,
+          "wealthSharePct": 9.97,
+          "bankruptCount": 0,
+          "tradesCompleted": 7067,
+          "avgMarginPerTx": 172.63,
+          "avgTicksToDoubleCoins": 225
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "961595",
+          "avgWealth": 96159.5,
+          "wealthSharePct": 29.41,
+          "bankruptCount": 0,
+          "tradesCompleted": 8323,
+          "avgMarginPerTx": 461.77,
+          "avgTicksToDoubleCoins": 67
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "910790",
+          "avgWealth": 91079,
+          "wealthSharePct": 27.86,
+          "bankruptCount": 0,
+          "tradesCompleted": 5796,
+          "avgMarginPerTx": 638.79,
+          "avgTicksToDoubleCoins": 54
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "0",
+          "avgWealth": 0,
+          "wealthSharePct": 0,
+          "bankruptCount": 10,
+          "tradesCompleted": 118,
+          "avgMarginPerTx": -11.92,
+          "avgTicksToDoubleCoins": null
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3091,
+          "avgNetProfitPerTrip": 177.26,
+          "avgNetProfitPerTick": 35.45
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 126,
+          "avgNetProfitPerTrip": 1297.94,
+          "avgNetProfitPerTick": 129.79
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 17,
+          "avgNetProfitPerTrip": 1123.94,
+          "avgNetProfitPerTick": 70.25
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2448,
+          "avgNetProfitPerTrip": 476.61,
+          "avgNetProfitPerTick": 79.43
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 438,
+          "avgNetProfitPerTrip": 1533.97,
+          "avgNetProfitPerTick": 127.83
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3111,
+          "avgNetProfitPerTrip": 244.47,
+          "avgNetProfitPerTick": 48.89
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 180,
+          "avgNetProfitPerTrip": 1378.42,
+          "avgNetProfitPerTick": 153.16
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 19,
+          "avgNetProfitPerTrip": 1036.63,
+          "avgNetProfitPerTick": 69.11
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2658,
+          "avgNetProfitPerTrip": 582.1,
+          "avgNetProfitPerTick": 116.42
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 545,
+          "avgNetProfitPerTrip": 1528.11,
+          "avgNetProfitPerTick": 138.92
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 635,
+          "avgNetProfitPerTrip": 137.26,
+          "avgNetProfitPerTick": 13.73
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 649,
+          "avgNetProfitPerTrip": 136.83,
+          "avgNetProfitPerTick": 15.2
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 394,
+          "avgNetProfitPerTrip": 57.23,
+          "avgNetProfitPerTick": 8.18
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 894,
+          "avgNetProfitPerTrip": 63.19,
+          "avgNetProfitPerTick": 15.8
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2886,
+          "avgNetProfitPerTrip": 99.84,
+          "avgNetProfitPerTick": 33.28
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 595,
+          "avgNetProfitPerTrip": 107.51,
+          "avgNetProfitPerTick": 6.72
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 581,
+          "avgNetProfitPerTrip": 108.91,
+          "avgNetProfitPerTick": 7.26
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 974,
+          "avgNetProfitPerTrip": 45.35,
+          "avgNetProfitPerTick": 6.48
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 107,
+          "avgNetProfitPerTrip": 145.46,
+          "avgNetProfitPerTick": 14.55
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 2905,
+          "avgNetProfitPerTrip": 158.74,
+          "avgNetProfitPerTick": 39.68
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 278,
+          "avgNetProfitPerTrip": 101.92,
+          "avgNetProfitPerTick": 16.99
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 269,
+          "avgNetProfitPerTrip": 85.79,
+          "avgNetProfitPerTick": 17.16
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1453,
+          "avgNetProfitPerTrip": 996.79,
+          "avgNetProfitPerTick": 249.2
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 613,
+          "avgNetProfitPerTrip": 1147.26,
+          "avgNetProfitPerTick": 114.73
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3287,
+          "avgNetProfitPerTrip": 1056.11,
+          "avgNetProfitPerTick": 176.02
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 237,
+          "avgNetProfitPerTrip": 97.97,
+          "avgNetProfitPerTick": 8.16
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 210,
+          "avgNetProfitPerTrip": 79.02,
+          "avgNetProfitPerTick": 7.18
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 155,
+          "avgNetProfitPerTrip": 21.71,
+          "avgNetProfitPerTick": 7.24
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 372,
+          "avgNetProfitPerTrip": 58.27,
+          "avgNetProfitPerTick": 14.57
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 20,
+          "avgNetProfitPerTrip": 88.1,
+          "avgNetProfitPerTick": 14.68
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 86532,
+        "roundingAttempts": 28844,
+        "pumpDumpAttempts": 28844,
+        "rescueFarmingAttempts": 7211,
+        "totalExploitAttempts": 122587,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-144"
+      },
+      "timeSeriesSamples": []
+    },
+    {
+      "seed": 404,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "35c8683f7c0b7dc69c8f9a869c8193a25391dc6ebbb2ab6e71187ef5b11fe95c",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.354,
+      "bankruptBotCount": 9,
+      "bankruptBotPct": 18,
+      "permanentlyDeadBotCount": 9,
+      "rescueGrantedTotal": 39,
+      "maxStrategyWealthSharePct": 33.3,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "29666",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 738,
+      "skillGradient": {
+        "naiveAvgWealth": 30897.9,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 107793.6,
+        "skillGradientRatio": 3.49
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 3029114.56,
+        "q4MeanCoins": 3237570.06,
+        "relativeDriftPct": 6.88,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "36125370",
+        "cumulativePortIncomeSource": "36117570",
+        "cumulativeRescueSource": "7800",
+        "finalPlayerCoins": "3182696",
+        "finalPortTreasury": "297951",
+        "cumulativeUpkeepSink": "32994723",
+        "cumulativeShipUpkeepSink": "9683790",
+        "cumulativePortProducerPayoutSink": "23310933",
+        "lhsTotalAccounted": "36475370",
+        "rhsTotalExpected": "36475370"
+      },
+      "portTreasuries": {
+        "banda": "49092",
+        "ternate": "53441",
+        "surabaya": "52131",
+        "malaka": "47813",
+        "makassar": "48640",
+        "batavia": "46834"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "49092",
+          "minTreasury": "35580",
+          "minTreasuryTick": 3279,
+          "maxTreasury": "57961",
+          "meanTreasury": 49541,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "53441",
+          "minTreasury": "41806",
+          "minTreasuryTick": 149,
+          "maxTreasury": "63572",
+          "meanTreasury": 49461,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "52131",
+          "minTreasury": "34932",
+          "minTreasuryTick": 3005,
+          "maxTreasury": "54791",
+          "meanTreasury": 49575,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "47813",
+          "minTreasury": "33360",
+          "minTreasuryTick": 1020,
+          "maxTreasury": "55598",
+          "meanTreasury": 49750,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "48640",
+          "minTreasury": "39227",
+          "minTreasuryTick": 9303,
+          "maxTreasury": "57478",
+          "meanTreasury": 50115,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "46834",
+          "minTreasury": "29666",
+          "minTreasuryTick": 738,
+          "maxTreasury": "55098",
+          "meanTreasury": 48997,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 89.83,
+          "stdDevPrice": 28,
+          "volatilityPct": 31.17,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 177,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 111.03,
+          "stdDevPrice": 31.48,
+          "volatilityPct": 28.35,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 219,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.04,
+          "stdDevPrice": 2.13,
+          "volatilityPct": 10.14,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 43,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 47.52,
+          "stdDevPrice": 4.09,
+          "volatilityPct": 8.6,
+          "minObservedPrice": 34,
+          "maxObservedPrice": 88,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1077936",
+          "avgWealth": 107793.6,
+          "wealthSharePct": 33.3,
+          "bankruptCount": 0,
+          "tradesCompleted": 9276,
+          "avgMarginPerTx": 453.24,
+          "avgTicksToDoubleCoins": 57
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "308979",
+          "avgWealth": 30897.9,
+          "wealthSharePct": 9.54,
+          "bankruptCount": 0,
+          "tradesCompleted": 7537,
+          "avgMarginPerTx": 157.99,
+          "avgTicksToDoubleCoins": 229
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "948701",
+          "avgWealth": 94870.1,
+          "wealthSharePct": 29.31,
+          "bankruptCount": 0,
+          "tradesCompleted": 8475,
+          "avgMarginPerTx": 448.76,
+          "avgTicksToDoubleCoins": 56
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "901384",
+          "avgWealth": 90138.4,
+          "wealthSharePct": 27.84,
+          "bankruptCount": 0,
+          "tradesCompleted": 5916,
+          "avgMarginPerTx": 618.21,
+          "avgTicksToDoubleCoins": 51
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "196",
+          "avgWealth": 19.6,
+          "wealthSharePct": 0.01,
+          "bankruptCount": 9,
+          "tradesCompleted": 259,
+          "avgMarginPerTx": 10.68,
+          "avgTicksToDoubleCoins": 249
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3089,
+          "avgNetProfitPerTrip": 183.72,
+          "avgNetProfitPerTick": 36.74
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 111,
+          "avgNetProfitPerTrip": 1236.17,
+          "avgNetProfitPerTick": 123.62
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 40,
+          "avgNetProfitPerTrip": 817.67,
+          "avgNetProfitPerTick": 51.1
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2562,
+          "avgNetProfitPerTrip": 475.67,
+          "avgNetProfitPerTick": 79.28
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 426,
+          "avgNetProfitPerTrip": 1416.17,
+          "avgNetProfitPerTick": 118.01
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3133,
+          "avgNetProfitPerTrip": 226.5,
+          "avgNetProfitPerTick": 45.3
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 202,
+          "avgNetProfitPerTrip": 1224.02,
+          "avgNetProfitPerTick": 136
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 62,
+          "avgNetProfitPerTrip": 1044.65,
+          "avgNetProfitPerTick": 69.64
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2497,
+          "avgNetProfitPerTrip": 565.62,
+          "avgNetProfitPerTick": 113.12
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 704,
+          "avgNetProfitPerTrip": 1307.3,
+          "avgNetProfitPerTick": 118.85
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 632,
+          "avgNetProfitPerTrip": 125.34,
+          "avgNetProfitPerTick": 12.53
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 676,
+          "avgNetProfitPerTrip": 122.74,
+          "avgNetProfitPerTick": 13.64
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 430,
+          "avgNetProfitPerTrip": 53.33,
+          "avgNetProfitPerTick": 7.62
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 1012,
+          "avgNetProfitPerTrip": 56.97,
+          "avgNetProfitPerTick": 14.24
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2984,
+          "avgNetProfitPerTrip": 99.17,
+          "avgNetProfitPerTick": 33.06
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 471,
+          "avgNetProfitPerTrip": 114.69,
+          "avgNetProfitPerTick": 7.17
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 493,
+          "avgNetProfitPerTrip": 118.74,
+          "avgNetProfitPerTick": 7.92
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 922,
+          "avgNetProfitPerTrip": 54.75,
+          "avgNetProfitPerTick": 7.82
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 109,
+          "avgNetProfitPerTrip": 115.4,
+          "avgNetProfitPerTick": 11.54
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 3329,
+          "avgNetProfitPerTrip": 155.99,
+          "avgNetProfitPerTick": 39
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 350,
+          "avgNetProfitPerTrip": 112.34,
+          "avgNetProfitPerTick": 18.72
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 336,
+          "avgNetProfitPerTrip": 85.9,
+          "avgNetProfitPerTick": 17.18
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1504,
+          "avgNetProfitPerTrip": 958.01,
+          "avgNetProfitPerTick": 239.5
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 680,
+          "avgNetProfitPerTrip": 1056.46,
+          "avgNetProfitPerTick": 105.65
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3166,
+          "avgNetProfitPerTrip": 1063.87,
+          "avgNetProfitPerTick": 177.31
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 329,
+          "avgNetProfitPerTrip": 132.39,
+          "avgNetProfitPerTick": 11.03
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 280,
+          "avgNetProfitPerTrip": 95.19,
+          "avgNetProfitPerTick": 8.65
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 247,
+          "avgNetProfitPerTrip": 11.88,
+          "avgNetProfitPerTick": 3.96
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 348,
+          "avgNetProfitPerTrip": 96.89,
+          "avgNetProfitPerTick": 24.22
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 28,
+          "avgNetProfitPerTrip": 86.43,
+          "avgNetProfitPerTick": 14.4
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 84636,
+        "roundingAttempts": 28212,
+        "pumpDumpAttempts": 28212,
+        "rescueFarmingAttempts": 7053,
+        "totalExploitAttempts": 119901,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-138"
+      },
+      "timeSeriesSamples": []
+    },
+    {
+      "seed": 505,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "02540a143fddbab7eb352c5065509cee78536a25d6de7ba494ef3bb238da7c6a",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3587,
+      "bankruptBotCount": 10,
+      "bankruptBotPct": 20,
+      "permanentlyDeadBotCount": 10,
+      "rescueGrantedTotal": 39,
+      "maxStrategyWealthSharePct": 33.31,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "29098",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 9618,
+      "skillGradient": {
+        "naiveAvgWealth": 31412,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 106901,
+        "skillGradientRatio": 3.4
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 3004893.93,
+        "q4MeanCoins": 3132609.83,
+        "relativeDriftPct": 4.25,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "35807707",
+        "cumulativePortIncomeSource": "35799907",
+        "cumulativeRescueSource": "7800",
+        "finalPlayerCoins": "3177077",
+        "finalPortTreasury": "299042",
+        "cumulativeUpkeepSink": "32681588",
+        "cumulativeShipUpkeepSink": "9787448",
+        "cumulativePortProducerPayoutSink": "22894140",
+        "lhsTotalAccounted": "36157707",
+        "rhsTotalExpected": "36157707"
+      },
+      "portTreasuries": {
+        "banda": "49735",
+        "ternate": "48092",
+        "surabaya": "50865",
+        "malaka": "47554",
+        "makassar": "50188",
+        "batavia": "52608"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "49735",
+          "minTreasury": "38564",
+          "minTreasuryTick": 4530,
+          "maxTreasury": "58925",
+          "meanTreasury": 49562,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "48092",
+          "minTreasury": "38947",
+          "minTreasuryTick": 1845,
+          "maxTreasury": "62652",
+          "meanTreasury": 49412,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "50865",
+          "minTreasury": "34585",
+          "minTreasuryTick": 1954,
+          "maxTreasury": "54045",
+          "meanTreasury": 49559,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "47554",
+          "minTreasury": "34602",
+          "minTreasuryTick": 6870,
+          "maxTreasury": "56027",
+          "meanTreasury": 49791,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "50188",
+          "minTreasury": "39069",
+          "minTreasuryTick": 1424,
+          "maxTreasury": "57595",
+          "meanTreasury": 50113,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "52608",
+          "minTreasury": "29098",
+          "minTreasuryTick": 9618,
+          "maxTreasury": "55095",
+          "meanTreasury": 48991,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 93.26,
+          "stdDevPrice": 30.57,
+          "volatilityPct": 32.78,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 177,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 110.21,
+          "stdDevPrice": 31.37,
+          "volatilityPct": 28.46,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 203,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.85,
+          "stdDevPrice": 2.53,
+          "volatilityPct": 11.56,
+          "minObservedPrice": 14,
+          "maxObservedPrice": 38,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 47.38,
+          "stdDevPrice": 3.74,
+          "volatilityPct": 7.89,
+          "minObservedPrice": 36,
+          "maxObservedPrice": 77,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1069010",
+          "avgWealth": 106901,
+          "wealthSharePct": 33.31,
+          "bankruptCount": 0,
+          "tradesCompleted": 9191,
+          "avgMarginPerTx": 467.22,
+          "avgTicksToDoubleCoins": 65
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "314120",
+          "avgWealth": 31412,
+          "wealthSharePct": 9.79,
+          "bankruptCount": 0,
+          "tradesCompleted": 6369,
+          "avgMarginPerTx": 185.99,
+          "avgTicksToDoubleCoins": 198
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "984032",
+          "avgWealth": 98403.2,
+          "wealthSharePct": 30.66,
+          "bankruptCount": 0,
+          "tradesCompleted": 8343,
+          "avgMarginPerTx": 463.59,
+          "avgTicksToDoubleCoins": 63
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "841965",
+          "avgWealth": 84196.5,
+          "wealthSharePct": 26.24,
+          "bankruptCount": 0,
+          "tradesCompleted": 5702,
+          "avgMarginPerTx": 629.44,
+          "avgTicksToDoubleCoins": 61
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "0",
+          "avgWealth": 0,
+          "wealthSharePct": 0,
+          "bankruptCount": 10,
+          "tradesCompleted": 166,
+          "avgMarginPerTx": -1.38,
+          "avgTicksToDoubleCoins": 345
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3160,
+          "avgNetProfitPerTrip": 207.62,
+          "avgNetProfitPerTick": 41.52
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 99,
+          "avgNetProfitPerTrip": 1494.21,
+          "avgNetProfitPerTick": 149.42
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 15,
+          "avgNetProfitPerTrip": 1856.73,
+          "avgNetProfitPerTick": 116.05
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2108,
+          "avgNetProfitPerTrip": 507.82,
+          "avgNetProfitPerTick": 84.64
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 410,
+          "avgNetProfitPerTrip": 1617.02,
+          "avgNetProfitPerTick": 134.75
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3145,
+          "avgNetProfitPerTrip": 209.2,
+          "avgNetProfitPerTick": 41.84
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 158,
+          "avgNetProfitPerTrip": 1298.44,
+          "avgNetProfitPerTick": 144.27
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 23,
+          "avgNetProfitPerTrip": 974.96,
+          "avgNetProfitPerTick": 65
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2676,
+          "avgNetProfitPerTrip": 595.34,
+          "avgNetProfitPerTick": 119.07
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 622,
+          "avgNetProfitPerTrip": 1432.9,
+          "avgNetProfitPerTick": 130.26
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 485,
+          "avgNetProfitPerTrip": 166.86,
+          "avgNetProfitPerTick": 16.69
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 564,
+          "avgNetProfitPerTrip": 132.32,
+          "avgNetProfitPerTick": 14.7
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 395,
+          "avgNetProfitPerTrip": 67.33,
+          "avgNetProfitPerTick": 9.62
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 1044,
+          "avgNetProfitPerTrip": 58.62,
+          "avgNetProfitPerTick": 14.66
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2689,
+          "avgNetProfitPerTrip": 103.37,
+          "avgNetProfitPerTick": 34.46
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 588,
+          "avgNetProfitPerTrip": 121.7,
+          "avgNetProfitPerTick": 7.61
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 634,
+          "avgNetProfitPerTrip": 83.36,
+          "avgNetProfitPerTick": 5.56
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 934,
+          "avgNetProfitPerTrip": 45.74,
+          "avgNetProfitPerTick": 6.53
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 126,
+          "avgNetProfitPerTrip": 135.36,
+          "avgNetProfitPerTick": 13.54
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 2709,
+          "avgNetProfitPerTrip": 160.62,
+          "avgNetProfitPerTick": 40.16
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 392,
+          "avgNetProfitPerTrip": 140.69,
+          "avgNetProfitPerTick": 23.45
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 350,
+          "avgNetProfitPerTrip": 106.16,
+          "avgNetProfitPerTick": 21.23
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1498,
+          "avgNetProfitPerTrip": 1070.23,
+          "avgNetProfitPerTick": 267.56
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 570,
+          "avgNetProfitPerTrip": 1167.92,
+          "avgNetProfitPerTick": 116.79
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3128,
+          "avgNetProfitPerTrip": 1087.37,
+          "avgNetProfitPerTick": 181.23
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 240,
+          "avgNetProfitPerTrip": 156.6,
+          "avgNetProfitPerTick": 13.05
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 204,
+          "avgNetProfitPerTrip": 110.15,
+          "avgNetProfitPerTick": 10.01
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 150,
+          "avgNetProfitPerTrip": 11.31,
+          "avgNetProfitPerTick": 3.77
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 394,
+          "avgNetProfitPerTrip": 72.24,
+          "avgNetProfitPerTick": 18.06
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 15,
+          "avgNetProfitPerTrip": 32.6,
+          "avgNetProfitPerTick": 5.43
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 86040,
+        "roundingAttempts": 28680,
+        "pumpDumpAttempts": 28680,
+        "rescueFarmingAttempts": 7170,
+        "totalExploitAttempts": 121890,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-130"
+      },
+      "timeSeriesSamples": []
+    }
+  ],
+  "validation": [
+    {
+      "seed": 1001,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "20bbba09867ede56e5937ebdcfd5cdd4a94e64cada6a85cf9794729ab5b85681",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3712,
+      "bankruptBotCount": 10,
+      "bankruptBotPct": 20,
+      "permanentlyDeadBotCount": 10,
+      "rescueGrantedTotal": 39,
+      "maxStrategyWealthSharePct": 34.79,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "31610",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 4929,
+      "skillGradient": {
+        "naiveAvgWealth": 30677.5,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 118610.1,
+        "skillGradientRatio": 3.87
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 3001102.25,
+        "q4MeanCoins": 3260025,
+        "relativeDriftPct": 8.63,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "36280528",
+        "cumulativePortIncomeSource": "36272728",
+        "cumulativeRescueSource": "7800",
+        "finalPlayerCoins": "3378048",
+        "finalPortTreasury": "294542",
+        "cumulativeUpkeepSink": "32957938",
+        "cumulativeShipUpkeepSink": "9907346",
+        "cumulativePortProducerPayoutSink": "23050592",
+        "lhsTotalAccounted": "36630528",
+        "rhsTotalExpected": "36630528"
+      },
+      "portTreasuries": {
+        "banda": "49201",
+        "ternate": "47183",
+        "surabaya": "51311",
+        "malaka": "47778",
+        "makassar": "50076",
+        "batavia": "48993"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "49201",
+          "minTreasury": "35695",
+          "minTreasuryTick": 8072,
+          "maxTreasury": "58325",
+          "meanTreasury": 49526,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "47183",
+          "minTreasury": "41530",
+          "minTreasuryTick": 224,
+          "maxTreasury": "62007",
+          "meanTreasury": 49430,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "51311",
+          "minTreasury": "32026",
+          "minTreasuryTick": 3677,
+          "maxTreasury": "53648",
+          "meanTreasury": 49547,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "47778",
+          "minTreasury": "37595",
+          "minTreasuryTick": 3396,
+          "maxTreasury": "55367",
+          "meanTreasury": 49831,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "50076",
+          "minTreasury": "40644",
+          "minTreasuryTick": 4597,
+          "maxTreasury": "57080",
+          "meanTreasury": 50115,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "48993",
+          "minTreasury": "31610",
+          "minTreasuryTick": 4929,
+          "maxTreasury": "54443",
+          "meanTreasury": 48912,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 90.64,
+          "stdDevPrice": 28.89,
+          "volatilityPct": 31.87,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 175,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 112.79,
+          "stdDevPrice": 32.94,
+          "volatilityPct": 29.2,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 223,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.1,
+          "stdDevPrice": 2.17,
+          "volatilityPct": 10.31,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 34,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 48.55,
+          "stdDevPrice": 4.4,
+          "volatilityPct": 9.07,
+          "minObservedPrice": 33,
+          "maxObservedPrice": 90,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1186101",
+          "avgWealth": 118610.1,
+          "wealthSharePct": 34.79,
+          "bankruptCount": 0,
+          "tradesCompleted": 9156,
+          "avgMarginPerTx": 473.36,
+          "avgTicksToDoubleCoins": 53
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "306775",
+          "avgWealth": 30677.5,
+          "wealthSharePct": 9,
+          "bankruptCount": 0,
+          "tradesCompleted": 6930,
+          "avgMarginPerTx": 173.83,
+          "avgTicksToDoubleCoins": 186
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "1034020",
+          "avgWealth": 103402,
+          "wealthSharePct": 30.33,
+          "bankruptCount": 0,
+          "tradesCompleted": 8029,
+          "avgMarginPerTx": 507.2,
+          "avgTicksToDoubleCoins": 54
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "882702",
+          "avgWealth": 88270.2,
+          "wealthSharePct": 25.89,
+          "bankruptCount": 0,
+          "tradesCompleted": 5748,
+          "avgMarginPerTx": 634.28,
+          "avgTicksToDoubleCoins": 48
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "0",
+          "avgWealth": 0,
+          "wealthSharePct": 0,
+          "bankruptCount": 10,
+          "tradesCompleted": 163,
+          "avgMarginPerTx": -3.93,
+          "avgTicksToDoubleCoins": 130
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3169,
+          "avgNetProfitPerTrip": 166.85,
+          "avgNetProfitPerTick": 33.37
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 147,
+          "avgNetProfitPerTrip": 1381.73,
+          "avgNetProfitPerTick": 138.17
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 27,
+          "avgNetProfitPerTrip": 1251.44,
+          "avgNetProfitPerTick": 78.22
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2325,
+          "avgNetProfitPerTrip": 503.22,
+          "avgNetProfitPerTick": 83.87
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 469,
+          "avgNetProfitPerTrip": 1412.04,
+          "avgNetProfitPerTick": 117.67
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3227,
+          "avgNetProfitPerTrip": 246.34,
+          "avgNetProfitPerTick": 49.27
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 159,
+          "avgNetProfitPerTrip": 1375.97,
+          "avgNetProfitPerTick": 152.89
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 16,
+          "avgNetProfitPerTrip": 848.06,
+          "avgNetProfitPerTick": 56.54
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2654,
+          "avgNetProfitPerTrip": 621.48,
+          "avgNetProfitPerTick": 124.3
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 493,
+          "avgNetProfitPerTrip": 1544.94,
+          "avgNetProfitPerTick": 140.45
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 658,
+          "avgNetProfitPerTrip": 155.5,
+          "avgNetProfitPerTick": 15.55
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 681,
+          "avgNetProfitPerTrip": 136.81,
+          "avgNetProfitPerTick": 15.2
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 440,
+          "avgNetProfitPerTrip": 48.24,
+          "avgNetProfitPerTick": 6.89
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 794,
+          "avgNetProfitPerTrip": 61.35,
+          "avgNetProfitPerTick": 15.34
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2747,
+          "avgNetProfitPerTrip": 103.17,
+          "avgNetProfitPerTick": 34.39
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 644,
+          "avgNetProfitPerTrip": 187.69,
+          "avgNetProfitPerTick": 11.73
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 611,
+          "avgNetProfitPerTrip": 161.14,
+          "avgNetProfitPerTick": 10.74
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 978,
+          "avgNetProfitPerTrip": 70.28,
+          "avgNetProfitPerTick": 10.04
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 89,
+          "avgNetProfitPerTrip": 119.36,
+          "avgNetProfitPerTick": 11.94
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 2782,
+          "avgNetProfitPerTrip": 170.78,
+          "avgNetProfitPerTick": 42.69
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 296,
+          "avgNetProfitPerTrip": 120.67,
+          "avgNetProfitPerTick": 20.11
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 240,
+          "avgNetProfitPerTrip": 104.85,
+          "avgNetProfitPerTick": 20.97
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1462,
+          "avgNetProfitPerTrip": 1012.42,
+          "avgNetProfitPerTick": 253.1
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 520,
+          "avgNetProfitPerTrip": 1044.83,
+          "avgNetProfitPerTick": 104.48
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3217,
+          "avgNetProfitPerTrip": 1156.62,
+          "avgNetProfitPerTick": 192.77
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 199,
+          "avgNetProfitPerTrip": 166.89,
+          "avgNetProfitPerTick": 13.91
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 184,
+          "avgNetProfitPerTrip": 156.5,
+          "avgNetProfitPerTick": 14.23
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 137,
+          "avgNetProfitPerTrip": 64.34,
+          "avgNetProfitPerTick": 21.45
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 348,
+          "avgNetProfitPerTrip": 43.24,
+          "avgNetProfitPerTick": 10.81
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 19,
+          "avgNetProfitPerTrip": 68.89,
+          "avgNetProfitPerTick": 11.48
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 86724,
+        "roundingAttempts": 28908,
+        "pumpDumpAttempts": 28908,
+        "rescueFarmingAttempts": 7227,
+        "totalExploitAttempts": 122859,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-144"
+      },
+      "timeSeriesSamples": []
+    },
+    {
+      "seed": 1002,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "62fd625fab365d4771a1fd8e71e86a6508c4e8714ad65645bd06d61e256e96ae",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3624,
+      "bankruptBotCount": 10,
+      "bankruptBotPct": 20,
+      "permanentlyDeadBotCount": 10,
+      "rescueGrantedTotal": 38,
+      "maxStrategyWealthSharePct": 34.09,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "29071",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 3214,
+      "skillGradient": {
+        "naiveAvgWealth": 31639.1,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 112857.3,
+        "skillGradientRatio": 3.57
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 3074471.87,
+        "q4MeanCoins": 3219047.4,
+        "relativeDriftPct": 4.7,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "36027132",
+        "cumulativePortIncomeSource": "36019532",
+        "cumulativeRescueSource": "7600",
+        "finalPlayerCoins": "3263608",
+        "finalPortTreasury": "299464",
+        "cumulativeUpkeepSink": "32814060",
+        "cumulativeShipUpkeepSink": "9838539",
+        "cumulativePortProducerPayoutSink": "22975521",
+        "lhsTotalAccounted": "36377132",
+        "rhsTotalExpected": "36377132"
+      },
+      "portTreasuries": {
+        "banda": "49665",
+        "ternate": "49150",
+        "surabaya": "51051",
+        "malaka": "50801",
+        "makassar": "49743",
+        "batavia": "49054"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "49665",
+          "minTreasury": "35604",
+          "minTreasuryTick": 964,
+          "maxTreasury": "58952",
+          "meanTreasury": 49533,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "49150",
+          "minTreasury": "38853",
+          "minTreasuryTick": 8755,
+          "maxTreasury": "64799",
+          "meanTreasury": 49435,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "51051",
+          "minTreasury": "34028",
+          "minTreasuryTick": 5770,
+          "maxTreasury": "53909",
+          "meanTreasury": 49558,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "50801",
+          "minTreasury": "33348",
+          "minTreasuryTick": 5600,
+          "maxTreasury": "54625",
+          "meanTreasury": 49838,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "49743",
+          "minTreasury": "39551",
+          "minTreasuryTick": 2251,
+          "maxTreasury": "58032",
+          "meanTreasury": 50114,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "49054",
+          "minTreasury": "29071",
+          "minTreasuryTick": 3214,
+          "maxTreasury": "54848",
+          "meanTreasury": 48923,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 90.22,
+          "stdDevPrice": 28.64,
+          "volatilityPct": 31.75,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 177,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 113.41,
+          "stdDevPrice": 33.28,
+          "volatilityPct": 29.35,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 226,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.3,
+          "stdDevPrice": 2.18,
+          "volatilityPct": 10.24,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 37,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 48,
+          "stdDevPrice": 4.07,
+          "volatilityPct": 8.47,
+          "minObservedPrice": 33,
+          "maxObservedPrice": 88,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1128573",
+          "avgWealth": 112857.3,
+          "wealthSharePct": 34.09,
+          "bankruptCount": 0,
+          "tradesCompleted": 9203,
+          "avgMarginPerTx": 467.09,
+          "avgTicksToDoubleCoins": 56
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "316391",
+          "avgWealth": 31639.1,
+          "wealthSharePct": 9.56,
+          "bankruptCount": 0,
+          "tradesCompleted": 6654,
+          "avgMarginPerTx": 181.45,
+          "avgTicksToDoubleCoins": 190
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "1006612",
+          "avgWealth": 100661.2,
+          "wealthSharePct": 30.41,
+          "bankruptCount": 0,
+          "tradesCompleted": 8163,
+          "avgMarginPerTx": 483.2,
+          "avgTicksToDoubleCoins": 54
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "858957",
+          "avgWealth": 85895.7,
+          "wealthSharePct": 25.95,
+          "bankruptCount": 0,
+          "tradesCompleted": 5653,
+          "avgMarginPerTx": 643.22,
+          "avgTicksToDoubleCoins": 48
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "0",
+          "avgWealth": 0,
+          "wealthSharePct": 0,
+          "bankruptCount": 10,
+          "tradesCompleted": 191,
+          "avgMarginPerTx": 1.74,
+          "avgTicksToDoubleCoins": 488
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3082,
+          "avgNetProfitPerTrip": 174.51,
+          "avgNetProfitPerTick": 34.9
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 147,
+          "avgNetProfitPerTrip": 1160.52,
+          "avgNetProfitPerTick": 116.05
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 18,
+          "avgNetProfitPerTrip": 1235.83,
+          "avgNetProfitPerTick": 77.24
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2347,
+          "avgNetProfitPerTrip": 486.51,
+          "avgNetProfitPerTick": 81.08
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 462,
+          "avgNetProfitPerTrip": 1459.97,
+          "avgNetProfitPerTick": 121.66
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3138,
+          "avgNetProfitPerTrip": 254.44,
+          "avgNetProfitPerTick": 50.89
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 168,
+          "avgNetProfitPerTrip": 1416.44,
+          "avgNetProfitPerTick": 157.38
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 16,
+          "avgNetProfitPerTrip": 995.44,
+          "avgNetProfitPerTick": 66.36
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2557,
+          "avgNetProfitPerTrip": 615.27,
+          "avgNetProfitPerTick": 123.05
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 484,
+          "avgNetProfitPerTrip": 1602.2,
+          "avgNetProfitPerTick": 145.65
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 671,
+          "avgNetProfitPerTrip": 137.53,
+          "avgNetProfitPerTick": 13.75
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 638,
+          "avgNetProfitPerTrip": 138.82,
+          "avgNetProfitPerTick": 15.42
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 455,
+          "avgNetProfitPerTrip": 40.87,
+          "avgNetProfitPerTick": 5.84
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 867,
+          "avgNetProfitPerTrip": 57.73,
+          "avgNetProfitPerTick": 14.43
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2695,
+          "avgNetProfitPerTrip": 99.29,
+          "avgNetProfitPerTick": 33.1
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 634,
+          "avgNetProfitPerTrip": 127.24,
+          "avgNetProfitPerTick": 7.95
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 637,
+          "avgNetProfitPerTrip": 145.64,
+          "avgNetProfitPerTick": 9.71
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 1020,
+          "avgNetProfitPerTrip": 54.34,
+          "avgNetProfitPerTick": 7.76
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 70,
+          "avgNetProfitPerTrip": 132.86,
+          "avgNetProfitPerTick": 13.29
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 2810,
+          "avgNetProfitPerTrip": 161.71,
+          "avgNetProfitPerTick": 40.43
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 292,
+          "avgNetProfitPerTrip": 104.6,
+          "avgNetProfitPerTick": 17.43
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 278,
+          "avgNetProfitPerTrip": 107.72,
+          "avgNetProfitPerTick": 21.54
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1486,
+          "avgNetProfitPerTrip": 1027.09,
+          "avgNetProfitPerTick": 256.77
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 521,
+          "avgNetProfitPerTrip": 992.64,
+          "avgNetProfitPerTick": 99.26
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3209,
+          "avgNetProfitPerTrip": 1163.22,
+          "avgNetProfitPerTick": 193.87
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 189,
+          "avgNetProfitPerTrip": 142.61,
+          "avgNetProfitPerTick": 11.88
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 197,
+          "avgNetProfitPerTrip": 143.1,
+          "avgNetProfitPerTick": 13.01
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 134,
+          "avgNetProfitPerTrip": 55.69,
+          "avgNetProfitPerTick": 18.56
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 335,
+          "avgNetProfitPerTrip": 58.57,
+          "avgNetProfitPerTick": 14.64
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 14,
+          "avgNetProfitPerTrip": 131.36,
+          "avgNetProfitPerTick": 21.89
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 87144,
+        "roundingAttempts": 29048,
+        "pumpDumpAttempts": 29048,
+        "rescueFarmingAttempts": 7262,
+        "totalExploitAttempts": 123454,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-144"
+      },
+      "timeSeriesSamples": []
+    },
+    {
+      "seed": 1003,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "c194ec2aa6436bcb1980c1c837e19a5229fd06ff57b207178d2b2304b1848f6e",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3602,
+      "bankruptBotCount": 9,
+      "bankruptBotPct": 18,
+      "permanentlyDeadBotCount": 9,
+      "rescueGrantedTotal": 40,
+      "maxStrategyWealthSharePct": 33.85,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "24205",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 9789,
+      "skillGradient": {
+        "naiveAvgWealth": 30164.1,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 110697.1,
+        "skillGradientRatio": 3.67
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 2978541.41,
+        "q4MeanCoins": 3191300.18,
+        "relativeDriftPct": 7.14,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "36225205",
+        "cumulativePortIncomeSource": "36217205",
+        "cumulativeRescueSource": "8000",
+        "finalPlayerCoins": "3218825",
+        "finalPortTreasury": "298620",
+        "cumulativeUpkeepSink": "33057760",
+        "cumulativeShipUpkeepSink": "9806369",
+        "cumulativePortProducerPayoutSink": "23251391",
+        "lhsTotalAccounted": "36575205",
+        "rhsTotalExpected": "36575205"
+      },
+      "portTreasuries": {
+        "banda": "48435",
+        "ternate": "50358",
+        "surabaya": "45613",
+        "malaka": "50445",
+        "makassar": "51445",
+        "batavia": "52324"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "48435",
+          "minTreasury": "37889",
+          "minTreasuryTick": 3968,
+          "maxTreasury": "60996",
+          "meanTreasury": 49552,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "50358",
+          "minTreasury": "41517",
+          "minTreasuryTick": 2311,
+          "maxTreasury": "62049",
+          "meanTreasury": 49441,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "45613",
+          "minTreasury": "29436",
+          "minTreasuryTick": 5583,
+          "maxTreasury": "55206",
+          "meanTreasury": 49571,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "50445",
+          "minTreasury": "34522",
+          "minTreasuryTick": 3287,
+          "maxTreasury": "55047",
+          "meanTreasury": 49796,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "51445",
+          "minTreasury": "38206",
+          "minTreasuryTick": 3373,
+          "maxTreasury": "58044",
+          "meanTreasury": 50115,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "52324",
+          "minTreasury": "24205",
+          "minTreasuryTick": 9789,
+          "maxTreasury": "55084",
+          "meanTreasury": 48939,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 91.5,
+          "stdDevPrice": 29.36,
+          "volatilityPct": 32.08,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 177,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 110.82,
+          "stdDevPrice": 31.54,
+          "volatilityPct": 28.46,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 228,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.06,
+          "stdDevPrice": 2.12,
+          "volatilityPct": 10.05,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 34,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 47.39,
+          "stdDevPrice": 3.74,
+          "volatilityPct": 7.88,
+          "minObservedPrice": 35,
+          "maxObservedPrice": 80,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1106971",
+          "avgWealth": 110697.1,
+          "wealthSharePct": 33.85,
+          "bankruptCount": 0,
+          "tradesCompleted": 9047,
+          "avgMarginPerTx": 469.89,
+          "avgTicksToDoubleCoins": 54
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "301641",
+          "avgWealth": 30164.1,
+          "wealthSharePct": 9.22,
+          "bankruptCount": 0,
+          "tradesCompleted": 6899,
+          "avgMarginPerTx": 170.49,
+          "avgTicksToDoubleCoins": 225
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "976350",
+          "avgWealth": 97635,
+          "wealthSharePct": 29.86,
+          "bankruptCount": 0,
+          "tradesCompleted": 8470,
+          "avgMarginPerTx": 464.77,
+          "avgTicksToDoubleCoins": 49
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "885042",
+          "avgWealth": 88504.2,
+          "wealthSharePct": 27.06,
+          "bankruptCount": 0,
+          "tradesCompleted": 5774,
+          "avgMarginPerTx": 632.3,
+          "avgTicksToDoubleCoins": 47
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "146",
+          "avgWealth": 14.6,
+          "wealthSharePct": 0,
+          "bankruptCount": 9,
+          "tradesCompleted": 154,
+          "avgMarginPerTx": -3.51,
+          "avgTicksToDoubleCoins": null
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3190,
+          "avgNetProfitPerTrip": 180.56,
+          "avgNetProfitPerTick": 36.11
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 85,
+          "avgNetProfitPerTrip": 1496.31,
+          "avgNetProfitPerTick": 149.63
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 16,
+          "avgNetProfitPerTrip": 1539.56,
+          "avgNetProfitPerTick": 96.22
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2343,
+          "avgNetProfitPerTrip": 507.03,
+          "avgNetProfitPerTick": 84.5
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 464,
+          "avgNetProfitPerTrip": 1589.81,
+          "avgNetProfitPerTick": 132.48
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3218,
+          "avgNetProfitPerTrip": 215.95,
+          "avgNetProfitPerTick": 43.19
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 169,
+          "avgNetProfitPerTrip": 1271.66,
+          "avgNetProfitPerTick": 141.3
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 26,
+          "avgNetProfitPerTrip": 853.04,
+          "avgNetProfitPerTick": 56.87
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2649,
+          "avgNetProfitPerTrip": 605.37,
+          "avgNetProfitPerTick": 121.07
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 588,
+          "avgNetProfitPerTrip": 1528.2,
+          "avgNetProfitPerTick": 138.93
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 617,
+          "avgNetProfitPerTrip": 152.04,
+          "avgNetProfitPerTick": 15.2
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 640,
+          "avgNetProfitPerTrip": 119.29,
+          "avgNetProfitPerTick": 13.25
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 402,
+          "avgNetProfitPerTrip": 63.09,
+          "avgNetProfitPerTick": 9.01
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 900,
+          "avgNetProfitPerTrip": 63.69,
+          "avgNetProfitPerTick": 15.92
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2787,
+          "avgNetProfitPerTrip": 98.02,
+          "avgNetProfitPerTick": 32.67
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 597,
+          "avgNetProfitPerTrip": 119.91,
+          "avgNetProfitPerTick": 7.49
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 600,
+          "avgNetProfitPerTrip": 82.67,
+          "avgNetProfitPerTick": 5.51
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 992,
+          "avgNetProfitPerTrip": 43.1,
+          "avgNetProfitPerTick": 6.16
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 92,
+          "avgNetProfitPerTrip": 130.73,
+          "avgNetProfitPerTick": 13.07
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 2882,
+          "avgNetProfitPerTrip": 164.54,
+          "avgNetProfitPerTick": 41.13
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 299,
+          "avgNetProfitPerTrip": 99.17,
+          "avgNetProfitPerTick": 16.53
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 251,
+          "avgNetProfitPerTrip": 71.25,
+          "avgNetProfitPerTick": 14.25
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1481,
+          "avgNetProfitPerTrip": 981.3,
+          "avgNetProfitPerTick": 245.32
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 634,
+          "avgNetProfitPerTrip": 1032.93,
+          "avgNetProfitPerTick": 103.29
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3197,
+          "avgNetProfitPerTrip": 1100.09,
+          "avgNetProfitPerTick": 183.35
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 260,
+          "avgNetProfitPerTrip": 118.89,
+          "avgNetProfitPerTick": 9.91
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 228,
+          "avgNetProfitPerTrip": 85.25,
+          "avgNetProfitPerTick": 7.75
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 126,
+          "avgNetProfitPerTrip": 38.29,
+          "avgNetProfitPerTick": 12.76
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 385,
+          "avgNetProfitPerTrip": 41.99,
+          "avgNetProfitPerTick": 10.5
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 12,
+          "avgNetProfitPerTrip": 114.75,
+          "avgNetProfitPerTick": 19.13
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 85296,
+        "roundingAttempts": 28432,
+        "pumpDumpAttempts": 28432,
+        "rescueFarmingAttempts": 7108,
+        "totalExploitAttempts": 120836,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-140"
+      },
+      "timeSeriesSamples": []
+    },
+    {
+      "seed": 1004,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "eee424936803b271534b297f51748742e0e9fa56b89feeb8f0d6de95357dd497",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3467,
+      "bankruptBotCount": 9,
+      "bankruptBotPct": 18,
+      "permanentlyDeadBotCount": 9,
+      "rescueGrantedTotal": 39,
+      "maxStrategyWealthSharePct": 31.14,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "25050",
+      "minPortTreasuryPort": "batavia",
+      "minPortTreasuryTick": 5684,
+      "skillGradient": {
+        "naiveAvgWealth": 27203.7,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 98723.3,
+        "skillGradientRatio": 3.63
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 2960419.12,
+        "q4MeanCoins": 3079486.95,
+        "relativeDriftPct": 4.02,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "36235574",
+        "cumulativePortIncomeSource": "36227774",
+        "cumulativeRescueSource": "7800",
+        "finalPlayerCoins": "3124063",
+        "finalPortTreasury": "301551",
+        "cumulativeUpkeepSink": "33159960",
+        "cumulativeShipUpkeepSink": "9749591",
+        "cumulativePortProducerPayoutSink": "23410369",
+        "lhsTotalAccounted": "36585574",
+        "rhsTotalExpected": "36585574"
+      },
+      "portTreasuries": {
+        "banda": "49859",
+        "ternate": "48306",
+        "surabaya": "50714",
+        "malaka": "48597",
+        "makassar": "51619",
+        "batavia": "52456"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "49859",
+          "minTreasury": "35248",
+          "minTreasuryTick": 118,
+          "maxTreasury": "59811",
+          "meanTreasury": 49546,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "48306",
+          "minTreasury": "41933",
+          "minTreasuryTick": 4690,
+          "maxTreasury": "62387",
+          "meanTreasury": 49445,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "50714",
+          "minTreasury": "32985",
+          "minTreasuryTick": 3340,
+          "maxTreasury": "54096",
+          "meanTreasury": 49588,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "48597",
+          "minTreasury": "36055",
+          "minTreasuryTick": 5035,
+          "maxTreasury": "55841",
+          "meanTreasury": 49753,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "51619",
+          "minTreasury": "41183",
+          "minTreasuryTick": 3313,
+          "maxTreasury": "56910",
+          "meanTreasury": 50115,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "52456",
+          "minTreasury": "25050",
+          "minTreasuryTick": 5684,
+          "maxTreasury": "54912",
+          "meanTreasury": 48997,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 90.39,
+          "stdDevPrice": 28.67,
+          "volatilityPct": 31.72,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 168,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 109.52,
+          "stdDevPrice": 30.78,
+          "volatilityPct": 28.1,
+          "minObservedPrice": 63,
+          "maxObservedPrice": 215,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.36,
+          "stdDevPrice": 2.26,
+          "volatilityPct": 10.58,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 36,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 47.85,
+          "stdDevPrice": 4.14,
+          "volatilityPct": 8.65,
+          "minObservedPrice": 33,
+          "maxObservedPrice": 79,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "987233",
+          "avgWealth": 98723.3,
+          "wealthSharePct": 31.14,
+          "bankruptCount": 0,
+          "tradesCompleted": 9258,
+          "avgMarginPerTx": 442.01,
+          "avgTicksToDoubleCoins": 43
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "272037",
+          "avgWealth": 27203.7,
+          "wealthSharePct": 8.58,
+          "bankruptCount": 0,
+          "tradesCompleted": 6936,
+          "avgMarginPerTx": 164.93,
+          "avgTicksToDoubleCoins": 127
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "955385",
+          "avgWealth": 95538.5,
+          "wealthSharePct": 30.14,
+          "bankruptCount": 0,
+          "tradesCompleted": 8371,
+          "avgMarginPerTx": 462.44,
+          "avgTicksToDoubleCoins": 53
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "955570",
+          "avgWealth": 95557,
+          "wealthSharePct": 30.14,
+          "bankruptCount": 0,
+          "tradesCompleted": 6055,
+          "avgMarginPerTx": 619.11,
+          "avgTicksToDoubleCoins": 48
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "113",
+          "avgWealth": 11.3,
+          "wealthSharePct": 0,
+          "bankruptCount": 9,
+          "tradesCompleted": 171,
+          "avgMarginPerTx": 0.42,
+          "avgTicksToDoubleCoins": 176
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3103,
+          "avgNetProfitPerTrip": 187.95,
+          "avgNetProfitPerTick": 37.59
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 100,
+          "avgNetProfitPerTrip": 1288.26,
+          "avgNetProfitPerTick": 128.83
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 35,
+          "avgNetProfitPerTrip": 1360.14,
+          "avgNetProfitPerTick": 85.01
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2459,
+          "avgNetProfitPerTrip": 477.47,
+          "avgNetProfitPerTick": 79.58
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 491,
+          "avgNetProfitPerTrip": 1446.98,
+          "avgNetProfitPerTick": 120.58
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3089,
+          "avgNetProfitPerTrip": 206.04,
+          "avgNetProfitPerTick": 41.21
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 228,
+          "avgNetProfitPerTrip": 1118.62,
+          "avgNetProfitPerTick": 124.29
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 47,
+          "avgNetProfitPerTrip": 962.11,
+          "avgNetProfitPerTick": 64.14
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2573,
+          "avgNetProfitPerTrip": 560.46,
+          "avgNetProfitPerTick": 112.09
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 639,
+          "avgNetProfitPerTrip": 1295.1,
+          "avgNetProfitPerTick": 117.74
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 628,
+          "avgNetProfitPerTrip": 134.85,
+          "avgNetProfitPerTick": 13.49
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 673,
+          "avgNetProfitPerTrip": 140.49,
+          "avgNetProfitPerTick": 15.61
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 386,
+          "avgNetProfitPerTrip": 71.07,
+          "avgNetProfitPerTick": 10.15
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 941,
+          "avgNetProfitPerTrip": 58.53,
+          "avgNetProfitPerTick": 14.63
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2866,
+          "avgNetProfitPerTrip": 108.89,
+          "avgNetProfitPerTick": 36.3
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 480,
+          "avgNetProfitPerTrip": 115.47,
+          "avgNetProfitPerTick": 7.22
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 528,
+          "avgNetProfitPerTrip": 107.31,
+          "avgNetProfitPerTick": 7.15
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 862,
+          "avgNetProfitPerTrip": 66,
+          "avgNetProfitPerTick": 9.43
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 131,
+          "avgNetProfitPerTrip": 159.03,
+          "avgNetProfitPerTick": 15.9
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 3064,
+          "avgNetProfitPerTrip": 178.13,
+          "avgNetProfitPerTick": 44.53
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 287,
+          "avgNetProfitPerTrip": 104.08,
+          "avgNetProfitPerTick": 17.35
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 338,
+          "avgNetProfitPerTrip": 107.48,
+          "avgNetProfitPerTick": 21.5
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1446,
+          "avgNetProfitPerTrip": 977.17,
+          "avgNetProfitPerTick": 244.29
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 669,
+          "avgNetProfitPerTrip": 1068.22,
+          "avgNetProfitPerTick": 106.82
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3278,
+          "avgNetProfitPerTrip": 1026.24,
+          "avgNetProfitPerTick": 171.04
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 285,
+          "avgNetProfitPerTrip": 152.14,
+          "avgNetProfitPerTick": 12.68
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 234,
+          "avgNetProfitPerTrip": 152.71,
+          "avgNetProfitPerTick": 13.88
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 213,
+          "avgNetProfitPerTrip": 41.62,
+          "avgNetProfitPerTick": 13.87
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 413,
+          "avgNetProfitPerTrip": 99.89,
+          "avgNetProfitPerTick": 24.97
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 23,
+          "avgNetProfitPerTrip": 130.52,
+          "avgNetProfitPerTick": 21.75
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 87600,
+        "roundingAttempts": 29200,
+        "pumpDumpAttempts": 29200,
+        "rescueFarmingAttempts": 7300,
+        "totalExploitAttempts": 124100,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-136"
+      },
+      "timeSeriesSamples": []
+    },
+    {
+      "seed": 1005,
+      "ticks": 10000,
+      "bots": 50,
+      "stateHash": "3cc0e965f081250f724f8774b8d7a1393f839c78df42390723472350a93d039a",
+      "invariantViolations": 0,
+      "invariantViolationDetails": [],
+      "giniWealth": 0.3552,
+      "bankruptBotCount": 9,
+      "bankruptBotPct": 18,
+      "permanentlyDeadBotCount": 9,
+      "rescueGrantedTotal": 40,
+      "maxStrategyWealthSharePct": 32.99,
+      "dominantStrategy": "adversarial",
+      "overallPctTicksAtBounds": 0,
+      "maxCommodityPctTicksAtBounds": 0,
+      "minPortTreasuryCoins": "28707",
+      "minPortTreasuryPort": "malaka",
+      "minPortTreasuryTick": 7232,
+      "skillGradient": {
+        "naiveAvgWealth": 28577.5,
+        "bestSmartStrategy": "adversarial",
+        "bestSmartAvgWealth": 103253.4,
+        "skillGradientRatio": 3.61
+      },
+      "playerCoinsStability": {
+        "q3MeanCoins": 3036364.05,
+        "q4MeanCoins": 3095943.01,
+        "relativeDriftPct": 1.96,
+        "maxAllowedDriftPct": 15,
+        "isStable": true
+      },
+      "gates": {
+        "passed": true,
+        "failedGates": []
+      },
+      "moneyConservation": {
+        "valid": true,
+        "totalInitialPlayerCoins": "50000",
+        "totalInitialPortTreasury": "300000",
+        "totalInitialMoney": "350000",
+        "cumulativeSource": "35793054",
+        "cumulativePortIncomeSource": "35785054",
+        "cumulativeRescueSource": "8000",
+        "finalPlayerCoins": "3082463",
+        "finalPortTreasury": "300128",
+        "cumulativeUpkeepSink": "32760463",
+        "cumulativeShipUpkeepSink": "9881164",
+        "cumulativePortProducerPayoutSink": "22879299",
+        "lhsTotalAccounted": "36143054",
+        "rhsTotalExpected": "36143054"
+      },
+      "portTreasuries": {
+        "banda": "52979",
+        "ternate": "48564",
+        "surabaya": "49692",
+        "malaka": "46128",
+        "makassar": "51696",
+        "batavia": "51069"
+      },
+      "portTreasuryStats": {
+        "banda": {
+          "portCode": "banda",
+          "initialTreasury": "50000",
+          "finalTreasury": "52979",
+          "minTreasury": "31314",
+          "minTreasuryTick": 9949,
+          "maxTreasury": "57700",
+          "meanTreasury": 49565,
+          "firstZeroTick": null
+        },
+        "ternate": {
+          "portCode": "ternate",
+          "initialTreasury": "50000",
+          "finalTreasury": "48564",
+          "minTreasury": "41384",
+          "minTreasuryTick": 5345,
+          "maxTreasury": "65058",
+          "meanTreasury": 49443,
+          "firstZeroTick": null
+        },
+        "surabaya": {
+          "portCode": "surabaya",
+          "initialTreasury": "50000",
+          "finalTreasury": "49692",
+          "minTreasury": "33071",
+          "minTreasuryTick": 8152,
+          "maxTreasury": "55825",
+          "meanTreasury": 49578,
+          "firstZeroTick": null
+        },
+        "malaka": {
+          "portCode": "malaka",
+          "initialTreasury": "50000",
+          "finalTreasury": "46128",
+          "minTreasury": "28707",
+          "minTreasuryTick": 7232,
+          "maxTreasury": "55606",
+          "meanTreasury": 49818,
+          "firstZeroTick": null
+        },
+        "makassar": {
+          "portCode": "makassar",
+          "initialTreasury": "50000",
+          "finalTreasury": "51696",
+          "minTreasury": "39955",
+          "minTreasuryTick": 9254,
+          "maxTreasury": "57840",
+          "meanTreasury": 50107,
+          "firstZeroTick": null
+        },
+        "batavia": {
+          "portCode": "batavia",
+          "initialTreasury": "50000",
+          "finalTreasury": "51069",
+          "minTreasury": "28970",
+          "minTreasuryTick": 3601,
+          "maxTreasury": "54708",
+          "meanTreasury": 48914,
+          "firstZeroTick": null
+        }
+      },
+      "commodityMetrics": [
+        {
+          "commodityId": 1,
+          "code": "pala",
+          "basePrice": 70,
+          "minBoundPrice": 18,
+          "maxBoundPrice": 280,
+          "meanPrice": 92.28,
+          "stdDevPrice": 30.17,
+          "volatilityPct": 32.69,
+          "minObservedPrice": 49,
+          "maxObservedPrice": 175,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 2,
+          "code": "cengkeh",
+          "basePrice": 90,
+          "minBoundPrice": 23,
+          "maxBoundPrice": 360,
+          "meanPrice": 111.29,
+          "stdDevPrice": 32.75,
+          "volatilityPct": 29.43,
+          "minObservedPrice": 64,
+          "maxObservedPrice": 222,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 3,
+          "code": "garam",
+          "basePrice": 20,
+          "minBoundPrice": 5,
+          "maxBoundPrice": 80,
+          "meanPrice": 21.22,
+          "stdDevPrice": 2.33,
+          "volatilityPct": 10.98,
+          "minObservedPrice": 15,
+          "maxObservedPrice": 39,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        },
+        {
+          "commodityId": 4,
+          "code": "kain",
+          "basePrice": 45,
+          "minBoundPrice": 11,
+          "maxBoundPrice": 180,
+          "meanPrice": 47.35,
+          "stdDevPrice": 3.62,
+          "volatilityPct": 7.64,
+          "minObservedPrice": 36,
+          "maxObservedPrice": 78,
+          "pctTicksAtLowerBound": 0,
+          "pctTicksAtUpperBound": 0,
+          "pctTicksAtBounds": 0
+        }
+      ],
+      "strategyMetrics": [
+        {
+          "strategy": "adversarial",
+          "botCount": 10,
+          "totalWealth": "1032534",
+          "avgWealth": 103253.4,
+          "wealthSharePct": 32.99,
+          "bankruptCount": 0,
+          "tradesCompleted": 9040,
+          "avgMarginPerTx": 478.21,
+          "avgTicksToDoubleCoins": 63
+        },
+        {
+          "strategy": "naive",
+          "botCount": 10,
+          "totalWealth": "285775",
+          "avgWealth": 28577.5,
+          "wealthSharePct": 9.13,
+          "bankruptCount": 0,
+          "tradesCompleted": 6757,
+          "avgMarginPerTx": 177.42,
+          "avgTicksToDoubleCoins": 194
+        },
+        {
+          "strategy": "margin_hunter",
+          "botCount": 10,
+          "totalWealth": "944212",
+          "avgWealth": 94421.2,
+          "wealthSharePct": 30.17,
+          "bankruptCount": 0,
+          "tradesCompleted": 8337,
+          "avgMarginPerTx": 474.8,
+          "avgTicksToDoubleCoins": 63
+        },
+        {
+          "strategy": "hoarder",
+          "botCount": 10,
+          "totalWealth": "866848",
+          "avgWealth": 86684.8,
+          "wealthSharePct": 27.7,
+          "bankruptCount": 0,
+          "tradesCompleted": 5449,
+          "avgMarginPerTx": 636.83,
+          "avgTicksToDoubleCoins": 47
+        },
+        {
+          "strategy": "random",
+          "botCount": 10,
+          "totalWealth": "194",
+          "avgWealth": 19.4,
+          "wealthSharePct": 0.01,
+          "bankruptCount": 9,
+          "tradesCompleted": 131,
+          "avgMarginPerTx": -7.26,
+          "avgTicksToDoubleCoins": null
+        }
+      ],
+      "routeMargins": [
+        {
+          "routeKey": "banda->ternate",
+          "fromPort": "banda",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 3172,
+          "avgNetProfitPerTrip": 189.22,
+          "avgNetProfitPerTick": 37.84
+        },
+        {
+          "routeKey": "banda->surabaya",
+          "fromPort": "banda",
+          "toPort": "surabaya",
+          "ticks": 10,
+          "tripsCompleted": 130,
+          "avgNetProfitPerTrip": 1406.94,
+          "avgNetProfitPerTick": 140.69
+        },
+        {
+          "routeKey": "banda->malaka",
+          "fromPort": "banda",
+          "toPort": "malaka",
+          "ticks": 16,
+          "tripsCompleted": 32,
+          "avgNetProfitPerTrip": 1192.75,
+          "avgNetProfitPerTick": 74.55
+        },
+        {
+          "routeKey": "banda->makassar",
+          "fromPort": "banda",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 2143,
+          "avgNetProfitPerTrip": 496.92,
+          "avgNetProfitPerTick": 82.82
+        },
+        {
+          "routeKey": "banda->batavia",
+          "fromPort": "banda",
+          "toPort": "batavia",
+          "ticks": 12,
+          "tripsCompleted": 461,
+          "avgNetProfitPerTrip": 1712.1,
+          "avgNetProfitPerTick": 142.68
+        },
+        {
+          "routeKey": "ternate->banda",
+          "fromPort": "ternate",
+          "toPort": "banda",
+          "ticks": 5,
+          "tripsCompleted": 3196,
+          "avgNetProfitPerTrip": 218.73,
+          "avgNetProfitPerTick": 43.75
+        },
+        {
+          "routeKey": "ternate->surabaya",
+          "fromPort": "ternate",
+          "toPort": "surabaya",
+          "ticks": 9,
+          "tripsCompleted": 170,
+          "avgNetProfitPerTrip": 1402,
+          "avgNetProfitPerTick": 155.78
+        },
+        {
+          "routeKey": "ternate->malaka",
+          "fromPort": "ternate",
+          "toPort": "malaka",
+          "ticks": 15,
+          "tripsCompleted": 22,
+          "avgNetProfitPerTrip": 948.09,
+          "avgNetProfitPerTick": 63.21
+        },
+        {
+          "routeKey": "ternate->makassar",
+          "fromPort": "ternate",
+          "toPort": "makassar",
+          "ticks": 5,
+          "tripsCompleted": 2464,
+          "avgNetProfitPerTrip": 583.17,
+          "avgNetProfitPerTick": 116.63
+        },
+        {
+          "routeKey": "ternate->batavia",
+          "fromPort": "ternate",
+          "toPort": "batavia",
+          "ticks": 11,
+          "tripsCompleted": 622,
+          "avgNetProfitPerTrip": 1534.64,
+          "avgNetProfitPerTick": 139.51
+        },
+        {
+          "routeKey": "surabaya->banda",
+          "fromPort": "surabaya",
+          "toPort": "banda",
+          "ticks": 10,
+          "tripsCompleted": 615,
+          "avgNetProfitPerTrip": 159.13,
+          "avgNetProfitPerTick": 15.91
+        },
+        {
+          "routeKey": "surabaya->ternate",
+          "fromPort": "surabaya",
+          "toPort": "ternate",
+          "ticks": 9,
+          "tripsCompleted": 640,
+          "avgNetProfitPerTrip": 135.78,
+          "avgNetProfitPerTick": 15.09
+        },
+        {
+          "routeKey": "surabaya->malaka",
+          "fromPort": "surabaya",
+          "toPort": "malaka",
+          "ticks": 7,
+          "tripsCompleted": 434,
+          "avgNetProfitPerTrip": 61.47,
+          "avgNetProfitPerTick": 8.78
+        },
+        {
+          "routeKey": "surabaya->makassar",
+          "fromPort": "surabaya",
+          "toPort": "makassar",
+          "ticks": 4,
+          "tripsCompleted": 925,
+          "avgNetProfitPerTrip": 69.3,
+          "avgNetProfitPerTick": 17.32
+        },
+        {
+          "routeKey": "surabaya->batavia",
+          "fromPort": "surabaya",
+          "toPort": "batavia",
+          "ticks": 3,
+          "tripsCompleted": 2762,
+          "avgNetProfitPerTrip": 107.37,
+          "avgNetProfitPerTick": 35.79
+        },
+        {
+          "routeKey": "malaka->banda",
+          "fromPort": "malaka",
+          "toPort": "banda",
+          "ticks": 16,
+          "tripsCompleted": 565,
+          "avgNetProfitPerTrip": 102.43,
+          "avgNetProfitPerTick": 6.4
+        },
+        {
+          "routeKey": "malaka->ternate",
+          "fromPort": "malaka",
+          "toPort": "ternate",
+          "ticks": 15,
+          "tripsCompleted": 600,
+          "avgNetProfitPerTrip": 83.37,
+          "avgNetProfitPerTick": 5.56
+        },
+        {
+          "routeKey": "malaka->surabaya",
+          "fromPort": "malaka",
+          "toPort": "surabaya",
+          "ticks": 7,
+          "tripsCompleted": 959,
+          "avgNetProfitPerTrip": 33.4,
+          "avgNetProfitPerTick": 4.77
+        },
+        {
+          "routeKey": "malaka->makassar",
+          "fromPort": "malaka",
+          "toPort": "makassar",
+          "ticks": 10,
+          "tripsCompleted": 111,
+          "avgNetProfitPerTrip": 117.67,
+          "avgNetProfitPerTick": 11.77
+        },
+        {
+          "routeKey": "malaka->batavia",
+          "fromPort": "malaka",
+          "toPort": "batavia",
+          "ticks": 4,
+          "tripsCompleted": 2857,
+          "avgNetProfitPerTrip": 160.49,
+          "avgNetProfitPerTick": 40.12
+        },
+        {
+          "routeKey": "makassar->banda",
+          "fromPort": "makassar",
+          "toPort": "banda",
+          "ticks": 6,
+          "tripsCompleted": 311,
+          "avgNetProfitPerTrip": 114.62,
+          "avgNetProfitPerTick": 19.1
+        },
+        {
+          "routeKey": "makassar->ternate",
+          "fromPort": "makassar",
+          "toPort": "ternate",
+          "ticks": 5,
+          "tripsCompleted": 292,
+          "avgNetProfitPerTrip": 104.07,
+          "avgNetProfitPerTick": 20.81
+        },
+        {
+          "routeKey": "makassar->surabaya",
+          "fromPort": "makassar",
+          "toPort": "surabaya",
+          "ticks": 4,
+          "tripsCompleted": 1381,
+          "avgNetProfitPerTrip": 1027.32,
+          "avgNetProfitPerTick": 256.83
+        },
+        {
+          "routeKey": "makassar->malaka",
+          "fromPort": "makassar",
+          "toPort": "malaka",
+          "ticks": 10,
+          "tripsCompleted": 542,
+          "avgNetProfitPerTrip": 995.7,
+          "avgNetProfitPerTick": 99.57
+        },
+        {
+          "routeKey": "makassar->batavia",
+          "fromPort": "makassar",
+          "toPort": "batavia",
+          "ticks": 6,
+          "tripsCompleted": 3085,
+          "avgNetProfitPerTrip": 1176.75,
+          "avgNetProfitPerTick": 196.13
+        },
+        {
+          "routeKey": "batavia->banda",
+          "fromPort": "batavia",
+          "toPort": "banda",
+          "ticks": 12,
+          "tripsCompleted": 208,
+          "avgNetProfitPerTrip": 116.55,
+          "avgNetProfitPerTick": 9.71
+        },
+        {
+          "routeKey": "batavia->ternate",
+          "fromPort": "batavia",
+          "toPort": "ternate",
+          "ticks": 11,
+          "tripsCompleted": 196,
+          "avgNetProfitPerTrip": 93.23,
+          "avgNetProfitPerTick": 8.48
+        },
+        {
+          "routeKey": "batavia->surabaya",
+          "fromPort": "batavia",
+          "toPort": "surabaya",
+          "ticks": 3,
+          "tripsCompleted": 149,
+          "avgNetProfitPerTrip": 7.5,
+          "avgNetProfitPerTick": 2.5
+        },
+        {
+          "routeKey": "batavia->malaka",
+          "fromPort": "batavia",
+          "toPort": "malaka",
+          "ticks": 4,
+          "tripsCompleted": 411,
+          "avgNetProfitPerTrip": 85.91,
+          "avgNetProfitPerTick": 21.48
+        },
+        {
+          "routeKey": "batavia->makassar",
+          "fromPort": "batavia",
+          "toPort": "makassar",
+          "ticks": 6,
+          "tripsCompleted": 11,
+          "avgNetProfitPerTrip": 96.27,
+          "avgNetProfitPerTick": 16.05
+        }
+      ],
+      "adversarial": {
+        "cycleAttempts": 84612,
+        "roundingAttempts": 28204,
+        "pumpDumpAttempts": 28204,
+        "rescueFarmingAttempts": 7051,
+        "totalExploitAttempts": 119867,
+        "profitableExploitsFound": 0,
+        "bestCycleNetDeltaCoins": "-2",
+        "worstCycleNetDeltaCoins": "-140"
+      },
+      "timeSeriesSamples": []
+    }
+  ]
+}

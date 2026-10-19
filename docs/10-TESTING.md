@@ -1,4 +1,4 @@
-# 10 — Strategi Pengujian v0.1
+# 10 — Strategi Pengujian v0.2
 
 ## Prinsip
 Logika game (DSL, ekonomi, ledger, tick) **wajib dites sebelum diimplementasi** (tes dulu). UI cukup tes jalur kritis.
@@ -8,7 +8,7 @@ Logika game (DSL, ekonomi, ledger, tick) **wajib dites sebelum diimplementasi** 
 |---|---|---|---|
 | Unit | Vitest | `packages/dsl`, `packages/econ`, util | >= 90% baris pada paket murni |
 | Properti | fast-check | invarian ekonomi, parser | tiap invarian di `06` |
-| Integrasi | Vitest + Testcontainers (Postgres nyata) | api, worker, migrasi, transaksi | jalur kritis |
+| Integrasi | Vitest + Postgres nyata (service container di CI; **satu DATABASE baru per file tes**, tes memeriksa `current_database()`) | api, worker, migrasi, transaksi | jalur kritis |
 | Simulasi | `pnpm sim:run` | ekonomi skala besar | gerbang rilis |
 | Kontrak | skema OpenAPI | respons api | semua endpoint |
 | Klien | Flutter widget/integration test | login, editor, pasar | jalur kritis |
@@ -36,6 +36,13 @@ Properti (fast-check) — untuk urutan transaksi acak apa pun:
 - **Gerbang:** tidak ada pelanggaran invarian; harga hidup (bukan konstan) dan tidak menyentuh batas 25%/400% terus-menerus; tidak ada strategi tunggal yang menang > X% kekayaan total `[ASUMSI X=40%]`
 - Jalankan dengan banyak seed; hasil tetap konsisten untuk seed yang sama
 - CI menjalankan versi pendek (2.000 tick, 10 bot) di setiap PR; versi penuh sebelum rilis
+
+## Tes kesetaraan (satu implementasi tick)
+- Worker, simulator, dan sandbox API memakai `stepWorld` yang sama. Tes: untuk keadaan awal, aturan, dan seed yang sama, `state_hash` hasil worker (lewat database) sama dengan hasil simulator murni setelah N tick
+- Dilarang ada logika tick atau harga yang diduplikasi di luar `packages/econ`
+
+## Gerbang kualitas sebagai kode
+Setiap gerbang (invarian, kas pelabuhan, harga di batas, bot bangkrut, kekayaan per strategi) diimplementasikan di `sim-cli` dan membuat proses keluar non-nol saat gagal. Ambang tertulis di `06`; mengubah ambang butuh ADR dan data.
 
 ## Tes tick dan ketahanan
 - Kill -9 worker acak saat tick → data konsisten, tick tidak ganda

@@ -6,7 +6,7 @@
                                                               >--> [PostgreSQL]
                               [worker (tick loop)] ----------/
 ```
-- `api`: autentikasi, baca dunia, kelola aturan, endpoint simulasi
+- `api`: autentikasi, baca dunia, kelola aturan, endpoint simulasi (dieksekusi di worker thread, bukan di event loop HTTP)
 - `worker`: **satu-satunya penulis** keadaan dunia (stok, harga, kapal, ledger)
 - PostgreSQL: sumber kebenaran tunggal
 
@@ -15,6 +15,7 @@
 2. **Satu penulis dunia**: hanya worker yang menjalankan simulasi; api hanya menulis data akun dan aturan.
 3. **Inti murni**: `packages/dsl` dan `packages/econ` tanpa I/O supaya mudah dites dan deterministik.
 4. **Diskret**: dunia maju per tick; tidak ada logika real-time.
+5. **Satu implementasi tick**: fungsi murni `stepWorld(state, rules, config)` di `packages/econ` dipakai oleh worker (memuat state dari DB, memanggil, menyimpan hasil), simulator `sim:run`, dan sandbox API. Dilarang menduplikasi logika tick, harga, atau transaksi di tempat lain; tes kesetaraan menjaganya.
 
 ## Komponen
 | Komponen | Tanggung jawab | Catatan |

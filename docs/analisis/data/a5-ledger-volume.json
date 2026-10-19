@@ -1,0 +1,116 @@
+{
+  "assumptions": {
+    "tickSeconds": 30,
+    "ticksPer30Days": 86400,
+    "ticksPerStressMonth": 250000,
+    "avgTradeEventsPerShipPerTick": 0.125,
+    "postgresTuplePlusToastHeaderBytes": 136,
+    "btreeIndexesBytesPerRow": 56
+  },
+  "scenarios": [
+    {
+      "ships": 50,
+      "ticksPerMonth": 86400,
+      "tradeRowsPerMonth": 540000,
+      "option1_rowPerTick": {
+        "upkeepRows": 4320000,
+        "totalRows": 4860000,
+        "upkeepPctOfLedger": 88.89,
+        "monthlySizeMB": 889.89,
+        "yearlySizeMB": 10678.71
+      },
+      "option2_batch120Ticks": {
+        "upkeepRows": 36000,
+        "totalRows": 576000,
+        "rowReductionPct": 88.15,
+        "monthlySizeMB": 105.47,
+        "yearlySizeMB": 1265.63
+      },
+      "option3_counterPlusPeriodicSummary1000": {
+        "upkeepRows": 4320,
+        "totalRows": 544320,
+        "rowReductionPct": 88.8,
+        "monthlySizeMB": 99.67,
+        "yearlySizeMB": 1196.02
+      }
+    },
+    {
+      "ships": 500,
+      "ticksPerMonth": 86400,
+      "tradeRowsPerMonth": 5400000,
+      "option1_rowPerTick": {
+        "upkeepRows": 43200000,
+        "totalRows": 48600000,
+        "upkeepPctOfLedger": 88.89,
+        "monthlySizeMB": 8898.93,
+        "yearlySizeMB": 106787.11
+      },
+      "option2_batch120Ticks": {
+        "upkeepRows": 360000,
+        "totalRows": 5760000,
+        "rowReductionPct": 88.15,
+        "monthlySizeMB": 1054.69,
+        "yearlySizeMB": 12656.25
+      },
+      "option3_counterPlusPeriodicSummary1000": {
+        "upkeepRows": 43200,
+        "totalRows": 5443200,
+        "rowReductionPct": 88.8,
+        "monthlySizeMB": 996.68,
+        "yearlySizeMB": 11960.16
+      }
+    },
+    {
+      "ships": 50,
+      "ticksPerMonth": 250000,
+      "tradeRowsPerMonth": 1562500,
+      "option1_rowPerTick": {
+        "upkeepRows": 12500000,
+        "totalRows": 14062500,
+        "upkeepPctOfLedger": 88.89,
+        "monthlySizeMB": 2574.92,
+        "yearlySizeMB": 30899.05
+      },
+      "option2_batch120Ticks": {
+        "upkeepRows": 104167,
+        "totalRows": 1666667,
+        "rowReductionPct": 88.15,
+        "monthlySizeMB": 305.18,
+        "yearlySizeMB": 3662.11
+      },
+      "option3_counterPlusPeriodicSummary1000": {
+        "upkeepRows": 12500,
+        "totalRows": 1575000,
+        "rowReductionPct": 88.8,
+        "monthlySizeMB": 288.39,
+        "yearlySizeMB": 3460.69
+      }
+    },
+    {
+      "ships": 500,
+      "ticksPerMonth": 250000,
+      "tradeRowsPerMonth": 15625000,
+      "option1_rowPerTick": {
+        "upkeepRows": 125000000,
+        "totalRows": 140625000,
+        "upkeepPctOfLedger": 88.89,
+        "monthlySizeMB": 25749.21,
+        "yearlySizeMB": 308990.48
+      },
+      "option2_batch120Ticks": {
+        "upkeepRows": 1041667,
+        "totalRows": 16666667,
+        "rowReductionPct": 88.15,
+        "monthlySizeMB": 3051.76,
+        "yearlySizeMB": 36621.09
+      },
+      "option3_counterPlusPeriodicSummary1000": {
+        "upkeepRows": 125000,
+        "totalRows": 15750000,
+        "rowReductionPct": 88.8,
+        "monthlySizeMB": 2883.91,
+        "yearlySizeMB": 34606.93
+      }
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "demandShockEnabled": false,
+    "seed": 101,
+    "skillGradientRatio": 3.55,
+    "bestSmartStrategy": "adversarial",
+    "bestSmartAvgWealth": 89833.2,
+    "naiveAvgWealth": 25277.5,
+    "maxStrategySharePct": 31.37,
+    "meanVolatilityPct": 18.3
+  },
+  {
+    "demandShockEnabled": false,
+    "seed": 202,
+    "skillGradientRatio": 4.07,
+    "bestSmartStrategy": "adversarial",
+    "bestSmartAvgWealth": 107615.4,
+    "naiveAvgWealth": 26420.6,
+    "maxStrategySharePct": 35.54,
+    "meanVolatilityPct": 19.92
+  },
+  {
+    "demandShockEnabled": false,
+    "seed": 1001,
+    "skillGradientRatio": 4.35,
+    "bestSmartStrategy": "hoarder",
+    "bestSmartAvgWealth": 68135.3,
+    "naiveAvgWealth": 15646.5,
+    "maxStrategySharePct": 31.51,
+    "meanVolatilityPct": 16.82
+  },
+  {
+    "demandShockEnabled": false,
+    "seed": 1002,
+    "skillGradientRatio": 3.79,
+    "bestSmartStrategy": "adversarial",
+    "bestSmartAvgWealth": 91508,
+    "naiveAvgWealth": 24165.1,
+    "maxStrategySharePct": 31.84,
+    "meanVolatilityPct": 19.07
+  },
+  {
+    "demandShockEnabled": true,
+    "seed": 101,
+    "skillGradientRatio": 3.39,
+    "bestSmartStrategy": "adversarial",
+    "bestSmartAvgWealth": 88899.1,
+    "naiveAvgWealth": 26235.4,
+    "maxStrategySharePct": 31.47,
+    "meanVolatilityPct": 18.49
+  },
+  {
+    "demandShockEnabled": true,
+    "seed": 202,
+    "skillGradientRatio": 3.62,
+    "bestSmartStrategy": "adversarial",
+    "bestSmartAvgWealth": 96539.7,
+    "naiveAvgWealth": 26657.9,
+    "maxStrategySharePct": 32.7,
+    "meanVolatilityPct": 19.12
+  },
+  {
+    "demandShockEnabled": true,
+    "seed": 1001,
+    "skillGradientRatio": 3.26,
+    "bestSmartStrategy": "adversarial",
+    "bestSmartAvgWealth": 94395.9,
+    "naiveAvgWealth": 28942.3,
+    "maxStrategySharePct": 31.27,
+    "meanVolatilityPct": 19.3
+  },
+  {
+    "demandShockEnabled": true,
+    "seed": 1002,
+    "skillGradientRatio": 3.78,
+    "bestSmartStrategy": "adversarial",
+    "bestSmartAvgWealth": 97297.8,
+    "naiveAvgWealth": 25752.6,
+    "maxStrategySharePct": 31.52,
+    "meanVolatilityPct": 19.6
+  }
+]

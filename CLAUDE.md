@@ -53,6 +53,15 @@ pnpm sim:run --ticks 10000 --bots 50   # simulasi ekonomi
 5. Jalankan lint, typecheck, dan tes sebelum menyatakan selesai.
 6. Perbarui `docs/PROGRESS.md` (apa yang selesai, keputusan baru, masalah terbuka). Keputusan arsitektur baru masuk `docs/04-ADR.md`.
 
+## Pelajaran M0 dan M1 (aturan tetap)
+1. Tes harus membuktikan lingkungannya sendiri: tes database memakai satu DATABASE baru per file tes dan memeriksa `current_database()`. Jangan bergantung pada `search_path` atau keadaan DB dari langkah CI sebelumnya.
+2. Dilarang mengubah, menghapus, melonggarkan, atau `skip` tes dan gerbang agar hijau. Setiap tes yang diubah harus punya pasangan setara atau lebih ketat dan dicatat di `docs/PROGRESS.md` dengan alasan.
+3. Gerbang kualitas adalah kode (`sim-cli`) dengan ambang tertulis di `docs/06`. Mengubah ambang butuh ADR dan data.
+4. Tuning bukan alat meloloskan tes: parameter harus stabil pada horizon 250.000 tick (sekitar 1 bulan waktu nyata) dan pada 10-100 kapal. Jangan menyetel ke satu skenario uji.
+5. Pisahkan hasil "dijalankan di VM" dari "dijalankan di CI", lengkap dengan perintah, versi, dan output mentah. Jangan menyatakan lulus tanpa CI.
+6. Tidak ada logika tick ganda: worker, simulator, dan sandbox API memakai `stepWorld` yang sama.
+7. Jika dokumen tampak salah atau kontradiktif: berhenti, tulis di `docs/PROGRESS.md` bagian "Temuan dokumen", usulkan koreksi. Jangan menyimpang diam-diam. Lihat juga `docs/AUDIT-v0.3.md`.
+
 ## Definition of Done
 - Tes baru ada dan lulus; tes lama tidak rusak
 - Lint dan typecheck bersih

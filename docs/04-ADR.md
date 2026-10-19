@@ -36,10 +36,10 @@ Format: Konteks → Keputusan → Konsekuensi. Status: Diterima / Diganti / Dito
 - **Status:** Diterima
 - **Konteks:** Perlu audit dan deteksi eksploit.
 - **Keputusan:** Setiap perubahan koin tercatat di `ledger`; saldo pemain di-cache dan harus sama dengan jumlah ledger.
-- **Konsekuensi:** Tes invarian rutin; sedikit overhead tulis.
+- **Konsekuensi:** Tes invarian rutin; sedikit overhead tulis (dioptimalkan oleh ADR-011).
 
 ## ADR-007 — Klien Flutter sebagai tampilan tipis
-- **Status:** Diterima
+- **Status:** Diterima (lihat evaluasi kelayakan M5 di `docs/analisis/A8-audit-gdd-prd-kelayakan-m5.md` untuk keputusan pemilik)
 - **Konteks:** Pengembangan hanya via VPS + build GitHub, tes di HP sendiri.
 - **Keputusan:** Flutter untuk Android; tidak ada logika game di klien.
 - **Konsekuensi:** Klien mudah diganti; semua fitur butuh endpoint.
@@ -51,15 +51,40 @@ Format: Konteks → Keputusan → Konsekuensi. Status: Diterima / Diganti / Dito
 - **Konsekuensi:** Arbitrase lebih mudah; evaluasi dampaknya di beta sebelum menambah kabut.
 
 ## ADR-009 — Eksekusi transaksi simetris dan kas pelabuhan (treasury) tertutup
-- **Status:** Diterima
+- **Status:** Diterima (diperluas oleh ADR-010 untuk mekanisme pendapatan pelabuhan konsumen dan syarat kas bersih $N \le \text{treasury}$)
 - **Konteks:**
-  1. Jika jual 1 unit memakai `harga(stok)` sebelum `stok += 1` sedangkan beli 1 unit memakai `harga(stok)` sebelum `stok -= 1`, maka beli $n$ unit dari stok $S$ lalu jual $n$ unit dari stok $S-n$ mengevaluasi kurva harga pada indeks stok yang bergeser satu langkah ($\{S, \dots, S-n+1\}$ vs $\{S-n, \dots, S-1\}$), yang membuka celah arbitrase siklus di pelabuhan yang sama.
+  1. Jika jual 1 unit memakai `harga(stok)` sebelum `stok += 1` sedangkan beli 1 unit memakai `harga(stok)` sebelum `stok -= 1`, maka beli $n$ unit dari stok $S$ lalu jual $n$ unit dari stok $S-n$ mengevaluasi kurva harga pada indeks stok yang bergeser satu langkah, yang membuka celah arbitrase siklus di pelabuhan yang sama.
   2. Tanpa kas pelabuhan (`treasury`) yang terbatas dan dengan biaya pelabuhan 2% sebagai pemusnah koin, dunia kehabisan uang beredar (deflasi) atau sebaliknya pelabuhan membeli barang tanpa batas likuiditas.
 - **Keputusan:**
-  1. **Eksekusi Simetris**: Beli 1 unit membayar `hitungHarga(stok)` lalu `stok -= 1`. Jual 1 unit melakukan `stok += 1` **lebih dulu**, lalu menerima `hitungHarga(stok)` (stok baru). Dengan demikian beli $n$ lalu jual $n$ di pelabuhan yang sama mengevaluasi himpunan harga satuan yang identik ($\{S, S-1, \dots, S-n+1\}$) sehingga nilai kotor pembelian dan penjualan selalu sama persis dan siklus beli-jual selalu rugi tepat sebesar biaya transaksi dua sisi.
-  2. **Kas Pelabuhan (`ports.treasury`)**: Setiap pelabuhan memiliki `treasury BIGINT NOT NULL CHECK (treasury >= 0)` (dan `initial_treasury` dari konfigurasi). Pembelian pemain menambah kas pelabuhan sebesar nilai kotor + biaya 2%; penjualan pemain dibayar dari kas pelabuhan (dibatasi secara deterministik oleh kas tersedia dan ruang gudang), sementara biaya 2% masuk/tetap di kas pelabuhan tempat transaksi.
-  3. **Invarian Konservasi Uang**: Biaya perawatan kapal (`upkeep`) adalah satu-satunya pengurang koin sistem (*money sink*) dan dicatat eksplisit di `ledger` (`reason = 'upkeep'`). Berlaku invarian ketat: `total koin pemain + total kas pelabuhan + pengurang kumulatif (upkeep) = total modal awal pemain + total kas awal pelabuhan`.
-- **Konsekuensi:** Arbitrase siklus beli-jual di pelabuhan yang sama mustahil menghasilkan untung pada seluruh rezim stok (termasuk batas clamp `0.25x` dan `4.0x`). Likuiditas tiap pelabuhan menjadi variabel ekonomi nyata yang mencegah eksploitasi penjualan tak terbatas ke satu pelabuhan, dan konservasi uang dapat diaudit secara eksak setiap tick.
+  1. **Eksekusi Simetris**: Beli 1 unit membayar `hitungHarga(stok)` lalu `stok -= 1`. Jual 1 unit melakukan `stok += 1` **lebih dulu**, lalu menerima `hitungHarga(stok)` (stok baru).
+  2. **Kas Pelabuhan (`ports.treasury`)**: Setiap pelabuhan memiliki `treasury BIGINT NOT NULL CHECK (treasury >= 0)`. Pembelian pemain menambah kas pelabuhan sebesar nilai kotor + biaya 2%; penjualan pemain dibayar dari kas pelabuhan, sementara biaya 2% masuk/tetap di kas pelabuhan tempat transaksi.
+  3. **Invarian Konservasi Uang**: Berlaku invarian konservasi uang yang diperluas dengan suku `sumber_kumulatif` pada ADR-010.
+- **Konsekuensi:** Arbitrase siklus beli-jual di pelabuhan yang sama mustahil menghasilkan untung pada seluruh rezim stok (termasuk batas clamp `0.25x` dan `4.0x`).
+
+## ADR-010 — Mekanisme pendapatan pelabuhan konsumen (`sumber_kumulatif`), syarat kas jual `N <= treasury`, dan penskalaan pasar adaptif
+- **Status:** Diterima (Berdasarkan Analisis `A1`, `A2`, `A3`, `A4`)
+- **Konteks:**
+  1. Pelabuhan konsumen murni (Batavia, konsumsi 32 unit/tick, produksi 0) dan konsumen bersih (Malaka, Surabaya) hanya membeli kargo dari pemain tanpa pemasukan eksternal. Pada `INITIAL_PORT_TREASURY = 50.000` tanpa pemasukan, kas Batavia habis pada tick 45; pada `25.000.000`, kas Batavia tetap terkuras ~1.925 koin/tick dan habis sebelum tick 40.000 (`docs/analisis/A2-pendapatan-pelabuhan.md`).
+  2. Syarat kas pada penjualan di dokumen lama ditulis `G <= treasury`, padahal kas pelabuhan berkurang bersih sebesar `N = G - F` karena biaya `F` tinggal di dalam kas pelabuhan.
+  3. Kapasitas kapal statis (`20` atau `45`) tanpa penskalaan pasar membuat harga menempel di batas clamp (`38%–69%` tick) pada 10–25 kapal atau memicu kongesti monopoli (`49,8%` pangsa) pada 100 kapal (`docs/analisis/A1-parameter-ekonomi.md`).
+  4. Pada pasar yang terlalu tenang tanpa pergeseran permintaan, strategi `naive` menyamai strategi cerdas (gradien keahlian `1,00x`, `docs/analisis/A4-gradien-keahlian.md`).
+- **Keputusan:**
+  1. **Kliring Domestik Seimbang (`PORT_INCOME_ENABLED = true`)**: Kas awal tiap pelabuhan ditetapkan `INITIAL_PORT_TREASURY = 50.000` koin (`6x` total modal awal 50 pemain, memenuhi batas `<= 10x`). Setiap tick pada Langkah 3, pelabuhan menerima nilai konsumsi ritel warga lokal (`actualConsumed * base_price`) dan membayar produsen lokal atas komoditas yang diproduksi (`actualProduced * base_price`, dibatasi agar kas tidak turun di bawah `PORT_TREASURY_FLOOR = 22.000`), ditambah pemulihan proporsional menuju kas target `(INITIAL_PORT_TREASURY - treasury) / PORT_TREASURY_RESTORE_DIVISOR`.
+  2. **Pencatatan Eksplisit & Invarian Konservasi Uang (`sumber_kumulatif`)**: Semua penambahan kas pelabuhan (`port_income`) dan pemulihan darurat (`rescue`) dicatat sebagai sumber (`cumulativeSource`), sedangkan perawatan kapal (`upkeep`, termasuk pajak logistik kekayaan `WEALTH_UPKEEP_BPS = 4` di atas `STARTER_COINS`) dan pembayaran produsen lokal (`port_producer_payout`) dicatat sebagai pengurang (`cumulativeUpkeepSink`) di tabel append-only `public.economy_sources_sinks` (Migrasi `0003`). Persamaan konservasi uang menjadi:
+     `total_koin_pemain + total_kas_pelabuhan + pengurang_kumulatif == total_awal + sumber_kumulatif`.
+  3. **Syarat Kas Jual Bersih**: Penjualan $n$ unit sah jika dan hanya jika pembayaran bersih $N(n) = G(n) - F(G(n)) \le \text{treasury}$ dan $N(n) > 0$.
+  4. **Kapasitas Kapal `35` & Dinamika Pasar (`SCALE_MARKET_WITH_FLEET`, `DEMAND_SHOCK_ENABLED`)**: `STARTER_SHIP_CAPACITY` ditetapkan `35`, disertai peredam karavan pesisir domestik dan penskalaan produksi/konsumsi untuk armada $> 50$ kapal, serta guncangan permintaan terjadwal deterministik *zero-sum* setiap `40` tick (`+5` konsumsi di satu pelabuhan dan `+5` produksi di pelabuhan lain pada komoditas yang sama).
+- **Konsekuensi:** Ekonomi stabil selama $\ge 200.000$ tick (drift koin pemain Q3->Q4 hanya `1,65% <= 15%`), lulus seluruh gerbang pada 10, 25, 50, dan 100 kapal, serta menghasilkan gradien keahlian `3,29x–4,79x` (`>= 1,3x`) dengan pangsa strategi tertinggi `31%–35%` (`<= 40%`).
+
+## ADR-011 — Optimasi volume ledger perawatan kapal (`unflushed_upkeep` + agregasi blok) dan fungsi murni `stepWorld` v0.2
+- **Status:** Diterima (Berdasarkan Analisis `A5` dan `docs/09` v0.2)
+- **Konteks:**
+  1. Mencatat perawatan kapal 1 baris per kapal per tick menghasilkan `4,32 juta` baris/bulan pada 50 kapal dan `43,2 juta` baris/bulan (`~8,9 GB/bulan`, `88,89%` dari seluruh isi `ledger`) pada 500 kapal (`docs/analisis/A5-volume-ledger.md`).
+  2. `docs/03` v0.2 dan `docs/09` v0.2 menetapkan fungsi murni `stepWorld` dengan perawatan dipotong **sebelum** aksi, kapal `grounded` diizinkan `jual` dan `tunggu` (aksi `beli`/`berlayar` gagal dengan `GROUNDED` dan jatuh ke aturan berikutnya pada tick yang sama), serta tunggakan tidak diakumulasi saat `sailing`.
+- **Keputusan:**
+  1. **Desain Hibrida Agregasi Blok Upkeep (Migrasi `0003`)**: Menambahkan kolom `unflushed_upkeep BIGINT NOT NULL DEFAULT 0 CHECK (unflushed_upkeep >= 0)` dan `cumulative_upkeep_paid BIGINT NOT NULL DEFAULT 0 CHECK (cumulative_upkeep_paid >= 0)` pada `public.players`, serta indeks parsial `idx_ledger_player_non_upkeep ON public.ledger (player_id, id DESC) WHERE reason <> 'upkeep'`. Di antara waktu flush, pemotongan upkeep per tick mengurangi `players.coins` dan menambah `players.unflushed_upkeep`. Setiap `UPKEEP_LEDGER_BATCH_TICKS = 120` tick (atau tepat sebelum pemain melakukan transaksi `buy`/`sell`/`rescue` atau snapshot audit), `unflushed_upkeep` di-flush menjadi satu baris ringkasan `ledger` (`reason = 'upkeep', delta = -unflushed_upkeep, meta = {"from_tick", "to_tick", "ticks_count"}`) dan di-reset ke `0`.
+  2. **Fungsi Murni `stepWorld`**: Mengimplementasikan seluruh 9 langkah tick `docs/09` v0.2 di `packages/econ/src/step-world.ts` sebagai fungsi murni deterministik yang digunakan oleh simulator M1, endpoint `/v1/simulate` M2, dan worker M4.
+- **Konsekuensi:** Volume baris `ledger` berkurang **88,15%** (baris upkeep turun **99,17%**) tanpa mengorbankan invarian `players.coins + players.unflushed_upkeep == SUM(ledger.delta)` di setiap tick maupun `players.coins == SUM(ledger.delta)` pada setiap batas flush/transaksi.
 
 ## Template
 ```

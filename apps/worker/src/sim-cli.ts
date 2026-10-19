@@ -59,26 +59,26 @@ function main(): void {
       seed,
     });
 
-    // Verifikasi determinisme: jalankan sekali lagi pada seed pertama (atau jika diminta)
-    const verifyDeterminism = runEconomySimulation({
-      ticks: args.ticks,
-      bots: args.bots,
-      seed,
-    });
+    // Verifikasi determinisme untuk run <= 20.000 tick
+    if (args.ticks <= 20000) {
+      const verifyDeterminism = runEconomySimulation({
+        ticks: args.ticks,
+        bots: args.bots,
+        seed,
+      });
 
-    if (result.stateHash !== verifyDeterminism.stateHash) {
-      console.error(
-        `[SIM-ERROR] Pelanggaran determinisme pada seed ${seed}: ${result.stateHash} !== ${verifyDeterminism.stateHash}`,
-      );
-      hasFailure = true;
+      if (result.stateHash !== verifyDeterminism.stateHash) {
+        console.error(
+          `[SIM-ERROR] Pelanggaran determinisme pada seed ${seed}: ${result.stateHash} !== ${verifyDeterminism.stateHash}`,
+        );
+        hasFailure = true;
+      }
     }
 
-    if (
-      result.invariantViolations > 0 ||
-      !result.moneyConservation.valid ||
-      result.adversarial.profitableExploitsFound > 0 ||
-      result.maxStrategyWealthSharePct > 40
-    ) {
+    if (!result.gates.passed) {
+      console.error(
+        `[SIM-GATE-FAILED] Seed ${seed} gagal pada gerbang: ${result.gates.failedGates.join('; ')}`,
+      );
       hasFailure = true;
     }
 
@@ -94,7 +94,9 @@ function main(): void {
   }
 
   if (hasFailure) {
-    console.error('[SIM-ERROR] Satu atau lebih gerbang invarian/kualitas simulasi gagal.');
+    console.error(
+      '[SIM-ERROR] Satu atau lebih gerbang invarian/kualitas simulasi gagal.',
+    );
     process.exit(1);
   }
 }

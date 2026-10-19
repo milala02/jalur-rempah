@@ -1,0 +1,82 @@
+[
+  {
+    "scenario": "normal",
+    "rescueEnabled": false,
+    "seed": 101,
+    "bankruptBotPct": 20,
+    "permanentlyDeadBotCount": 10,
+    "rescueGrantedTotal": 0,
+    "cumulativeRescueSource": "0",
+    "profitableExploitsFound": 0
+  },
+  {
+    "scenario": "normal",
+    "rescueEnabled": false,
+    "seed": 1001,
+    "bankruptBotPct": 20,
+    "permanentlyDeadBotCount": 10,
+    "rescueGrantedTotal": 0,
+    "cumulativeRescueSource": "0",
+    "profitableExploitsFound": 0
+  },
+  {
+    "scenario": "normal",
+    "rescueEnabled": true,
+    "seed": 101,
+    "bankruptBotPct": 20,
+    "permanentlyDeadBotCount": 10,
+    "rescueGrantedTotal": 20,
+    "cumulativeRescueSource": "4000",
+    "profitableExploitsFound": 0
+  },
+  {
+    "scenario": "normal",
+    "rescueEnabled": true,
+    "seed": 1001,
+    "bankruptBotPct": 20,
+    "permanentlyDeadBotCount": 10,
+    "rescueGrantedTotal": 20,
+    "cumulativeRescueSource": "4000",
+    "profitableExploitsFound": 0
+  },
+  {
+    "scenario": "high_stress_low_capital",
+    "rescueEnabled": false,
+    "seed": 101,
+    "bankruptBotPct": 94,
+    "permanentlyDeadBotCount": 47,
+    "rescueGrantedTotal": 0,
+    "cumulativeRescueSource": "0",
+    "profitableExploitsFound": 0
+  },
+  {
+    "scenario": "high_stress_low_capital",
+    "rescueEnabled": false,
+    "seed": 1001,
+    "bankruptBotPct": 96,
+    "permanentlyDeadBotCount": 48,
+    "rescueGrantedTotal": 0,
+    "cumulativeRescueSource": "0",
+    "profitableExploitsFound": 0
+  },
+  {
+    "scenario": "high_stress_low_capital",
+    "rescueEnabled": true,
+    "seed": 101,
+    "bankruptBotPct": 40,
+    "permanentlyDeadBotCount": 20,
+    "rescueGrantedTotal": 88,
+    "cumulativeRescueSource": "17600",
+    "profitableExploitsFound": 0
+  },
+  {
+    "scenario": "high_stress_low_capital",
+    "rescueEnabled": true,
+    "seed": 1001,
+    "bankruptBotPct": 36,
+    "permanentlyDeadBotCount": 18,
+    "rescueGrantedTotal": 84,
+    "cumulativeRescueSource": "16800",
+    "profitableExploitsFound": 0
+  }
+]

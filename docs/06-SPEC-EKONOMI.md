@@ -1,21 +1,21 @@
-# 06 — Spesifikasi Ekonomi v0.2
+# 06 — Spesifikasi Ekonomi v0.3
 
-Semua angka adalah **parameter awal** di `packages/shared/config`. Tuning lewat simulasi (lihat `10`), bukan tebakan.
+Semua angka adalah **parameter terkonfigurasi** di `packages/shared/src/config.ts`. Perubahan nilai wajib didukung data simulasi pada seed tuning (`101-505`) dan seed validasi (`1001-1005`) (lihat `docs/10` dan `docs/analisis/A1-parameter-ekonomi.md`).
 
 ## Prinsip
-1. Uang dan stok integer (ADR-005). Tidak ada float di jalur uang; satu-satunya fungsi pembulatan berada di `hitungHarga` (`packages/econ`).
-2. Harga ditentukan **hanya** oleh stok pelabuhan relatif target, bukan oleh pemain secara langsung.
+1. Uang dan stok integer (`BIGINT`, ADR-005). Tidak ada float di jalur uang; satu-satunya fungsi pembulatan berada di `hitungHarga` (`packages/econ`).
+2. Harga ditentukan **hanya** oleh stok pelabuhan relatif terhadap target, bukan oleh pemain secara langsung.
 3. Eksekusi transaksi beli dan jual bersifat **simetris** (ADR-009).
-4. Setiap pelabuhan memiliki **kas (`treasury`)** terbatas (`>= 0`). Biaya pelabuhan 2% masuk ke kas pelabuhan tempat transaksi; perawatan kapal (`upkeep`) adalah satu-satunya pengurang koin sistem (ADR-009).
+4. Setiap pelabuhan memiliki **kas (`treasury`)** terbatas (`>= 0`). Biaya pelabuhan 2% masuk ke kas pelabuhan tempat transaksi; penambahan kas domestik pelabuhan dan pemulihan darurat tercatat sebagai `sumber_kumulatif`, sedangkan perawatan kapal (`upkeep`) dan pembayaran produsen lokal tercatat sebagai `pengurang_kumulatif` (ADR-009, ADR-010).
 
 ## Dunia awal
 Komoditas dan harga dasar (koin per unit):
-| Komoditas | Harga dasar |
-|---|---|
-| pala | 70 |
-| cengkeh | 90 |
-| garam | 20 |
-| kain | 45 |
+| Komoditas | Harga dasar | Batas bawah (`0.25x`) | Batas atas (`4.0x`) |
+|---|---|---|---|
+| pala | 70 | 18 | 280 |
+| cengkeh | 90 | 23 | 360 |
+| garam | 20 | 5 | 80 |
+| kain | 45 | 11 | 180 |
 
 Pelabuhan, produksi unggulan, dan jarak (tick pelayaran, dua arah):
 | Pelabuhan | Produksi unggulan |
@@ -24,8 +24,8 @@ Pelabuhan, produksi unggulan, dan jarak (tick pelayaran, dua arah):
 | Ternate | cengkeh |
 | Surabaya | garam |
 | Malaka | kain |
-| Makassar | (campuran kecil) |
-| Batavia | (pusat konsumsi) |
+| Makassar | (campuran seimbang) |
+| Batavia | (pusat konsumsi murni) |
 
 | Rute | Tick |
 |---|---|
@@ -37,85 +37,158 @@ Pelabuhan, produksi unggulan, dan jarak (tick pelayaran, dua arah):
 | Batavia – Malaka | 4 |
 | Makassar – Batavia | 6 |
 
-`[ASUMSI]` Durasi tick produksi 30 detik (di simulasi: 0 detik, loncat). Pelayaran 3-6 tick = 1,5-3 menit.
+`[ASUMSI]` Durasi tick produksi 30 detik (di simulasi: 0 detik, loncat). Pelayaran 3–6 tick = 1,5–3 menit.
 
 ## Model pasar per (pelabuhan, komoditas)
 Variabel: `stok`, `target` (stok setimbang), `produksi` per tick, `konsumsi` per tick.
 
-**Harga:**
+**Harga (`hitungHarga`):**
+```text
+rasio = target / max(stok, 1)
+harga = max(1, round(dasar * clamp(rasio ^ e, 0.25, 4.0)))
 ```
-rasio  = target / max(stok, 1)
-harga  = round(dasar * clamp(rasio ^ e, 0.25, 4.0))
-```
-- `e = 0.6` (elastisitas awal)
-- `round` ke integer terdekat, minimal 1 (satu-satunya fungsi pembulatan di seluruh sistem)
-- Fungsi `hitungHarga(stok, target, dasar)` adalah **satu-satunya** tempat harga dihitung
+- `e = 0.6` (`ELASTICITY` di `WORLD_CONFIG`)
+- `round` ke integer terdekat, minimal `1` (satu-satunya tempat pembulatan float-ke-integer di seluruh sistem)
+- Fungsi `hitungHarga(stok, target, dasar, config)` di `packages/econ/src/price.ts` adalah **satu-satunya** tempat harga dihitung
 
-**Produksi/konsumsi tiap tick:**
+**Produksi dan konsumsi tiap tick (`stepProduksiKonsumsi`):**
+```text
+stok_setelah_produksi = stok + produksi_efektif
+konsumsi_aktual       = min(konsumsi_efektif, stok_setelah_produksi)
+stok_baru             = min(stok_setelah_produksi - konsumsi_aktual, kapasitasGudang)
+harga_baru            = hitungHarga(stok_baru, target, dasar, config)
 ```
-stok += produksi
-stok -= min(konsumsi, stok)
-stok  = min(stok, kapasitasGudang)
-```
-Pelabuhan unggulan: `produksi` besar untuk komoditasnya, `konsumsi` kecil. Pusat konsumsi: kebalikannya. Semua pelabuhan punya `konsumsi` kecil untuk semua komoditas supaya selalu ada permintaan.
-
-`[ASUMSI]` Parameter awal (diuji dan di-tuning di simulasi M1):
-- `target` = 400
-- `kapasitasGudang` = 1.600
+Parameter dasar (`packages/shared/src/seed-data.ts` & `config.ts`):
+- `target = 400`, `kapasitasGudang = 1.600`, stok awal = `400`, harga awal = `harga_dasar`.
 - Pelabuhan unggulan (Banda: pala, Ternate: cengkeh, Surabaya: garam, Malaka: kain): komoditas unggulan `produksi = 20, konsumsi = 3`; tiga komoditas lainnya `produksi = 0, konsumsi = 3`.
 - Makassar: keempat komoditas `produksi = 3, konsumsi = 3`.
 - Batavia: keempat komoditas `produksi = 0, konsumsi = 8`.
-- Stok awal semua baris pasar = 400 (`target`), dan harga awal = `harga_dasar`.
-- Kas awal tiap pelabuhan (`INITIAL_PORT_TREASURY`) berasal dari konfigurasi `packages/shared/config`.
+- **Invarian Seed Global**: Untuk setiap komoditas, jumlah `produksi` dasar di seluruh 6 pelabuhan sama dengan jumlah `konsumsi` dasar di seluruh 6 pelabuhan (`total_prod == total_cons == 23` unit/tick).
+- **Guncangan Permintaan Terjadwal Deterministik (`DEMAND_SHOCK_ENABLED = true`)**: Setiap blok `DEMAND_SHOCK_INTERVAL_TICKS = 40` tick, satu komoditas terpilih secara deterministik dari `(epoch, worldSeed)` mengalami tambahan konsumsi `+5` unit/tick di satu pelabuhan dan tambahan produksi `+5` unit/tick di pelabuhan lain (tetap *zero-sum* secara global).
+- **Penskalaan & Peredam Pasar Adaptif (`SCALE_MARKET_WITH_FLEET = true`)**: Untuk armada $> 50$ kapal, laju produksi dan konsumsi efektif diskalakan dengan `fleetSize / 50`; untuk mencegah stok menempel di batas clamp pada armada kecil (10–25 kapal), karavan pesisir domestik menyerap sebagian kelebihan stok di atas `target + 220` dan memasok darurat saat stok di bawah `140`.
 
-## Eksekusi transaksi simetris (slippage, biaya, dan kas pelabuhan)
-Beli/jual dieksekusi **unit demi unit secara simetris** (ADR-009):
-- **Beli 1 unit:** bayar `hitungHarga(stok)` lalu `stok -= 1`.
-  - Untuk $n$ unit dari stok awal $S$: nilai kotor $G = \sum_{i=0}^{n-1} 	ext{hitungHarga}(S - i)$, dan stok akhir $S - n$.
-- **Jual 1 unit:** `stok += 1` **lebih dulu**, lalu terima `hitungHarga(stok)` (stok yang baru).
-  - Untuk $n$ unit dari stok awal $S'$: nilai kotor $G = \sum_{i=1}^{n} 	ext{hitungHarga}(S' + i)$, dan stok akhir $S' + n$.
-- **Sifat Simetri:** Membeli $n$ unit dari stok $S$ (stok turun ke $S - n$) lalu menjual $n$ unit dari stok $S - n$ (stok naik kembali ke $S$) mengevaluasi himpunan harga satuan yang **identik** ($\{S, S-1, \dots, S-n+1\}$), sehingga nilai kotor beli dan jual sama persis ($G_{	ext{beli}} = G_{	ext{jual}}$).
-- **Biaya pelabuhan:** 2% dari nilai kotor transaksi $G$ tiap sisi, dibulatkan ke atas dalam aritmetika integer (`max(1n, (G * 2n + 99n) / 100n)` untuk $G > 0$). Biaya pelabuhan **masuk ke kas pelabuhan (`ports.treasury`)** tempat transaksi berlangsung:
-  - Pada **Beli $n$ unit**: pemain membayar total $T = G + F$ (`players.coins -= T`), dan kas pelabuhan bertambah $T$ (`ports.treasury += T`).
-  - Pada **Jual $n$ unit**: pemain menerima bersih $N = G - F$ (`players.coins += N`), dan kas pelabuhan berkurang bersih sebesar $N$ (`ports.treasury -= N`, karena pelabuhan mengeluarkan $G$ untuk barang dan menerima kembali biaya $F$ ke dalam kasnya; dengan syarat kas pelabuhan mencukupi $G \le 	ext{treasury}$).
+## Eksekusi transaksi simetris (slippage, biaya, dan syarat kas pelabuhan)
+Beli dan jual dieksekusi **unit demi unit secara simetris** (ADR-009, ADR-010):
+
+```text
+Beli 1 unit dari stok S:
+  bayar hitungHarga(S, target, dasar)
+  stok_baru = S - 1
+
+Beli n unit dari stok awal S:
+  G_beli(S, n) = sum_{i = 0 .. n-1} hitungHarga(S - i, target, dasar)
+  stok_akhir   = S - n
+
+Jual 1 unit ke stok S':
+  stok_baru = S' + 1
+  terima hitungHarga(stok_baru, target, dasar)
+
+Jual n unit ke stok awal S':
+  G_jual(S', n) = sum_{i = 1 .. n} hitungHarga(S' + i, target, dasar)
+  stok_akhir    = S' + n
+```
+
+- **Sifat Simetri Eksak:** Membeli `n` unit dari stok `S` (stok turun ke `S - n`) lalu menjual `n` unit dari stok `S - n` (stok naik kembali ke `S`) mengevaluasi himpunan harga satuan yang **identik** (`{S, S - 1, ..., S - n + 1}`), sehingga nilai kotor beli dan nilai kotor jual selalu sama persis:
+  ```text
+  G_beli(S, n) == G_jual(S - n, n)
+  ```
+- **Biaya Pelabuhan (`hitungBiayaPelabuhan`):** `2%` dari nilai kotor transaksi `G` tiap sisi, dibulatkan ke atas dalam aritmetika integer murni, minimal `1` koin untuk `G > 0`:
+  ```text
+  F(G) = 0                             jika G <= 0
+  F(G) = max(1, (G * 2 + 99) / 100)    jika G > 0 (pembagian integer BigInt)
+  ```
+- **Mutasi Koin dan Syarat Kas Pelabuhan (Disamakan antara Kode & Dokumen — `Tugas i`):**
+  ```text
+  Transaksi BELI n unit:
+    Total bayar pemain : T(n) = G(n) + F(G(n))
+    Syarat sah         : n <= stok_pelabuhan
+                         AND n <= kapasitas_kapal - total_muatan_kapal
+                         AND T(n) <= koin_pemain
+    Mutasi             : koin_pemain    -= T(n)
+                         kas_pelabuhan  += T(n)
+
+  Transaksi JUAL n unit:
+    Penerimaan bersih  : N(n) = G(n) - F(G(n))
+    Syarat sah         : n <= muatan_komoditas_di_kapal
+                         AND stok_pelabuhan + n <= kapasitasGudang
+                         AND N(n) > 0
+                         AND N(n) <= kas_pelabuhan (ports.treasury)
+    Mutasi             : koin_pemain    += N(n)
+                         kas_pelabuhan  -= N(n)
+  ```
+  *Catatan batas kas jual:* Karena pelabuhan membayarkan `G(n)` kepada penjual dan pada saat yang sama memungut kembali biaya pelabuhan `F(G(n))` ke dalam kasnya sendiri, pengeluaran bersih kas pelabuhan adalah `N(n) = G(n) - F(G(n))`. Oleh sebab itu, penjualan sah selama `N(n) <= kas_pelabuhan` (termasuk saat `kas_pelabuhan == N(n)` meskipun `G(n) > kas_pelabuhan`). Jika `kas_pelabuhan == N(n) - 1`, transaksi ditolak dengan kode `PORT_TREASURY_LOW`.
+
 - **Algoritma Deterministik `beli(k, maks)` dan `jual(k, semua)`:**
-  - `beli(k, maks)`: Batas fisik $U_{	ext{maks}} = \min(	ext{muatan\_bebas}, 	ext{stok\_pelabuhan})$. Karena total bayar $T(n) = G(n) + F(n)$ monoton naik tegas terhadap $n$, jumlah unit $n \in [0, U_{	ext{maks}}]$ terbesar yang memenuhi $T(n) \le 	ext{koin\_pemain}$ dicari dengan **pencarian biner (binary search)** pada array prefix sum harga satuan.
-  - `jual(k, semua)`: Batas fisik $U_{	ext{maks}} = \min(	ext{stok\_kapal}, 	ext{kapasitasGudang} - 	ext{stok\_pelabuhan})$. Karena nilai kotor pembelian oleh pelabuhan $G(n)$ monoton naik tegas terhadap $n$, jumlah unit $n \in [0, U_{	ext{maks}}]$ terbesar yang memenuhi $G(n) \le 	ext{treasury\_pelabuhan}$ dicari dengan **pencarian biner (binary search)** pada array prefix sum harga satuan.
-- Transaksi eksplisit (`beli(k, n)` / `jual(k, n)`) bersifat **atomik per aksi**: gagal sebagian = gagal seluruhnya, kecuali `maks`/`semua` yang menghitung $n$ deterministik lebih dulu.
+  ```text
+  beli(k, maks):
+    U_maks = min(muatan_bebas_kapal, stok_pelabuhan)
+    Cari k terbesar dalam [0 .. U_maks] dengan pencarian biner (binary search)
+    pada prefix sum G_beli(k) sehingga T(k) = G_beli(k) + F(G_beli(k)) <= koin_pemain.
 
-## Sumber, sirkulasi, dan pengurang uang (money conservation)
-**Modal awal sistem:**
-- Modal awal tiap akun pemain: `STARTER_COINS` (1.000 koin, tercatat di `ledger` dengan `reason = 'starter'`)
-- Kas awal tiap pelabuhan: `INITIAL_PORT_TREASURY` (tercatat di `ports.initial_treasury`)
+  jual(k, semua):
+    U_maks = min(stok_kapal[k], kapasitasGudang - stok_pelabuhan)
+    Cari k terbesar dalam [0 .. U_maks] dengan pencarian biner (binary search)
+    pada prefix sum G_jual(k) sehingga N(k) = G_jual(k) - F(G_jual(k)) <= kas_pelabuhan
+    dan N(k) > 0.
+  ```
+- Transaksi dengan jumlah eksplisit (`beli(k, n)` / `jual(k, n)`) bersifat **atomik per aksi**: gagal sebagian = gagal seluruhnya (`ok: false` dengan `failureCode`), lalu evaluasi aturan jatuh ke aturan berikutnya pada tick yang sama (`docs/05` v0.2).
+
+## Sumber, sirkulasi, dan pengurang uang (`sumber_kumulatif` & `pengurang_kumulatif`)
+**Modal awal sistem (`total_awal`):**
+- Modal awal tiap akun pemain: `STARTER_COINS = 1.000` koin (tercatat di `ledger` dengan `reason = 'starter'`).
+- Kas awal tiap pelabuhan: `INITIAL_PORT_TREASURY = 50.000` koin per pelabuhan (`300.000` koin total untuk 6 pelabuhan = `6x` total modal awal 50 pemain, memenuhi syarat `<= 10x`).
+- Kapasitas kapal awal: `STARTER_SHIP_CAPACITY = 35` unit.
+
+**Sumber koin eksplisit (`sumber_kumulatif`):**
+1. **Pendapatan Domestik Pelabuhan (`port_income`, Langkah 3 tick):** Setiap tick, kas pelabuhan menerima selisih nilai konsumsi ritel domestik terhadap produksi domestik ditambah pemulihan proporsional menuju kas target (`desiredDelta = (actualConsumed - actualProduced) * base_price + (INITIAL_PORT_TREASURY - treasury) / PORT_TREASURY_RESTORE_DIVISOR` bila `desiredDelta > 0`), tercatat di `economy_sources_sinks` (`kind = 'source', reason = 'port_income'`).
+2. **Pemulihan Darurat (`rescue`, Langkah 7 tick, di balik flag `RESCUE_ENABLED`):** Memberikan `RESCUE_COINS = 200` koin kepada pemain yang kapalnya `grounded`, kargo total `0`, koin `< UPKEEP_PER_TICK`, dan telah melewati `RESCUE_COOLDOWN_TICKS = 2.880` tick, tercatat di `ledger` (`reason = 'rescue', delta = +200`).
 
 **Sirkulasi internal (zero-sum antara pemain dan kas pelabuhan):**
-- Pembelian dan penjualan komoditas beserta biaya pelabuhan 2% hanya memindahkan koin antara `players.coins` dan `ports.treasury` ($\Delta 	ext{coins} + \Delta 	ext{treasury} = 0$).
+- Pembelian dan penjualan komoditas beserta biaya pelabuhan 2% hanya memindahkan koin antara `players.coins` dan `ports.treasury`:
+  ```text
+  delta_koin_pemain + delta_kas_pelabuhan == 0
+  ```
 
-**Pengurang satu-satunya (money sink):**
-- Perawatan kapal (`upkeep`): `UPKEEP_PER_TICK` (1 koin per tick untuk kapal berlayar maupun sandar), dicatat eksplisit di `ledger` (`reason = 'upkeep'`, `delta = -1`).
+**Pengurang koin eksplisit (`pengurang_kumulatif`):**
+1. **Perawatan Kapal & Pajak Logistik Kekayaan (`upkeep`, Langkah 5 tick):** Setiap kapal membayar perawatan dasar `UPKEEP_PER_TICK = 1` koin/tick ditambah surcharge logistik kekayaan `((coins - STARTER_COINS) * WEALTH_UPKEEP_BPS) / 10000` (untuk `coins > STARTER_COINS`, dengan `WEALTH_UPKEEP_BPS = 4`).
+2. **Pembayaran Produsen Lokal Pelabuhan (`port_producer_payout`, Langkah 3 tick):** Ketika `desiredDelta < 0` pada pelabuhan produsen bersih, kas pelabuhan membayar produsen lokal hingga batas bawah aman `PORT_TREASURY_FLOOR = 22.000` koin, tercatat di `economy_sources_sinks` (`kind = 'sink', reason = 'port_producer_payout'`).
 
-## Perawatan tidak terbayar
-Jika koin pemain < biaya perawatan: kapal **sandar paksa (`grounded`)** (aturan tidak dievaluasi) sampai koin cukup. Kapal tidak dihapus dan koin tidak menjadi negatif.
+## Perawatan kapal & perilaku `grounded` (sesuai `docs/09` v0.2)
+1. **Perawatan dipotong SEBELUM evaluasi aksi (Langkah 5 tick):**
+   - Untuk kapal `docked` atau `sailing`: jika `players.coins >= upkeepDue`, potong `upkeepDue`.
+   - Jika `players.coins < upkeepDue`:
+     - Kapal `docked` berubah status menjadi **`grounded`** (koin tidak dipotong dan tidak menjadi negatif).
+     - Kapal `sailing` **tetap berlayar** sampai tiba di pelabuhan tujuan; perawatan tick tersebut dilewati dan **tunggakan tidak diakumulasi**.
+2. **Pemulihan dari `grounded`:**
+   - Pada Langkah 5 tick, jika kapal berstatus `grounded` dan `players.coins >= upkeepDue`, pemain membayar `upkeepDue` dan status kapal langsung kembali menjadi **`docked`** pada tick yang sama (sehingga dapat berlayar pada Langkah 6 tick tersebut).
+   - Pada Langkah 6 tick, kapal yang masih berstatus `grounded` **tetap dievaluasi aturannya**, tetapi **hanya aksi `jual` dan `tunggu` yang diizinkan**. Jika aturan memilih `beli` atau `berlayar`, aksi tersebut gagal dengan kode `GROUNDED` (dicatat di `action_log`) dan evaluasi **jatuh ke aturan berikutnya** pada tick yang sama (memungkinkan kapal menjual muatan darurat untuk mendapatkan koin).
+3. **Pemulihan Darurat (Langkah 7 tick, di balik flag `RESCUE_ENABLED`):**
+   - Jika setelah Langkah 6 kapal masih `grounded`, total muatan `0`, `players.coins < UPKEEP_PER_TICK`, dan `tick_no - last_rescue_tick >= RESCUE_COOLDOWN_TICKS` (`2.880` tick), sistem memberikan `RESCUE_COINS = 200` koin (`reason = 'rescue'`).
 
 ## Kekayaan bersih (peringkat)
+```text
+kekayaan = koin + sum_k (stok_kapal[k] * harga_dasar[k])
 ```
-kekayaan = koin + sum(stok_kapal[k] * harga_dasar[k])
-```
-Pakai harga dasar (bukan harga pasar) supaya tidak bisa dimanipulasi dengan mendorong harga di pelabuhan.
+Menggunakan `harga_dasar` (bukan harga pasar lokal) agar peringkat tidak dapat dimanipulasi dengan menggoreng harga sesaat di satu pelabuhan.
 
-## Invarian (harus selalu benar; dites otomatis)
+## Invarian (harus selalu benar; dites otomatis setiap tick)
 1. Tidak ada koin pemain (`players.coins`), kas pelabuhan (`ports.treasury`), atau stok (`market.stock`, `ship_cargo.qty`) yang negatif.
-2. `players.coins == sum(ledger.delta per pemain)`.
-3. **Konservasi Uang Global (ADR-009):**
-   `sum(players.coins) + sum(ports.treasury) + pengurang_kumulatif_upkeep == total_modal_awal_pemain + total_kas_awal_pelabuhan`.
-4. Harga dalam `[round(dasar*0.25), round(dasar*4.0)]` dan bilangan bulat `>= 1`.
-5. Muatan kapal `<= kapasitas`.
-6. Stok pelabuhan dalam `[0, kapasitasGudang]`.
+2. `players.coins + players.unflushed_upkeep == sum(ledger.delta per pemain)` di setiap tick, dan `players.coins == sum(ledger.delta per pemain)` setiap selesai flush blok upkeep / transaksi.
+3. **Konservasi Uang Global (ADR-009 & ADR-010):**
+   ```text
+   total_koin_pemain + total_kas_pelabuhan + pengurang_kumulatif == total_awal + sumber_kumulatif
+   ```
+4. Harga selalu dalam `[round(dasar * 0.25), round(dasar * 4.0)]` dan bilangan bulat `>= 1`.
+5. Total muatan kapal `<= kapasitas` (`ships.capacity`).
+6. Stok pelabuhan selalu dalam `[0, kapasitasGudang]`.
 
-## Pemeriksaan eksploit
-- **Arbitrase siklus:** beli $n$ unit A → jual $n$ unit A di pelabuhan yang sama pada tick yang sama selalu menghasilkan rugi bersih tepat sebesar $F_{	ext{beli}} + F_{	ext{jual}} \ge 2$ koin (termasuk di batas harga clamp `0.25x` dan `4.0x`).
-- **Pembulatan:** beli lalu jual 1 unit berulang tidak pernah menghasilkan untung.
-- **Dorong harga:** menguras stok untuk menaikkan harga lalu menjual kembali di pelabuhan yang sama selalu rugi sebesar biaya dua sisi.
-
-## Metrik simulasi yang dipantau
-Harga rata-rata dan volatilitas per komoditas, persentase tick di batas harga (`0.25x` / `4.0x`), Gini kekayaan, pangsa kekayaan maksimum per strategi, total koin pemain, total kas pelabuhan, pengurang kumulatif (`upkeep`), margin rata-rata per rute, persentase bot yang bangkrut (`grounded`), dan laporan upaya eksploit bot adversarial.
+## Gerbang kualitas otomatis `sim-cli` (`Tugas f`)
+Perintah `pnpm sim:run` (`apps/worker/src/sim-cli.ts`) wajib keluar dengan **exit code non-nol (`1`)** jika salah satu ambang berikut dilanggar pada seed mana pun:
+1. **Invarian & Konservasi Uang**: `invariantViolations == 0` dan `moneyConservation.valid == true`.
+2. **Ketahanan Eksploit Adversarial**: `adversarial.profitableExploitsFound == 0`.
+3. **Batas Harga Clamp**: Persentase tick di mana harga menempel di batas bawah (`0.25x`) atau batas atas (`4.0x`) pada komoditas mana pun **tidak boleh melebihi `20%`** (`pctTicksAtBounds <= 20%`).
+4. **Harga Hidup (Tidak Konstan)**: Standar deviasi harga tiap komoditas harus positif (`stdDevPrice > 0`).
+5. **Likuiditas Kas Pelabuhan**: Kas pelabuhan mana pun tidak boleh menyentuh `0` sebelum tick akhir (`minPortTreasuryCoins > 0`).
+6. **Batas Kebangkrutan Bot**: Persentase bot berstatus `grounded` di akhir simulasi **tidak boleh melebihi `30%`** (`bankruptBotPct <= 30%`).
+7. **Anti-Monopoli & Gradien Keahlian**: Pangsa kekayaan satu strategi tidak boleh melebihi **`40%`** (`maxStrategyWealthSharePct <= 40%`), dan pada simulasi $\ge 1.000$ tick rasio kekayaan rata-rata strategi cerdas terbaik terhadap `naive` minimal **`1,3x`** (`skillGradientRatio >= 1.3`).
+8. **Stabilitas Koin Pemain Jangka Panjang**: Pada simulasi $\ge 10.000$ tick, pergeseran relatif rata-rata total koin pemain antara Kuartal 3 dan Kuartal 4 **tidak boleh melebihi `15%`** (`relativeDriftPct <= 15%`).

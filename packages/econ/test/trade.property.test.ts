@@ -11,7 +11,7 @@ import {
   periksaInvarianEkonomi,
 } from '../src/index.js';
 
-describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Konservasi Uang', () => {
+describe('M1 — packages/econ: Transaksi Simetris, Syarat Kas Jual (N <= treasury), & Konservasi Uang', () => {
   it('1. Properti Simetri Beli-lalu-Jual: untuk n acak 1..500 dan stok awal acak, beli n lalu jual n selalu memakai kumpulan harga identik dan rugi tepat 2x biaya', () => {
     fc.assert(
       fc.property(
@@ -80,12 +80,11 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
   });
 
   it('2. Kasus Tepi Simetri di Batas Clamp Harga (0.25x dan 4.0x) serta Pembulatan Integer untuk n = 1..500', () => {
-    // Rezim 4.0x (stok sangat rendah relatif target besar) & rezim 0.25x (stok sangat tinggi relatif target kecil)
     const edgeCases = [
-      { stock: 500n, target: 50000n, basePrice: 17n, n: 500n }, // Semua unit menempel di clamp 4.0x
-      { stock: 5000n, target: 10n, basePrice: 19n, n: 500n }, // Semua unit menempel di clamp 0.25x
-      { stock: 600n, target: 400n, basePrice: 70n, n: 500n }, // Melintasi tengah kurva hingga dekat clamp 4.0x
-      { stock: 1n, target: 400n, basePrice: 1n, n: 1n }, // Harga dasar minimum 1 koin, 1 unit
+      { stock: 500n, target: 50000n, basePrice: 17n, n: 500n },
+      { stock: 5000n, target: 10n, basePrice: 19n, n: 500n },
+      { stock: 600n, target: 400n, basePrice: 70n, n: 500n },
+      { stock: 1n, target: 400n, basePrice: 1n, n: 1n },
     ];
 
     for (const tc of edgeCases) {
@@ -127,7 +126,6 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
   });
 
   it('3. Kasus Tepi beli(maks) dan jual(semua): koin kurang, muatan penuh, stok habis, kas pelabuhan kosong/terbatas', () => {
-    // 3.1 Koin kurang untuk 1 unit pun (harga pala di stok 400 = 70, biaya = 2, butuh 72 koin; pemain hanya punya 71)
     const kurangKoin = eksekusiBeli({
       stock: 400n,
       target: 400n,
@@ -142,10 +140,10 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
       config: WORLD_CONFIG,
     });
     expect(kurangKoin.ok).toBe(false);
+    expect(kurangKoin.code).toBe('ZERO_QUANTITY');
     expect(kurangKoin.executedQty).toBe(0n);
     expect(kurangKoin.newPlayerCoins).toBe(71n);
 
-    // 3.2 Koin pas untuk tepat 1 unit (72 koin)
     const pasSatuUnit = eksekusiBeli({
       stock: 400n,
       target: 400n,
@@ -163,7 +161,6 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
     expect(pasSatuUnit.executedQty).toBe(1n);
     expect(pasSatuUnit.newPlayerCoins).toBe(0n);
 
-    // 3.3 Muatan kapal sudah penuh (shipTotalCargo == shipCapacity)
     const muatanPenuh = eksekusiBeli({
       stock: 400n,
       target: 400n,
@@ -180,7 +177,6 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
     expect(muatanPenuh.ok).toBe(false);
     expect(muatanPenuh.executedQty).toBe(0n);
 
-    // 3.4 Kas pelabuhan kosong (portTreasury == 0) saat jual(semua)
     const kasKosong = eksekusiJual({
       stock: 400n,
       target: 400n,
@@ -199,10 +195,12 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
     expect(kasKosong.newPortTreasury).toBe(0n);
     expect(kasKosong.newShipCargoQty).toBe(10n);
 
-    // 3.5 Kas pelabuhan terbatas (hanya cukup membeli sebagian muatan kapal)
-    const hargaUnitPertama = hitungHarga(401n, 400n, 70n, WORLD_CONFIG);
-    const hargaUnitKedua = hitungHarga(402n, 400n, 70n, WORLD_CONFIG);
-    const kasPasDuaUnit = hargaUnitPertama + hargaUnitKedua;
+    // Kas pelabuhan terbatas: cukup untuk tepat 2 unit berdasarkan pembayaran bersih N(2) = G(2) - F(G(2))
+    const g2 =
+      hitungHarga(401n, 400n, 70n, WORLD_CONFIG) +
+      hitungHarga(402n, 400n, 70n, WORLD_CONFIG);
+    const f2 = hitungBiayaPelabuhan(g2, WORLD_CONFIG);
+    const netDuaUnit = g2 - f2;
 
     const kasTerbatas = eksekusiJual({
       stock: 400n,
@@ -213,17 +211,119 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
       shipCargoQty: 10n,
       shipTotalCargo: 10n,
       shipCapacity: 20,
-      portTreasury: kasPasDuaUnit,
+      portTreasury: netDuaUnit,
       requestedQty: 'semua',
       config: WORLD_CONFIG,
     });
     expect(kasTerbatas.ok).toBe(true);
     expect(kasTerbatas.executedQty).toBe(2n);
     expect(kasTerbatas.newShipCargoQty).toBe(8n);
-    expect(kasTerbatas.newPortTreasury >= 0n).toBe(true);
+    expect(kasTerbatas.newPortTreasury).toBe(0n);
   });
 
-  it('4. Properti Optimality Binary Search beli(maks) dan jual(semua): n yang dipilih selalu maksimal yang sah', () => {
+  it('4. Tes Batas Tepat Syarat Kas Jual (Tugas i): G = treasury (N < G), N = treasury, dan kas kurang 1 koin (N - 1)', () => {
+    // 1 unit pala dijual pada stok 399 -> stok baru 400 -> G = 70, F = 2, N = G - F = 68
+    const G = hitungHarga(400n, 400n, 70n, WORLD_CONFIG);
+    const F = hitungBiayaPelabuhan(G, WORLD_CONFIG);
+    const N = G - F;
+    expect(G).toBe(70n);
+    expect(F).toBe(2n);
+    expect(N).toBe(68n);
+
+    // 4.1 Kasus G = treasury (treasury = 70, sementara N = 68 < G): LULUS, sisa kas = F = 2
+    const jualSaatKasSamaDenganG = eksekusiJual({
+      stock: 399n,
+      target: 400n,
+      basePrice: 70n,
+      capacity: 1600n,
+      playerCoins: 100n,
+      shipCargoQty: 1n,
+      shipTotalCargo: 1n,
+      shipCapacity: 20,
+      portTreasury: G,
+      requestedQty: 1n,
+      config: WORLD_CONFIG,
+    });
+    expect(jualSaatKasSamaDenganG.ok).toBe(true);
+    expect(jualSaatKasSamaDenganG.executedQty).toBe(1n);
+    expect(jualSaatKasSamaDenganG.newPlayerCoins).toBe(100n + N);
+    expect(jualSaatKasSamaDenganG.newPortTreasury).toBe(F);
+
+    // 4.2 Kasus N = treasury (treasury = 68, sementara G = 70 > treasury): LULUS, sisa kas = 0
+    const jualSaatKasSamaDenganN = eksekusiJual({
+      stock: 399n,
+      target: 400n,
+      basePrice: 70n,
+      capacity: 1600n,
+      playerCoins: 100n,
+      shipCargoQty: 1n,
+      shipTotalCargo: 1n,
+      shipCapacity: 20,
+      portTreasury: N,
+      requestedQty: 1n,
+      config: WORLD_CONFIG,
+    });
+    expect(jualSaatKasSamaDenganN.ok).toBe(true);
+    expect(jualSaatKasSamaDenganN.executedQty).toBe(1n);
+    expect(jualSaatKasSamaDenganN.newPlayerCoins).toBe(100n + N);
+    expect(jualSaatKasSamaDenganN.newPortTreasury).toBe(0n);
+
+    const jualSemuaSaatKasSamaDenganN = eksekusiJual({
+      stock: 399n,
+      target: 400n,
+      basePrice: 70n,
+      capacity: 1600n,
+      playerCoins: 100n,
+      shipCargoQty: 5n,
+      shipTotalCargo: 5n,
+      shipCapacity: 20,
+      portTreasury: N,
+      requestedQty: 'semua',
+      config: WORLD_CONFIG,
+    });
+    expect(jualSemuaSaatKasSamaDenganN.ok).toBe(true);
+    expect(jualSemuaSaatKasSamaDenganN.executedQty).toBe(1n);
+    expect(jualSemuaSaatKasSamaDenganN.newPortTreasury).toBe(0n);
+
+    // 4.3 Kasus kas kurang satu koin (treasury = N - 1 = 67): DITOLAK, state tidak berubah
+    const jualEksplisitKurangSatuKoin = eksekusiJual({
+      stock: 399n,
+      target: 400n,
+      basePrice: 70n,
+      capacity: 1600n,
+      playerCoins: 100n,
+      shipCargoQty: 1n,
+      shipTotalCargo: 1n,
+      shipCapacity: 20,
+      portTreasury: N - 1n,
+      requestedQty: 1n,
+      config: WORLD_CONFIG,
+    });
+    expect(jualEksplisitKurangSatuKoin.ok).toBe(false);
+    expect(jualEksplisitKurangSatuKoin.code).toBe('PORT_TREASURY_LOW');
+    expect(jualEksplisitKurangSatuKoin.executedQty).toBe(0n);
+    expect(jualEksplisitKurangSatuKoin.newPortTreasury).toBe(N - 1n);
+
+    const jualSemuaKurangSatuKoin = eksekusiJual({
+      stock: 399n,
+      target: 400n,
+      basePrice: 70n,
+      capacity: 1600n,
+      playerCoins: 100n,
+      shipCargoQty: 1n,
+      shipTotalCargo: 1n,
+      shipCapacity: 20,
+      portTreasury: N - 1n,
+      requestedQty: 'semua',
+      config: WORLD_CONFIG,
+    });
+    expect(jualSemuaKurangSatuKoin.ok).toBe(false);
+    expect(jualSemuaKurangSatuKoin.code).toBe('ZERO_QUANTITY');
+    expect(jualSemuaKurangSatuKoin.executedQty).toBe(0n);
+    expect(jualSemuaKurangSatuKoin.newPortTreasury).toBe(N - 1n);
+  });
+
+  it('5. Properti Optimality Binary Search beli(maks) dan jual(semua): n yang dipilih selalu maksimal yang sah', () => {
     fc.assert(
       fc.property(
         fc.bigInt({ min: 0n, max: 800n }),
@@ -255,7 +355,6 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
           expect(res.qty <= maxPhysical).toBe(true);
           expect(res.totalCost <= playerCoins).toBe(true);
 
-          // Jika masih ada ruang fisik (res.qty < maxPhysical), maka menambah 1 unit lagi PASTI melebihi playerCoins
           if (res.qty < maxPhysical) {
             const nextPrice = hitungHarga(
               stock - res.qty,
@@ -296,7 +395,7 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
           const maxPhysical =
             shipCargoQty < freeWarehouse ? shipCargoQty : freeWarehouse;
           expect(res.qty <= maxPhysical).toBe(true);
-          expect(res.grossValue <= portTreasury).toBe(true);
+          expect(res.netPayout <= portTreasury).toBe(true);
 
           if (res.qty < maxPhysical) {
             const nextPrice = hitungHarga(
@@ -306,7 +405,9 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
               WORLD_CONFIG,
             );
             const nextGross = res.grossValue + nextPrice;
-            expect(nextGross > portTreasury).toBe(true);
+            const nextFee = hitungBiayaPelabuhan(nextGross, WORLD_CONFIG);
+            const nextNet = nextGross - nextFee;
+            expect(nextNet > portTreasury).toBe(true);
           }
         },
       ),
@@ -314,12 +415,12 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
     );
   });
 
-  it('5. Properti Konservasi Uang Global: untuk urutan acak beli, jual, dan perawatan kapal (upkeep), total_koin_pemain + total_kas_pelabuhan + upkeep_kumulatif == total_awal', () => {
+  it('6. Properti Konservasi Uang Global dengan sumber_kumulatif: untuk urutan acak beli, jual, upkeep, dan pendapatan pelabuhan, koin + kas + pengurang == awal + sumber', () => {
     fc.assert(
       fc.property(
         fc.array(
           fc.record({
-            kind: fc.constantFrom('buy', 'sell', 'upkeep'),
+            kind: fc.constantFrom('buy', 'sell', 'upkeep', 'port_income'),
             qty: fc.bigInt({ min: 1n, max: 15n }),
           }),
           { minLength: 1, maxLength: 60 },
@@ -330,6 +431,7 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
           let playerCoins = initialPlayerCoins;
           let portTreasury = initialPortTreasury;
           let cumulativeUpkeep = 0n;
+          let cumulativeSource = 0n;
           let ledgerSum = initialPlayerCoins;
           let stock = 400n;
           let cargo = 0n;
@@ -378,6 +480,10 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
                 cargo = res.newShipCargoQty;
                 ledgerSum += res.netPlayerDelta;
               }
+            } else if (op.kind === 'port_income') {
+              const income = op.qty * 10n;
+              portTreasury += income;
+              cumulativeSource += income;
             } else {
               if (playerCoins >= WORLD_CONFIG.UPKEEP_PER_TICK) {
                 playerCoins -= WORLD_CONFIG.UPKEEP_PER_TICK;
@@ -386,7 +492,6 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
               }
             }
 
-            // Periksa invarian setiap langkah
             const check = periksaInvarianEkonomi({
               players: [
                 {
@@ -423,6 +528,7 @@ describe('M1 — packages/econ: Transaksi Simetris, Beli(maks)/Jual(semua), & Ko
               ],
               ledgerDeltasByPlayer: new Map([[1n, ledgerSum]]),
               cumulativeUpkeepSink: cumulativeUpkeep,
+              cumulativeSource,
             });
 
             expect(check.valid).toBe(true);

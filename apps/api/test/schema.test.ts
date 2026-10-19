@@ -30,6 +30,7 @@ const EXPECTED_GAME_TABLES = [
   'action_log',
   'tick_state',
   'refresh_tokens',
+  'economy_sources_sinks',
   'schema_migrations',
 ] as const;
 
@@ -124,6 +125,7 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
     const appliedFirst = await runMigrations(testPool);
     expect(appliedFirst).toContain('0001_init');
     expect(appliedFirst).toContain('0002_port_treasury_and_sinks');
+    expect(appliedFirst).toContain('0003_port_income_and_ledger_compaction');
 
     // Eksekusi ulang migrasi pada DB yang sama harus menghasilkan [] (idempoten)
     const appliedSecond = await runMigrations(testPool);
@@ -205,6 +207,25 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
     );
     expect(Number(marketCount.rows[0]?.count)).toBe(MARKET_SEED.length);
     expect(Number(marketCount.rows[0]?.count)).toBe(24);
+
+    // Verifikasi keseimbangan produksi = konsumsi global per komoditas (total_prod = 23, total_cons = 23)
+    const balanceRes = await testPool.query<{
+      commodity_id: number;
+      total_prod: string;
+      total_cons: string;
+    }>(`
+      SELECT commodity_id,
+             SUM(production) AS total_prod,
+             SUM(consumption) AS total_cons
+      FROM public.market
+      GROUP BY commodity_id
+      ORDER BY commodity_id ASC;
+    `);
+    expect(balanceRes.rows.length).toBe(COMMODITIES_SEED.length);
+    for (const row of balanceRes.rows) {
+      expect(Number(row.total_prod)).toBe(23);
+      expect(Number(row.total_cons)).toBe(23);
+    }
 
     // Jalankan seed kedua untuk menguji idempotensi
     await seedWorld(testPool);
@@ -421,13 +442,25 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
     const auditCargoRes = await testPool.query(auditCargoQuery);
     expect(auditCargoRes.rows.length).toBe(0);
 
-    // 7.3. Konservasi Uang Global (ADR-009):
-    // total_player_coins + total_port_treasury + cumulative_upkeep_sink == total_initial_money
+    // Simulasikan pendapatan pelabuhan (source = 500) ke kas pelabuhan 6 (Batavia)
+    await testPool.query('BEGIN');
+    await testPool.query(
+      `UPDATE public.ports SET treasury = treasury + 500 WHERE id = 6`,
+    );
+    await testPool.query(
+      `INSERT INTO public.economy_sources_sinks (tick_no, kind, reason, port_id, amount)
+       VALUES (2, 'source', 'port_income', 6, 500)`,
+    );
+    await testPool.query('COMMIT');
+
+    // 7.3. Konservasi Uang Global (ADR-009 & ADR-010):
+    // total_player_coins + total_port_treasury + cumulative_upkeep_sink == total_initial_money + cumulative_source
     const moneyAuditRes = await testPool.query<{
       total_player_coins: string;
       total_port_treasury: string;
       cumulative_upkeep_sink: string;
       total_initial_money: string;
+      cumulative_source: string;
     }>(`SELECT * FROM public.economy_money_supply_audit`);
     const auditRow = moneyAuditRes.rows[0];
     expect(auditRow).toBeDefined();
@@ -436,7 +469,48 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
       BigInt(auditRow?.total_player_coins ?? '0') +
       BigInt(auditRow?.total_port_treasury ?? '0') +
       BigInt(auditRow?.cumulative_upkeep_sink ?? '0');
-    const rhs = BigInt(auditRow?.total_initial_money ?? '0');
+    const rhs =
+      BigInt(auditRow?.total_initial_money ?? '0') +
+      BigInt(auditRow?.cumulative_source ?? '0');
     expect(lhs).toBe(rhs);
+
+    // 7.4. Pengujian agregasi blok upkeep (A5 / ADR-011):
+    // Akumulasi 5 tick upkeep pada unflushed_upkeep tetap menjaga konservasi uang global,
+    // dan saat di-flush sebagai satu baris ringkasan ke ledger, players.coins == SUM(ledger.delta) eksak.
+    await testPool.query('BEGIN');
+    await testPool.query(
+      `UPDATE public.players
+       SET coins = coins - 5,
+           unflushed_upkeep = unflushed_upkeep + 5,
+           cumulative_upkeep_paid = cumulative_upkeep_paid + 5
+       WHERE id = $1`,
+      [playerId],
+    );
+    await testPool.query('COMMIT');
+
+    // Sebelum flush: p.coins + p.unflushed_upkeep == SUM(ledger.delta)
+    const midBatchRes = await testPool.query(
+      `SELECT p.id FROM public.players p
+       LEFT JOIN (SELECT player_id, SUM(delta) s FROM public.ledger GROUP BY 1) l ON l.player_id = p.id
+       WHERE (p.coins + p.unflushed_upkeep) <> COALESCE(l.s, 0);`,
+    );
+    expect(midBatchRes.rows.length).toBe(0);
+
+    // Flush ringkasan blok ke ledger dan reset unflushed_upkeep = 0
+    await testPool.query('BEGIN');
+    await testPool.query(
+      `INSERT INTO public.ledger (player_id, tick_no, delta, reason, meta)
+       VALUES ($1, 7, -5, 'upkeep', '{"from_tick":3,"to_tick":7,"ticks_count":5}'::jsonb)`,
+      [playerId],
+    );
+    await testPool.query(
+      `UPDATE public.players SET unflushed_upkeep = 0 WHERE id = $1`,
+      [playerId],
+    );
+    await testPool.query('COMMIT');
+
+    // Setelah flush: invarian p.coins == SUM(ledger.delta) kembali terpenuhi
+    const afterFlushRes = await testPool.query(auditSaldoQuery);
+    expect(afterFlushRes.rows.length).toBe(0);
   });
 });

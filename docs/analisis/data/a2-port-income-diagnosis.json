@@ -1,0 +1,457 @@
+{
+  "diag50kNoIncome": {
+    "portTreasuryStats": {
+      "banda": {
+        "portCode": "banda",
+        "initialTreasury": "50000",
+        "finalTreasury": "1056",
+        "minTreasury": "2",
+        "minTreasuryTick": 899,
+        "maxTreasury": "61522",
+        "meanTreasury": 2902,
+        "firstZeroTick": null
+      },
+      "ternate": {
+        "portCode": "ternate",
+        "initialTreasury": "50000",
+        "finalTreasury": "3029",
+        "minTreasury": "3029",
+        "minTreasuryTick": 2104,
+        "maxTreasury": "122390",
+        "meanTreasury": 23150,
+        "firstZeroTick": null
+      },
+      "surabaya": {
+        "portCode": "surabaya",
+        "initialTreasury": "50000",
+        "finalTreasury": "39",
+        "minTreasury": "11",
+        "minTreasuryTick": 200,
+        "maxTreasury": "52416",
+        "meanTreasury": 425,
+        "firstZeroTick": null
+      },
+      "malaka": {
+        "portCode": "malaka",
+        "initialTreasury": "50000",
+        "finalTreasury": "210",
+        "minTreasury": "6",
+        "minTreasuryTick": 185,
+        "maxTreasury": "68788",
+        "meanTreasury": 946,
+        "firstZeroTick": null
+      },
+      "makassar": {
+        "portCode": "makassar",
+        "initialTreasury": "50000",
+        "finalTreasury": "12",
+        "minTreasury": "2",
+        "minTreasuryTick": 247,
+        "maxTreasury": "58173",
+        "meanTreasury": 1063,
+        "firstZeroTick": null
+      },
+      "batavia": {
+        "portCode": "batavia",
+        "initialTreasury": "50000",
+        "finalTreasury": "8",
+        "minTreasury": "1",
+        "minTreasuryTick": 45,
+        "maxTreasury": "50313",
+        "meanTreasury": 162,
+        "firstZeroTick": null
+      }
+    },
+    "overallPctTicksAtBounds": 63.88,
+    "bankruptBotPct": 94,
+    "sampleCurve": [
+      {
+        "tick": 500,
+        "totalPlayerCoins": "203382",
+        "totalPortTreasury": "122131",
+        "portTreasuries": {
+          "banda": "13247",
+          "ternate": "108153",
+          "surabaya": "39",
+          "malaka": "6",
+          "makassar": "678",
+          "batavia": "8"
+        },
+        "meanPriceByCommodity": {
+          "pala": 158,
+          "cengkeh": 203,
+          "garam": 58.33,
+          "kain": 130.83
+        }
+      },
+      {
+        "tick": 1000,
+        "totalPlayerCoins": "180920",
+        "totalPortTreasury": "122060",
+        "portTreasuries": {
+          "banda": "30",
+          "ternate": "121965",
+          "surabaya": "39",
+          "malaka": "6",
+          "makassar": "12",
+          "batavia": "8"
+        },
+        "meanPriceByCommodity": {
+          "pala": 158.17,
+          "cengkeh": 203,
+          "garam": 58.33,
+          "kain": 130.83
+        }
+      },
+      {
+        "tick": 1500,
+        "totalPlayerCoins": "172591",
+        "totalPortTreasury": "110858",
+        "portTreasuries": {
+          "banda": "891",
+          "ternate": "109698",
+          "surabaya": "39",
+          "malaka": "210",
+          "makassar": "12",
+          "batavia": "8"
+        },
+        "meanPriceByCommodity": {
+          "pala": 160.83,
+          "cengkeh": 211.67,
+          "garam": 58.33,
+          "kain": 130.83
+        }
+      },
+      {
+        "tick": 2000,
+        "totalPlayerCoins": "213580",
+        "totalPortTreasury": "52420",
+        "portTreasuries": {
+          "banda": "3072",
+          "ternate": "49079",
+          "surabaya": "39",
+          "malaka": "210",
+          "makassar": "12",
+          "batavia": "8"
+        },
+        "meanPriceByCommodity": {
+          "pala": 184.17,
+          "cengkeh": 255.83,
+          "garam": 58.33,
+          "kain": 130.83
+        }
+      },
+      {
+        "tick": 2500,
+        "totalPlayerCoins": "246167",
+        "totalPortTreasury": "4354",
+        "portTreasuries": {
+          "banda": "1056",
+          "ternate": "3029",
+          "surabaya": "39",
+          "malaka": "210",
+          "makassar": "12",
+          "batavia": "8"
+        },
+        "meanPriceByCommodity": {
+          "pala": 199.33,
+          "cengkeh": 255.83,
+          "garam": 58.33,
+          "kain": 130.83
+        }
+      },
+      {
+        "tick": 3000,
+        "totalPlayerCoins": "231417",
+        "totalPortTreasury": "4354",
+        "portTreasuries": {
+          "banda": "1056",
+          "ternate": "3029",
+          "surabaya": "39",
+          "malaka": "210",
+          "makassar": "12",
+          "batavia": "8"
+        },
+        "meanPriceByCommodity": {
+          "pala": 199.33,
+          "cengkeh": 255.83,
+          "garam": 58.33,
+          "kain": 130.83
+        }
+      },
+      {
+        "tick": 3500,
+        "totalPlayerCoins": "216917",
+        "totalPortTreasury": "4354",
+        "portTreasuries": {
+          "banda": "1056",
+          "ternate": "3029",
+          "surabaya": "39",
+          "malaka": "210",
+          "makassar": "12",
+          "batavia": "8"
+        },
+        "meanPriceByCommodity": {
+          "pala": 199.33,
+          "cengkeh": 255.83,
+          "garam": 58.33,
+          "kain": 130.83
+        }
+      },
+      {
+        "tick": 4000,
+        "totalPlayerCoins": "202800",
+        "totalPortTreasury": "4354",
+        "portTreasuries": {
+          "banda": "1056",
+          "ternate": "3029",
+          "surabaya": "39",
+          "malaka": "210",
+          "makassar": "12",
+          "batavia": "8"
+        },
+        "meanPriceByCommodity": {
+          "pala": 199.33,
+          "cengkeh": 255.83,
+          "garam": 58.33,
+          "kain": 130.83
+        }
+      }
+    ]
+  },
+  "diag25mNoIncome200k": {
+    "portTreasuryStats": {
+      "banda": {
+        "portCode": "banda",
+        "initialTreasury": "25000000",
+        "finalTreasury": "2110",
+        "minTreasury": "690",
+        "minTreasuryTick": 178530,
+        "maxTreasury": "25003444",
+        "meanTreasury": 6121549,
+        "firstZeroTick": null
+      },
+      "ternate": {
+        "portCode": "ternate",
+        "initialTreasury": "25000000",
+        "finalTreasury": "10620378",
+        "minTreasury": "10595656",
+        "minTreasuryTick": 191617,
+        "maxTreasury": "25052994",
+        "meanTreasury": 14022281,
+        "firstZeroTick": null
+      },
+      "surabaya": {
+        "portCode": "surabaya",
+        "initialTreasury": "25000000",
+        "finalTreasury": "69",
+        "minTreasury": "58",
+        "minTreasuryTick": 21111,
+        "maxTreasury": "25001178",
+        "meanTreasury": 1279744,
+        "firstZeroTick": null
+      },
+      "malaka": {
+        "portCode": "malaka",
+        "initialTreasury": "25000000",
+        "finalTreasury": "60",
+        "minTreasury": "60",
+        "minTreasuryTick": 96546,
+        "maxTreasury": "28588890",
+        "meanTreasury": 6914819,
+        "firstZeroTick": null
+      },
+      "makassar": {
+        "portCode": "makassar",
+        "initialTreasury": "25000000",
+        "finalTreasury": "24782519",
+        "minTreasury": "24762763",
+        "minTreasuryTick": 176868,
+        "maxTreasury": "25106466",
+        "meanTreasury": 24895257,
+        "firstZeroTick": null
+      },
+      "batavia": {
+        "portCode": "batavia",
+        "initialTreasury": "25000000",
+        "finalTreasury": "14",
+        "minTreasury": "14",
+        "minTreasuryTick": 14659,
+        "maxTreasury": "25000000",
+        "meanTreasury": 918196,
+        "firstZeroTick": null
+      }
+    },
+    "overallPctTicksAtBounds": 51.12,
+    "bankruptBotPct": 93.33,
+    "bataviaCurve": [
+      {
+        "tick": 10000,
+        "bataviaTreasury": "8008842",
+        "totalPlayerCoins": "9101217"
+      },
+      {
+        "tick": 20000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "6528944"
+      },
+      {
+        "tick": 30000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "1631695"
+      },
+      {
+        "tick": 40000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "1308757"
+      },
+      {
+        "tick": 50000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "1690316"
+      },
+      {
+        "tick": 60000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "838943"
+      },
+      {
+        "tick": 70000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "414619"
+      },
+      {
+        "tick": 80000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "739907"
+      },
+      {
+        "tick": 90000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "2300636"
+      },
+      {
+        "tick": 100000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "420693"
+      },
+      {
+        "tick": 110000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "49855"
+      },
+      {
+        "tick": 120000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "94434"
+      },
+      {
+        "tick": 130000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "143739"
+      },
+      {
+        "tick": 140000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "189559"
+      },
+      {
+        "tick": 150000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "147155"
+      },
+      {
+        "tick": 160000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "136884"
+      },
+      {
+        "tick": 170000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "221851"
+      },
+      {
+        "tick": 180000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "205129"
+      },
+      {
+        "tick": 190000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "9345"
+      },
+      {
+        "tick": 200000,
+        "bataviaTreasury": "14",
+        "totalPlayerCoins": "15307"
+      }
+    ]
+  },
+  "mechM1UncappedFaucet": {
+    "finalPortTreasury": "7958024",
+    "finalPlayerCoins": "152178",
+    "cumulativeSource": "8579307",
+    "portTreasuryStats": {
+      "banda": {
+        "portCode": "banda",
+        "initialTreasury": "50000",
+        "finalTreasury": "1672970",
+        "minTreasury": "50000",
+        "minTreasuryTick": 0,
+        "maxTreasury": "1672970",
+        "meanTreasury": 894295,
+        "firstZeroTick": null
+      },
+      "ternate": {
+        "portCode": "ternate",
+        "initialTreasury": "50000",
+        "finalTreasury": "3925716",
+        "minTreasury": "50000",
+        "minTreasuryTick": 0,
+        "maxTreasury": "3928746",
+        "meanTreasury": 2011570,
+        "firstZeroTick": null
+      },
+      "surabaya": {
+        "portCode": "surabaya",
+        "initialTreasury": "50000",
+        "finalTreasury": "1060507",
+        "minTreasury": "0",
+        "minTreasuryTick": 396,
+        "maxTreasury": "1071139",
+        "meanTreasury": 495713,
+        "firstZeroTick": 396
+      },
+      "malaka": {
+        "portCode": "malaka",
+        "initialTreasury": "50000",
+        "finalTreasury": "943275",
+        "minTreasury": "50000",
+        "minTreasuryTick": 0,
+        "maxTreasury": "945433",
+        "meanTreasury": 500871,
+        "firstZeroTick": null
+      },
+      "makassar": {
+        "portCode": "makassar",
+        "initialTreasury": "50000",
+        "finalTreasury": "355535",
+        "minTreasury": "30503",
+        "minTreasuryTick": 444,
+        "maxTreasury": "355535",
+        "meanTreasury": 177850,
+        "firstZeroTick": null
+      },
+      "batavia": {
+        "portCode": "batavia",
+        "initialTreasury": "50000",
+        "finalTreasury": "21",
+        "minTreasury": "0",
+        "minTreasuryTick": 169,
+        "maxTreasury": "89881",
+        "meanTreasury": 660,
+        "firstZeroTick": 169
+      }
+    }
+  }
+}

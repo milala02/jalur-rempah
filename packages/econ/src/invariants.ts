@@ -29,6 +29,7 @@ export interface EconomySnapshot {
   }[];
   readonly ledgerDeltasByPlayer: ReadonlyMap<bigint, bigint>;
   readonly cumulativeUpkeepSink: bigint;
+  readonly cumulativeSource?: bigint;
 }
 
 export interface InvariantCheckResult {
@@ -76,19 +77,27 @@ export function periksaInvarianEkonomi(
 
   if (snapshot.cumulativeUpkeepSink < 0n) {
     violations.push(
-      `Pengurang kumulatif upkeep negatif: ${snapshot.cumulativeUpkeepSink.toString()}`,
+      `Pengurang kumulatif negatif: ${snapshot.cumulativeUpkeepSink.toString()}`,
     );
   }
 
-  // Invarian Konservasi Uang Global (ADR-009):
-  // total_koin_pemain + total_kas_pelabuhan + pengurang_kumulatif == total_awal
-  const totalCurrentPlusSink =
-    totalPlayerCoins + totalPortTreasury + snapshot.cumulativeUpkeepSink;
-  const totalInitial = totalInitialPlayerCoins + totalInitialPortTreasury;
-
-  if (totalCurrentPlusSink !== totalInitial) {
+  const cumulativeSource = snapshot.cumulativeSource ?? 0n;
+  if (cumulativeSource < 0n) {
     violations.push(
-      `Pelanggaran konservasi uang: (koin=${totalPlayerCoins.toString()} + kas=${totalPortTreasury.toString()} + upkeep=${snapshot.cumulativeUpkeepSink.toString()} = ${totalCurrentPlusSink.toString()}) != total_awal (${totalInitial.toString()})`,
+      `Sumber kumulatif negatif: ${cumulativeSource.toString()}`,
+    );
+  }
+
+  // Invarian Konservasi Uang Global (ADR-009 & ADR-010):
+  // total_koin_pemain + total_kas_pelabuhan + pengurang_kumulatif == total_awal + sumber_kumulatif
+  const lhs =
+    totalPlayerCoins + totalPortTreasury + snapshot.cumulativeUpkeepSink;
+  const rhs =
+    totalInitialPlayerCoins + totalInitialPortTreasury + cumulativeSource;
+
+  if (lhs !== rhs) {
+    violations.push(
+      `Pelanggaran konservasi uang: (koin=${totalPlayerCoins.toString()} + kas=${totalPortTreasury.toString()} + pengurang=${snapshot.cumulativeUpkeepSink.toString()} = ${lhs.toString()}) != (awal=${(totalInitialPlayerCoins + totalInitialPortTreasury).toString()} + sumber=${cumulativeSource.toString()} = ${rhs.toString()})`,
     );
   }
 
