@@ -281,7 +281,7 @@ describe('Phase 2 (Setelah MVP) — Multi-Kapal, Kabut Informasi (ADR-012), Memo
   });
 
   it('4. Multi-Kapal (POST /v1/ships/buy) & Penghapusan/Anonimisasi Akun (DELETE /v1/me) Tanpa Merusak Invarian', async () => {
-    // Tambahkan modal koin ke Pemain A melalui penjualan atau kontrak agar cukup membeli kapal baru (1500 koin)
+    // Hadiah kontrak harus sesuai sisa saldo Pemain B setelah escrow 300 koin sebelumnya.
     const c2 = await api.inject<{ id: number }>({
       method: 'POST',
       url: '/v1/contracts',
@@ -290,7 +290,7 @@ describe('Phase 2 (Setelah MVP) — Multi-Kapal, Kabut Informasi (ADR-012), Memo
         port_id: 1,
         commodity_id: 1,
         qty: 2,
-        reward_coins: 900,
+        reward_coins: 600,
       },
     });
     expect(c2.statusCode).toBe(201);

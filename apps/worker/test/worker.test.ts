@@ -85,7 +85,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     await handle3!.release();
   });
 
-  it('2. Kesetaraan state_hash (docs/09 & docs/10): hasil tick Worker (via PostgreSQL) == hasil stepWorld murni di memori selama 20 tick', async () => {
+  it.sequential('2. Kesetaraan state_hash, pemulihan crash, dan rollback tick worker', async () => {
     const api = createApiServer(testPool);
 
     // Buat 2 pemain beserta kapal dan simpan aturan DSL aktif
@@ -132,7 +132,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     expect(put2.statusCode).toBe(200);
 
     // Ambil keadaan awal dari DB untuk dijalankan paralel di simulator memori murni
-    const pureState: WorldState = await loadWorldSnapshotFromDb(testPool);
+    let pureState: WorldState = await loadWorldSnapshotFromDb(testPool);
     const prog1 = compileDsl(RULE_TEMPLATES[0]!.source).ast!;
     const prog2 = compileDsl(RULE_TEMPLATES[1]!.source).ast!;
     const pureDecider = createDslShipRuleDecider(
@@ -152,6 +152,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
         101,
         true,
       );
+      pureState = expectedState;
 
       // 2. Jalankan di Worker PostgreSQL
       const dbTick = await executeSingleWorldTick(testPool, {
@@ -164,34 +165,34 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
       expect(dbTick.stateHash).toBe(expectedState.stateHash);
     }
 
-    // Verifikasi konsistensi database (ledger, muatan, konservasi uang global)
     const consistency = await checkDatabaseConsistency(testPool);
     expect(consistency.valid).toBe(true);
     expect(metrics.ticks_completed_total).toBe(20);
     expect(metrics.invariant_failures_total).toBe(0);
-  });
 
-  it('3. Pemulihan setelah kegagalan / crash di tengah tick: rollback transaksi menjaga DB utuh dan tick berikutnya lanjut dari max(tick_no) + 1', async () => {
-    const hashBeforeRes = await testPool.query<{
-      tick_no: string;
+    // Uji crash segera setelah 20 tick dan verifikasi snapshot DB sebelum rollback.
+    const tickBefore = pureState.tickNo;
+    expect(tickBefore).toBe(20);
+    const tickAudit = await testPool.query<{
+      max_tick: string;
       state_hash: string;
-    }>(
-      `SELECT tick_no::text, state_hash FROM public.tick_state ORDER BY tick_no DESC LIMIT 1`,
-    );
-    const tickBefore = Number(hashBeforeRes.rows[0]?.tick_no ?? '0');
+    }>(`SELECT MAX(tick_no)::text AS max_tick,
+               (SELECT state_hash FROM public.tick_state ORDER BY tick_no DESC LIMIT 1) AS state_hash
+        FROM public.tick_state`);
+    expect(Number(tickAudit.rows[0]?.max_tick)).toBe(tickBefore);
+    const hashBefore = tickAudit.rows[0]?.state_hash;
 
-    // Simulasikan crash mendadak tepat sebelum COMMIT pada tick ke-21
     await expect(
       executeSingleWorldTick(testPool, {
         config: WORLD_CONFIG,
         worldSeed: 101,
-        beforeCommitHook: () => {
+        beforeCommitHook: (tickNo) => {
+          expect(tickNo).toBe(tickBefore + 1);
           throw new Error('SIMULATED_KILL_9_BEFORE_COMMIT');
         },
       }),
     ).rejects.toThrow(/SIMULATED_KILL_9_BEFORE_COMMIT/);
 
-    // Pastikan tidak ada efek setengah jalan dan konsistensi DB tetap 100% valid
     const consistencyAfterCrash = await checkDatabaseConsistency(testPool);
     expect(consistencyAfterCrash.valid).toBe(true);
 
@@ -200,7 +201,12 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     );
     expect(Number(tickAfterCrashRes.rows[0]?.max_tick)).toBe(tickBefore);
 
-    // Jalankan kembali tick normal -> harus lanjut tepat di tickBefore + 1
+    const hashAfterCrashRes = await testPool.query<{ state_hash: string }>(
+      `SELECT state_hash FROM public.tick_state WHERE tick_no = $1`,
+      [tickBefore],
+    );
+    expect(hashAfterCrashRes.rows[0]?.state_hash).toBe(hashBefore);
+
     const recoveredTick = await executeSingleWorldTick(testPool, {
       config: WORLD_CONFIG,
       worldSeed: 101,
@@ -213,7 +219,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     expect(finalConsistency.ledgerMismatchPlayerIds).toEqual([]);
   });
 
-  it('4. Benchmark performa 100 kapal dengan aturan DSL: durasi p95 jauh di bawah 20% durasi tick (< 6.000 ms)', () => {
+  it('3. Benchmark performa 100 kapal dengan aturan DSL: durasi p95 jauh di bawah 20% durasi tick (< 6.000 ms)', () => {
     const players = new Map();
     const ships = new Map();
     const programsByShip = new Map();
