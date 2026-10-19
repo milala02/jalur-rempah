@@ -246,6 +246,8 @@ export function* evaluateDslProgram(
             return l === r;
           case '!=':
             return l !== r;
+          default:
+            return false;
         }
       }
       case 'call': {
