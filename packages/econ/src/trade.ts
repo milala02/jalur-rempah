@@ -3,6 +3,7 @@ import { hitungHarga } from './price.js';
 
 export type TradeFailureCode =
   | 'ZERO_QUANTITY'
+  | 'ZERO_PROCEEDS'
   | 'INSUFFICIENT_COINS'
   | 'CARGO_FULL'
   | 'OUT_OF_STOCK'
@@ -389,13 +390,6 @@ export function eksekusiJual(input: SellInput): TradeOutcome {
       'gudang pelabuhan penuh',
     );
   }
-  if (input.portTreasury <= 0n) {
-    return reject(
-      isMaxKeyword ? 'ZERO_QUANTITY' : 'PORT_TREASURY_LOW',
-      'kas pelabuhan kosong',
-    );
-  }
-
   let qty: bigint;
   let grossValue: bigint;
   let fee: bigint;
@@ -403,6 +397,19 @@ export function eksekusiJual(input: SellInput): TradeOutcome {
   if (isMaxKeyword) {
     const maxCalc = hitungJumlahJualMaks(input);
     if (maxCalc.qty <= 0n) {
+      const canAttemptOne = input.shipCargoQty > 0n && freeWarehouse > 0n;
+      if (canAttemptOne) {
+        const firstGross = hitungNilaiKotorJual(
+          input.stock,
+          1n,
+          input.target,
+          input.basePrice,
+          config,
+        );
+        if (firstGross - hitungBiayaPelabuhan(firstGross, config) === 0n) {
+          return reject('ZERO_PROCEEDS', 'hasil bersih penjualan harus > 0');
+        }
+      }
       return reject(
         'ZERO_QUANTITY',
         'kas pelabuhan tidak cukup untuk membeli 1 unit',
@@ -431,7 +438,13 @@ export function eksekusiJual(input: SellInput): TradeOutcome {
     );
     fee = hitungBiayaPelabuhan(grossValue, config);
     const netRequired = grossValue - fee;
-    if (netRequired <= 0n || netRequired > input.portTreasury) {
+    if (netRequired === 0n) {
+      return reject('ZERO_PROCEEDS', 'hasil bersih penjualan harus > 0');
+    }
+    if (netRequired < 0n) {
+      return reject('ZERO_PROCEEDS', 'hasil bersih penjualan tidak boleh negatif');
+    }
+    if (netRequired > input.portTreasury) {
       return reject('PORT_TREASURY_LOW', 'kas pelabuhan tidak mencukupi');
     }
   }

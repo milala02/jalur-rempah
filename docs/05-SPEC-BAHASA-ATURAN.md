@@ -110,7 +110,8 @@ Hasil validasi: daftar galat `{baris, kolom, kode, pesan}`; pesan dalam Indonesi
 **Kegagalan aksi** (dicatat `gagal`, evaluasi berlanjut ke aturan berikutnya):
 | Kode | Arti |
 |---|---|
-| `ZERO_QUANTITY` | jumlah <= 0, atau `maks`/`semua` menghasilkan 0 |
+| `ZERO_QUANTITY` | jumlah eksplisit <= 0, atau `maks`/`semua` tidak menghasilkan kuantitas yang dapat dieksekusi karena batas fisik/kas |
+| `ZERO_PROCEEDS` | penjualan menghasilkan pembayaran bersih `N = G - F = 0`; transaksi ditolak tanpa perubahan stok, muatan, koin, atau kas |
 | `INSUFFICIENT_COINS` | koin tidak cukup untuk jumlah eksplisit + biaya |
 | `CARGO_FULL` | muatan melebihi kapasitas kapal |
 | `OUT_OF_STOCK` | stok pelabuhan atau kapal tidak cukup untuk jumlah eksplisit |

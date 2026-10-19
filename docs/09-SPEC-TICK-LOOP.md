@@ -34,7 +34,7 @@ Semua langkah dalam **satu transaksi** (`READ COMMITTED`; konsistensi dijamin ol
    - kapal `docked` atau `sailing` yang tidak `grounded`: jika koin >= `UPKEEP_PER_TICK`, bayar (ledger `upkeep`). Jika koin kurang: kapal `docked` menjadi `grounded`; kapal `sailing` tetap berlayar dan perawatan tick itu dilewati (**tunggakan tidak diakumulasi**)
    - kapal `grounded` tidak ditagih. Jika koin pemain >= `UPKEEP_PER_TICK`, kapal membayar dan kembali `docked` pada tick yang sama
 6. **Evaluasi aturan per kapal `docked` atau `grounded`** (termasuk yang baru tiba), urutan adil: daftar diurutkan `ship_id`, lalu diputar sebanyak `t mod N` (N = jumlah kapal). Untuk tiap kapal:
-   - evaluasi aturan dari atas; aksi yang gagal dicatat dan evaluasi lanjut ke aturan berikutnya (`05`)
+   - evaluasi aturan dari atas; aksi yang gagal dicatat dengan kode (`05`) dan evaluasi lanjut ke aturan berikutnya pada tick yang sama. Penjualan dengan pembayaran bersih `N = G - F = 0` gagal dengan `ZERO_PROCEEDS`, tanpa mengubah stok, muatan, koin, atau kas; aturan berikutnya tetap dievaluasi.
    - kapal `grounded` hanya boleh `jual` dan `tunggu`
    - aksi berhasil **langsung diterapkan** (stok, kas, koin, harga), sehingga kapal berikutnya melihat dampaknya
    - tulis `ledger`, `ship_cargo`, `action_log`

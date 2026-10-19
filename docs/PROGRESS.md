@@ -2,6 +2,19 @@
 
 Perbarui di akhir setiap sesi. Terbaru di atas.
 
+## Lingkungan VPS (reproduksi CI M1)
+- Node.js `v20.20.2` via nvm (global Node 24 tidak diubah); pnpm `9.12.0` via Corepack.
+- PostgreSQL container `postgres:16-alpine` (`jr-test-pg`), `127.0.0.1:55432` -> container `5432`; user/database CI `jalur_rempah_test`, password CI `test_password`.
+- `DATABASE_URL=postgres://jalur_rempah_test:<password>@localhost:55432/jalur_rempah_test`; database smoke terpisah `jalur_rempah_smoke` pada port 55432.
+- Urutan yang dijalankan: `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm -w test`, `pnpm sim:short`, lalu buat DB kosong dengan skrip Node `pg` sesuai `.github/workflows/ci.yml` dan `DATABASE_URL="$SMOKE_DB_URL" pnpm db:migrate`.
+- Baseline sebelum perbaikan: lint/typecheck/sim/smoke lulus; suite gagal 1/22 pada properti simetri dengan counterexample `[1n, 25n, 50n, 1n]` (seed/path lokal berbeda CI).
+- Verifikasi lokal sesudah perubahan: `pnpm lint` lulus (ESLint: No issues found); `pnpm typecheck` lulus; `pnpm -w test` lulus (4 file, 24 tes); `pnpm sim:short` lulus (seed 11 dan 29; invarian 0; gate passed). Smoke `db:migrate` akan diulang pada DB kosong dan hasil dicatat sebelum selesai.
+
+### Perbaikan properti ZERO_PROCEEDS
+- Properti simetri diperkuat tanpa mempersempit generator: G dan F dihitung melalui fungsi ekonomi yang sama; N=0 menuntut penolakan tanpa mutasi, N>0 tetap menuntut seluruh asersi simetri terdahulu. Ditambah tes regresi counterexample dan properti N tidak negatif.
+- Perubahan tes dipasangkan dengan implementasi failure code `ZERO_PROCEEDS` dan spesifikasi di dokumen 05/09; properti simetri dijalankan `numRuns: 5000` untuk lima seed (`1812822188`, `1103`, `2207`, `3301`, `4409`).
+- Branch kerja `m1-ekonomi`; perubahan dibiarkan tanpa commit sesuai instruksi pemilik.
+
 ## Status saat ini
 - Milestone aktif: **M1 — Ekonomi dan dunia tanpa pemain (Revisi v0.3 + Analisis A1–A8)** (`m1-ekonomi`, siap dibawa ke GitHub Actions CI; gerbang M1 **BELUM dinyatakan lulus** sebelum CI hijau)
 - Milestone selesai: **M0 — Fondasi repo** (LULUS — CI Hijau)
