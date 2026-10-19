@@ -86,10 +86,13 @@ describe('M1 — packages/econ: Transaksi Simetris, Syarat Kas Jual (N <= treasu
             expect(sellRes.ok).toBe(false);
             expect(sellRes.code).toBe('ZERO_PROCEEDS');
             expect(sellRes.executedQty).toBe(0n);
+<<<<<<< HEAD
             expect(sellRes.grossValue).toBe(0n);
             expect(sellRes.fee).toBe(0n);
             expect(sellRes.netPlayerDelta).toBe(0n);
             expect(sellRes.netTreasuryDelta).toBe(0n);
+=======
+>>>>>>> 8940703 (perbaikan dan peningkatan)
             expect(sellRes.newStock).toBe(buyRes.newStock);
             expect(sellRes.newPlayerCoins).toBe(buyRes.newPlayerCoins);
             expect(sellRes.newShipCargoQty).toBe(buyRes.newShipCargoQty);
