@@ -1,0 +1,18 @@
+name: jalur_rempah_mobile
+description: Klien Android tipis Jalur Rempah (M5) — pasar, kapal, editor Bahasa Aturan, sandbox, dan peringkat.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

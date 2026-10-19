@@ -31,6 +31,12 @@ const EXPECTED_GAME_TABLES = [
   'tick_state',
   'refresh_tokens',
   'economy_sources_sinks',
+  'port_intel',
+  'ship_memory',
+  'guilds',
+  'guild_members',
+  'trade_contracts',
+  'world_events',
   'schema_migrations',
 ] as const;
 
@@ -126,6 +132,7 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
     expect(appliedFirst).toContain('0001_init');
     expect(appliedFirst).toContain('0002_port_treasury_and_sinks');
     expect(appliedFirst).toContain('0003_port_income_and_ledger_compaction');
+    expect(appliedFirst).toContain('0004_phase2_features');
 
     // Eksekusi ulang migrasi pada DB yang sama harus menghasilkan [] (idempoten)
     const appliedSecond = await runMigrations(testPool);

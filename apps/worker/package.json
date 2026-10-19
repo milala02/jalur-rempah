@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "sim:run": "tsx src/sim-cli.ts"
+    "start": "node dist/main.js",
+    "sim:run": "tsx src/sim-cli.ts",
+    "beta:eval": "tsx src/beta-eval-cli.ts"
   },
   "dependencies": {
     "@jalur-rempah/dsl": "workspace:*",

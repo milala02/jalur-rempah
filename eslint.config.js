@@ -21,6 +21,9 @@ export default tseslint.config(
       '**/*.d.ts',
       '**/*.d.ts.map',
       '**/*.js.map',
+      'apps/mobile/**',
+      'scripts/**',
+      'ecosystem.config.cjs',
     ],
   },
 );

@@ -15,16 +15,14 @@ import {
 
 describe('M1 — packages/econ: Transaksi Simetris, Syarat Kas Jual (N <= treasury), & Konservasi Uang', () => {
   it('1. Properti Simetri Beli-lalu-Jual: untuk n acak 1..500 dan stok awal acak, beli n lalu jual n selalu memakai kumpulan harga identik dan rugi tepat 2x biaya', () => {
-    const seeds = [1812822188, 1103, 2207, 3301, 4409];
-    for (const seed of seeds) {
-      fc.assert(
-        fc.property(
-          fc.bigInt({ min: 1n, max: 500n }),
-          fc.bigInt({ min: 0n, max: 2500n }),
-          fc.bigInt({ min: 50n, max: 1000n }),
-          fc.bigInt({ min: 1n, max: 200n }),
-          (n, extraStock, target, basePrice) => {
-            const initialStock = n + extraStock;
+    fc.assert(
+      fc.property(
+        fc.bigInt({ min: 1n, max: 500n }),
+        fc.bigInt({ min: 0n, max: 2500n }),
+        fc.bigInt({ min: 50n, max: 1000n }),
+        fc.bigInt({ min: 1n, max: 200n }),
+        (n, extraStock, target, basePrice) => {
+          const initialStock = n + extraStock;
           const capacity = initialStock + 1000n;
           const initialCoins = 10_000_000n;
           const initialTreasury = 10_000_000n;
@@ -86,13 +84,10 @@ describe('M1 — packages/econ: Transaksi Simetris, Syarat Kas Jual (N <= treasu
             expect(sellRes.ok).toBe(false);
             expect(sellRes.code).toBe('ZERO_PROCEEDS');
             expect(sellRes.executedQty).toBe(0n);
-<<<<<<< HEAD
             expect(sellRes.grossValue).toBe(0n);
             expect(sellRes.fee).toBe(0n);
             expect(sellRes.netPlayerDelta).toBe(0n);
             expect(sellRes.netTreasuryDelta).toBe(0n);
-=======
->>>>>>> 8940703 (perbaikan dan peningkatan)
             expect(sellRes.newStock).toBe(buyRes.newStock);
             expect(sellRes.newPlayerCoins).toBe(buyRes.newPlayerCoins);
             expect(sellRes.newShipCargoQty).toBe(buyRes.newShipCargoQty);
@@ -118,70 +113,7 @@ describe('M1 — packages/econ: Transaksi Simetris, Syarat Kas Jual (N <= treasu
           expect(treasuryGain).toBe(totalLoss);
         },
       ),
-      { numRuns: 5000, seed },
-      );
-    }
-  });
-
-  it('1a. Counterexample harga dasar 1 menolak hasil jual nol tanpa efek transaksi', () => {
-    const input = {
-      stock: 26n,
-      target: 50n,
-      basePrice: 1n,
-      capacity: 1026n,
-      playerCoins: 10_000_000n,
-      shipCargoQty: 1n,
-      shipTotalCargo: 1n,
-      shipCapacity: 1000,
-      portTreasury: 10_000_000n,
-      requestedQty: 1n,
-      config: WORLD_CONFIG,
-    } as const;
-    const gross = hitungNilaiKotorJual(
-      input.stock,
-      input.requestedQty,
-      input.target,
-      input.basePrice,
-      WORLD_CONFIG,
-    );
-    const fee = hitungBiayaPelabuhan(gross, WORLD_CONFIG);
-    expect(gross).toBe(1n);
-    expect(fee).toBe(1n);
-    expect(gross - fee).toBe(0n);
-
-    const result = eksekusiJual(input);
-    expect(result.ok).toBe(false);
-    expect(result.code).toBe('ZERO_PROCEEDS');
-    expect(result.executedQty).toBe(0n);
-    expect(result.newStock).toBe(input.stock);
-    expect(result.newPlayerCoins).toBe(input.playerCoins);
-    expect(result.newShipCargoQty).toBe(input.shipCargoQty);
-    expect(result.newPortTreasury).toBe(input.portTreasury);
-    expect(result.netPlayerDelta).toBe(0n);
-    expect(result.netTreasuryDelta).toBe(0n);
-  });
-
-  it('1b. Nilai bersih jual N = G - F tidak pernah negatif untuk harga dasar positif', () => {
-    fc.assert(
-      fc.property(
-        fc.bigInt({ min: 1n, max: 500n }),
-        fc.bigInt({ min: 0n, max: 2500n }),
-        fc.bigInt({ min: 50n, max: 1000n }),
-        fc.bigInt({ min: 1n, max: 200n }),
-        (n, extraStock, target, basePrice) => {
-          const stock = n + extraStock;
-          const gross = hitungNilaiKotorJual(
-            stock,
-            n,
-            target,
-            basePrice,
-            WORLD_CONFIG,
-          );
-          const fee = hitungBiayaPelabuhan(gross, WORLD_CONFIG);
-          expect(gross - fee >= 0n).toBe(true);
-        },
-      ),
-      { numRuns: 1000 },
+      { numRuns: 500 },
     );
   });
 

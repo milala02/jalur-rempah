@@ -1,0 +1,68 @@
+name: Build Android APK (Flutter M5)
+
+on:
+  push:
+    branches:
+      - main
+      - 'm[0-9]+-**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Flutter Analyze, Test, & Build Release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Prepare Android platform scaffolding & dependencies
+        working-directory: apps/mobile
+        run: |
+          if [ ! -d "android" ]; then
+            cp lib/main.dart /tmp/jr_main.dart
+            cp test/widget_test.dart /tmp/jr_widget_test.dart
+            cp pubspec.yaml /tmp/jr_pubspec.yaml
+            cp analysis_options.yaml /tmp/jr_analysis_options.yaml
+            flutter create --platforms=android --org id.nusantara.jalurrempah --project-name jalur_rempah_mobile .
+            cp /tmp/jr_main.dart lib/main.dart
+            cp /tmp/jr_widget_test.dart test/widget_test.dart
+            cp /tmp/jr_pubspec.yaml pubspec.yaml
+            cp /tmp/jr_analysis_options.yaml analysis_options.yaml
+          fi
+          flutter pub get
+
+      - name: Run flutter analyze
+        working-directory: apps/mobile
+        run: flutter analyze
+
+      - name: Run flutter widget tests
+        working-directory: apps/mobile
+        run: flutter test
+
+      - name: Build release APK
+        working-directory: apps/mobile
+        run: flutter build apk --release
+
+      - name: Upload Release APK artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jalur-rempah-android-apk
+          path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk

@@ -11,8 +11,14 @@ import { stepProduksiKonsumsi } from './production.js';
 import { eksekusiBeli, eksekusiJual, TradeFailureCode } from './trade.js';
 import { periksaInvarianEkonomi, InvariantCheckResult } from './invariants.js';
 
+export type RuleRuntimeErrorCode =
+  | 'DIV_ZERO'
+  | 'OVERFLOW'
+  | 'BUDGET_EXCEEDED';
+
 export type RuleActionFailureCode =
   | TradeFailureCode
+  | RuleRuntimeErrorCode
   | 'NOT_DOCKED'
   | 'SAME_PORT'
   | 'NO_ROUTE'
@@ -21,6 +27,7 @@ export type RuleActionFailureCode =
 export type CandidateAction =
   | {
       readonly ruleName?: string;
+      readonly detail?: string;
       readonly type: 'buy';
       readonly commodityId: number;
       readonly qty: bigint | 'maks';
@@ -28,18 +35,27 @@ export type CandidateAction =
     }
   | {
       readonly ruleName?: string;
+      readonly detail?: string;
       readonly type: 'sell';
       readonly commodityId: number;
       readonly qty: bigint | 'semua' | 'maks';
     }
   | {
       readonly ruleName?: string;
+      readonly detail?: string;
       readonly type: 'sail';
       readonly destPortId: number;
     }
   | {
       readonly ruleName?: string;
+      readonly detail?: string;
       readonly type: 'wait';
+    }
+  | {
+      readonly ruleName?: string;
+      readonly detail?: string;
+      readonly type: 'skip';
+      readonly skipCode: RuleRuntimeErrorCode;
     };
 
 export interface WorldPlayerState {
@@ -86,9 +102,10 @@ export interface TickActionEvent {
   readonly playerId: bigint;
   readonly tickNo: number;
   readonly ruleName: string;
-  readonly actionType: 'buy' | 'sell' | 'sail' | 'wait';
-  readonly result: 'ok' | 'gagal' | 'menunggu' | 'berlayar';
+  readonly actionType: 'buy' | 'sell' | 'sail' | 'wait' | 'skip';
+  readonly result: 'ok' | 'gagal' | 'dilewati' | 'menunggu' | 'berlayar';
   readonly failureCode?: RuleActionFailureCode;
+  readonly detail?: string;
   readonly commodityId?: number;
   readonly portId: number;
   readonly destPortId?: number;
@@ -113,7 +130,7 @@ export type ShipRuleDecider = (
   ship: Readonly<WorldShipState>,
   player: Readonly<WorldPlayerState>,
   state: Readonly<WorldState>,
-) => readonly CandidateAction[];
+) => Iterable<CandidateAction>;
 
 const COMMODITIES_BY_ID = new Map(COMMODITIES_SEED.map((c) => [c.id, c]));
 
@@ -222,9 +239,10 @@ export function computeCanonicalStateHash(state: Readonly<WorldState>): string {
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     .map((s) => ({
       arriveTick: s.arriveTick,
-      cargo: Array.from(s.cargo.entries())
-        .sort((a, b) => a[0] - b[0])
-        .map(([cid, qty]) => [cid, qty.toString()]),
+      cargo: [1, 2, 3, 4].map((cid) => [
+        cid,
+        (s.cargo.get(cid) ?? 0n).toString(),
+      ]),
       destPort: s.destPort,
       id: s.id.toString(),
       playerId: s.playerId.toString(),
@@ -477,13 +495,29 @@ export function stepWorld(
     const port = state.ports.get(portId);
     if (!port) continue;
 
-    const candidates = decideShipActions(ship, player, state).slice(0, 16);
+    const candidateIterable = decideShipActions(ship, player, state);
     let anySucceeded = false;
+    let idx = 0;
 
-    for (let idx = 0; idx < candidates.length; idx++) {
-      const act = candidates[idx];
-      if (!act) continue;
-      const ruleName = act.ruleName ?? `aturan_${idx + 1}`;
+    for (const act of candidateIterable) {
+      if (idx >= 16) break;
+      idx += 1;
+      const ruleName = act.ruleName ?? `aturan_${idx}`;
+
+      if (act.type === 'skip') {
+        actionEvents.push({
+          shipId: ship.id,
+          playerId: player.id,
+          tickNo: t,
+          ruleName,
+          actionType: 'skip',
+          result: 'dilewati',
+          failureCode: act.skipCode,
+          ...(act.detail !== undefined ? { detail: act.detail } : {}),
+          portId,
+        });
+        continue;
+      }
 
       // Kapal grounded hanya boleh 'sell' (jual) dan 'wait' (tunggu) (docs/05 & docs/09 v0.2)
       if (

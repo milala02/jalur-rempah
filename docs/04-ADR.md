@@ -45,10 +45,10 @@ Format: Konteks → Keputusan → Konsekuensi. Status: Diterima / Diganti / Dito
 - **Konsekuensi:** Klien mudah diganti; semua fitur butuh endpoint.
 
 ## ADR-008 — Informasi pasar real-time global di MVP
-- **Status:** Diterima (bisa diganti di Fase 2)
+- **Status:** Diterima untuk MVP, diperluas oleh ADR-012 di Fase 2
 - **Konteks:** Kabut informasi menambah kedalaman tapi juga kompleksitas data.
-- **Keputusan:** MVP: harga semua pelabuhan terlihat real-time oleh aturan.
-- **Konsekuensi:** Arbitrase lebih mudah; evaluasi dampaknya di beta sebelum menambah kabut.
+- **Keputusan:** MVP: harga semua pelabuhan terlihat real-time oleh aturan (`harga_di(p, k)`).
+- **Konsekuensi:** Arbitrase lebih mudah; di Fase 2 ditambahkan `harga_terakhir(p, k)` berbasis tabel `port_intel` (ADR-012).
 
 ## ADR-009 — Eksekusi transaksi simetris dan kas pelabuhan (treasury) tertutup
 - **Status:** Diterima (diperluas oleh ADR-010 untuk mekanisme pendapatan pelabuhan konsumen dan syarat kas bersih $N \le \text{treasury}$)
@@ -85,6 +85,20 @@ Format: Konteks → Keputusan → Konsekuensi. Status: Diterima / Diganti / Dito
   1. **Desain Hibrida Agregasi Blok Upkeep (Migrasi `0003`)**: Menambahkan kolom `unflushed_upkeep BIGINT NOT NULL DEFAULT 0 CHECK (unflushed_upkeep >= 0)` dan `cumulative_upkeep_paid BIGINT NOT NULL DEFAULT 0 CHECK (cumulative_upkeep_paid >= 0)` pada `public.players`, serta indeks parsial `idx_ledger_player_non_upkeep ON public.ledger (player_id, id DESC) WHERE reason <> 'upkeep'`. Di antara waktu flush, pemotongan upkeep per tick mengurangi `players.coins` dan menambah `players.unflushed_upkeep`. Setiap `UPKEEP_LEDGER_BATCH_TICKS = 120` tick (atau tepat sebelum pemain melakukan transaksi `buy`/`sell`/`rescue` atau snapshot audit), `unflushed_upkeep` di-flush menjadi satu baris ringkasan `ledger` (`reason = 'upkeep', delta = -unflushed_upkeep, meta = {"from_tick", "to_tick", "ticks_count"}`) dan di-reset ke `0`.
   2. **Fungsi Murni `stepWorld`**: Mengimplementasikan seluruh 9 langkah tick `docs/09` v0.2 di `packages/econ/src/step-world.ts` sebagai fungsi murni deterministik yang digunakan oleh simulator M1, endpoint `/v1/simulate` M2, dan worker M4.
 - **Konsekuensi:** Volume baris `ledger` berkurang **88,15%** (baris upkeep turun **99,17%**) tanpa mengorbankan invarian `players.coins + players.unflushed_upkeep == SUM(ledger.delta)` di setiap tick maupun `players.coins == SUM(ledger.delta)` pada setiap batas flush/transaksi.
+
+## ADR-012 — Kabut Informasi Harga (`port_intel`), Memori Kapal Antar-Tick (`ship_memory`), Multi-Kapal, Serikat Dagang, Kontrak Escrow, dan Anonimisasi Akun (Fase 2)
+- **Status:** Diterima (Fase 2 Pasca-MVP, Migrasi `0004`)
+- **Konteks:**
+  1. Setelah seluruh milestone MVP (`M0–M6`) hijau di CI, peta jalan Fase 2 (`docs/01`, `docs/05`, `docs/08`, `docs/09`, `docs/13`) mengamanatkan kabut informasi harga (`harga_terakhir`), variabel lokal (`biar x = ...`), memori kapal antar-tick (`simpan`/`ambil`), banyak kapal per pemain, serikat dagang ringan, kontrak pengiriman komoditas, musim angin muson (`musim()`), serta penghapusan akun (`DELETE /v1/me`).
+  2. Seluruh fitur ekonomi baru di Fase 2 (pembelian kapal baru, jaminan kontrak pengiriman, dan penghapusan akun) wajib mempertahankan invarian konservasi uang global `economy_money_supply_audit` (`diff == 0`) dan sifat *append-only* pada `public.ledger`.
+- **Keputusan:**
+  1. **Kabut Informasi (`public.port_intel` & `harga_terakhir(p, k)`)**: Setiap kali kapal pemain bersandar (`docked`/`grounded`) di suatu pelabuhan pada tick $t$, worker memperbarui `port_intel(player_id, port_id, commodity_id, price, stock, tick_seen = t)`. Fungsi DSL `harga_terakhir(p, k)` membaca harga langsung bila kapal sedang berada di pelabuhan $p$, atau membaca rekaman `port_intel` terakhir pemain untuk $(p, k)$. `harga_di(p, k)` tetap dipertahankan demi kompatibilitas mundur penuh dengan program aturan versi 1.
+  2. **Memori Kapal Antar-Tick (`public.ship_memory`) & Variabel Lokal (`biar`)**: Setiap kapal memiliki kuota 8 slot integer (`0..7`) yang dibaca dengan `ambil(slot)` dan ditulis dengan aksi `simpan(slot, nilai)`. Aturan juga mendukung deklarasi `biar <ident> = <ekspresi>` sebelum `jika`.
+  3. **Transaksi Fase 2 Tanpa Pelanggaran Konservasi Uang**:
+     - Pembelian kapal baru (`POST /v1/ships/buy`, maks 5 kapal/pemain, biaya `1.500` koin) memindahkan koin dari `players.coins` ke `ports.treasury` pelabuhan galangan dengan entri `ledger` (`reason = 'buy'`).
+     - Pembuatan kontrak pengiriman (`POST /v1/contracts`) mengunci `reward_coins` dari `players.coins` pembuat kontrak ke `ports.treasury` pelabuhan tujuan sebagai *escrow* (`reason = 'buy'`), dan pemenuhan kontrak (`POST /v1/contracts/:id/fulfill`) membayarkan `reward_coins` dari `ports.treasury` ke pemenuh kontrak (`reason = 'sell'`).
+     - Penghapusan akun (`DELETE /v1/me`) membatalkan kontrak terbuka milik pemain, mencatat sisa koin sebagai pengurang penutupan akun (`reason = 'upkeep'`), menghapus kapal/kargo/aturan/token sesi, serta menganonimkan baris `players` (`is_deleted = true`, `email = 'anon_<id>@deleted.local'`) setelah melepas FK `ledger_ref_ship_fkey` sehingga tabel `ledger` tetap 100% *append-only* dan `economy_money_supply_audit` tetap bernilai `diff == 0`.
+- **Konsekuensi:** Seluruh fitur Fase 2 berjalan secara deterministik, kompatibel mundur dengan AST v1, dan mempertahankan 0 pelanggaran invarian konservasi uang di setiap titik waktu.
 
 ## Template
 ```

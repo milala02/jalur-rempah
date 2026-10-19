@@ -390,6 +390,13 @@ export function eksekusiJual(input: SellInput): TradeOutcome {
       'gudang pelabuhan penuh',
     );
   }
+  if (input.portTreasury <= 0n) {
+    return reject(
+      isMaxKeyword ? 'ZERO_QUANTITY' : 'PORT_TREASURY_LOW',
+      'kas pelabuhan kosong',
+    );
+  }
+
   let qty: bigint;
   let grossValue: bigint;
   let fee: bigint;
@@ -438,18 +445,12 @@ export function eksekusiJual(input: SellInput): TradeOutcome {
     );
     fee = hitungBiayaPelabuhan(grossValue, config);
     const netRequired = grossValue - fee;
-<<<<<<< HEAD
     if (netRequired === 0n) {
       return reject('ZERO_PROCEEDS', 'hasil bersih penjualan harus > 0');
     }
     if (netRequired < 0n) {
       return reject('ZERO_PROCEEDS', 'hasil bersih penjualan tidak boleh negatif');
     }
-=======
-    if (netRequired <= 0n) {
-      return reject('ZERO_PROCEEDS', 'hasil bersih penjualan harus > 0');
-    }
->>>>>>> 8940703 (perbaikan dan peningkatan)
     if (netRequired > input.portTreasury) {
       return reject('PORT_TREASURY_LOW', 'kas pelabuhan tidak mencukupi');
     }

@@ -1,0 +1,14 @@
+analyzer:
+  errors:
+    todo: ignore
+    missing_Required_param: error
+    missing_return: error
+
+linter:
+  rules:
+    - avoid_empty_else
+    - cancel_subscriptions
+    - close_sinks
+    - no_duplicate_case_values
+    - prefer_is_empty
+    - prefer_is_not_empty
