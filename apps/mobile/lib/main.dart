@@ -684,7 +684,7 @@ class _JalurRempahAppState extends State<JalurRempahApp> {
         HttpJalurRempahApiClient(
           baseUrl: const String.fromEnvironment(
             'API_BASE_URL',
-            defaultValue: 'http://10.0.2.2:3100',
+            defaultValue: 'https://api.bacanova.my.id',
           ),
           tokenVault: _vault,
         );
