@@ -50,12 +50,7 @@ async function bootstrapApi(): Promise<void> {
   });
 }
 
-if (
-  process.argv[1] &&
-  (process.argv[1].endsWith('main.ts') || process.argv[1].endsWith('main.js'))
-) {
-  bootstrapApi().catch((err) => {
-    console.error('[JR-API] Kegagalan fatal saat startup:', err);
-    process.exit(1);
-  });
-}
+bootstrapApi().catch((err) => {
+  console.error('[JR-API] Kegagalan fatal saat startup:', err);
+  process.exit(1);
+});
