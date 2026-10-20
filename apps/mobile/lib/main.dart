@@ -738,7 +738,7 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _emailCtrl = TextEditingController(text: 'nahkoda@nusantara.id');
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController(text: 'SandiKuat123!');
   final _nameCtrl = TextEditingController(text: 'Nahkoda_Nusantara');
   bool _isRegisterMode = false;
