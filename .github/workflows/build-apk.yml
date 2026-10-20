@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 'm[0-9]+-**'
+      - 'm*'
   pull_request:
     branches:
       - main
@@ -32,20 +33,37 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Prepare Android platform scaffolding & dependencies
+      - name: Prepare Android platform scaffolding & inject INTERNET permission
         working-directory: apps/mobile
         run: |
-          if [ ! -d "android" ]; then
-            cp lib/main.dart /tmp/jr_main.dart
-            cp test/widget_test.dart /tmp/jr_widget_test.dart
-            cp pubspec.yaml /tmp/jr_pubspec.yaml
-            cp analysis_options.yaml /tmp/jr_analysis_options.yaml
-            flutter create --platforms=android --org id.nusantara.jalurrempah --project-name jalur_rempah_mobile .
-            cp /tmp/jr_main.dart lib/main.dart
-            cp /tmp/jr_widget_test.dart test/widget_test.dart
-            cp /tmp/jr_pubspec.yaml pubspec.yaml
-            cp /tmp/jr_analysis_options.yaml analysis_options.yaml
-          fi
+          cp lib/main.dart /tmp/jr_main.dart
+          cp test/widget_test.dart /tmp/jr_widget_test.dart
+          cp pubspec.yaml /tmp/jr_pubspec.yaml
+          cp analysis_options.yaml /tmp/jr_analysis_options.yaml
+
+          flutter create --platforms=android --org id.nusantara.jalurrempah --project-name jalur_rempah_mobile .
+
+          cp /tmp/jr_main.dart lib/main.dart
+          cp /tmp/jr_widget_test.dart test/widget_test.dart
+          cp /tmp/jr_pubspec.yaml pubspec.yaml
+          cp /tmp/jr_analysis_options.yaml analysis_options.yaml
+
+          python3 -c '
+          p = "android/app/src/main/AndroidManifest.xml"
+          s = open(p, "r", encoding="utf-8").read()
+          perms = (
+              "    <uses-permission android:name=\"android.permission.INTERNET\" />\n"
+              "    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />\n"
+          )
+          if "android.permission.INTERNET" not in s:
+              s = s.replace("<application", perms + "    <application", 1)
+          open(p, "w", encoding="utf-8").write(s)
+          '
+
+          echo "=== Verifikasi isi android/app/src/main/AndroidManifest.xml ==="
+          cat android/app/src/main/AndroidManifest.xml
+          grep -q "android.permission.INTERNET" android/app/src/main/AndroidManifest.xml
+
           flutter pub get
 
       - name: Run flutter analyze
@@ -58,11 +76,25 @@ jobs:
 
       - name: Build release APK
         working-directory: apps/mobile
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=API_BASE_URL=https://api.bacanova.my.id
+
+      - name: Verify compiled APK permissions with aapt
+        working-directory: apps/mobile
+        run: |
+          AAPT=$(find "$ANDROID_HOME/build-tools" -name "aapt" | sort -V | tail -n 1)
+          echo "Using aapt: $AAPT"
+          PERMS=$("$AAPT" dump permissions build/app/outputs/flutter-apk/app-release.apk)
+          echo "=== Daftar Permission di dalam app-release.apk ==="
+          echo "$PERMS"
+          echo "$PERMS" | grep -q "android.permission.INTERNET" || {
+            echo "FATAL: android.permission.INTERNET tidak ditemukan di dalam APK!"
+            exit 1
+          }
 
       - name: Upload Release APK artifact
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: jalur-rempah-android-apk
           path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+          overwrite: true
