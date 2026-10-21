@@ -2491,7 +2491,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         key: const Key('p2p_order_type_dropdown'),
-                        value: _p2pOrderType,
+                        initialValue: _p2pOrderType,
                         decoration: const InputDecoration(
                           labelText: 'Tipe Bursa',
                           border: OutlineInputBorder(),
@@ -2513,8 +2513,6 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                             });
                           }
                         },
-                          );
-                        },
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -2535,7 +2533,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                           }
                           return DropdownButtonFormField<int>(
                             key: const Key('p2p_commodity_dropdown'),
-                            value: _p2pCommodityId,
+                            initialValue: _p2pCommodityId,
                             decoration: InputDecoration(
                               labelText:
                                   'Produk Terbuka (Lv.$_playerLevel: ${dropdownItems.length} item)',
@@ -2549,15 +2547,17 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                                   ),
                                 )
                                 .toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            setState(() {
-                              _p2pCommodityId = v;
-                              _p2pUnitPriceCtrl.text =
-                                  _referenceMarketPriceForCommodity(v)
-                                      .toString();
-                            });
-                          }
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() {
+                                  _p2pCommodityId = v;
+                                  _p2pUnitPriceCtrl.text =
+                                      _referenceMarketPriceForCommodity(v)
+                                          .toString();
+                                });
+                              }
+                            },
+                          );
                         },
                       ),
                     ),
@@ -4311,7 +4311,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
               key: const Key('appbar_notification_badge'),
               isLabelVisible: _unreadCombatNotifications > 0,
               backgroundColor: Colors.red,
-              label: Text(`${_unreadCombatNotifications}`),
+              label: Text('$_unreadCombatNotifications'),
               child: const Icon(Icons.notifications_outlined),
             ),
             onPressed: () {
