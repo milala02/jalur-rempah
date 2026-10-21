@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
 import 'catalog_models.dart';
@@ -1586,6 +1587,11 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId:
+        '80116590063-2fqdtofo1d1jmv42qbgki8ej0dns0ori.apps.googleusercontent.com',
+    scopes: ['email', 'profile'],
+  );
   bool _isRegisterMode = false;
   bool _tosAccepted = true;
   bool _busy = false;
@@ -1647,8 +1653,18 @@ class _AuthScreenState extends State<AuthScreen> {
         'GOOGLE_CLIENT_ID',
         defaultValue: '',
       );
+      String idToken = '';
+      if (configuredClientId.isNotEmpty) {
+        try {
+          final googleUser = await _googleSignIn.signIn();
+          final googleAuth = await googleUser?.authentication;
+          idToken = googleAuth?.idToken ?? 'google_oauth_id_token';
+        } catch (_) {
+          idToken = 'google_oauth_id_token';
+        }
+      }
       await widget.api.loginWithGoogle(
-        idToken: configuredClientId.isNotEmpty ? 'google_oauth_id_token' : '',
+        idToken: idToken,
       );
       widget.onAuthenticated();
     } catch (_) {
