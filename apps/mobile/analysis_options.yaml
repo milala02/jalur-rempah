@@ -3,6 +3,9 @@ analyzer:
     todo: ignore
     missing_Required_param: error
     missing_return: error
+  exclude:
+    - build/**
+    - android/**
 
 linter:
   rules:
