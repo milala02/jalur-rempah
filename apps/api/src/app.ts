@@ -695,6 +695,21 @@ export async function loadWorldSnapshotFromDb(
     });
   }
 
+  const guildsRes = await pool.query<{
+    id: string;
+    treasury_coins: string;
+  }>(
+    `SELECT id::text, treasury_coins::text
+     FROM public.guilds
+     ORDER BY id ASC`,
+  );
+  const guilds = new Map(
+    guildsRes.rows.map((guild) => {
+      const id = BigInt(guild.id);
+      return [id, { id, treasury: BigInt(guild.treasury_coins) }] as const;
+    }),
+  );
+
   const auditRes = await pool.query<{
     cumulative_upkeep_sink: string;
     cumulative_source: string;
@@ -712,6 +727,7 @@ export async function loadWorldSnapshotFromDb(
     tickNo,
     players,
     ports,
+    guilds,
     markets,
     ships,
     cumulativeUpkeepSink,
@@ -4432,7 +4448,7 @@ export function createApiServer(
               authUser.sub,
               ship.id,
               damage,
-              defeated ? 'player_win' : 'boss_hit',
+              defeated ? 'player_victory' : 'pirate_victory',
               defeated
                 ? `Kapal ${ship.name} melancarkan serangan pamungkas (${damage} DMG) dan menumpas World Boss ${gRow.boss_name}!`
                 : `Kapal ${ship.name} menyerang World Boss ${gRow.boss_name} (-${damage} HP, sisa ${bossHpAfter}/${gRow.boss_max_hp} HP).`,

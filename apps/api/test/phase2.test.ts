@@ -283,7 +283,32 @@ describe('Phase 2 (Setelah MVP) — Multi-Kapal, Kabut Informasi (ADR-012), Memo
   });
 
   it('4. Multi-Kapal (POST /v1/ships/buy) & Penghapusan/Anonimisasi Akun (DELETE /v1/me) Tanpa Merusak Invarian', async () => {
-    // Tambahkan modal koin ke Pemain A melalui penjualan atau kontrak agar cukup membeli kapal baru (1500 koin)
+    // Transfer saldo fixture dari kas pelabuhan kepada Pemain B agar dapat menjaminkan kontrak.
+    await testPool.query('BEGIN');
+    const treasuryRes = await testPool.query<{ id: number }>(
+      'SELECT id FROM public.ports WHERE treasury >= 2000 ORDER BY treasury DESC LIMIT 1 FOR UPDATE',
+    );
+    const treasuryPort = treasuryRes.rows[0];
+    expect(treasuryPort).toBeDefined();
+    await testPool.query(
+      'UPDATE public.ports SET treasury = treasury - 2000 WHERE id = $1',
+      [treasuryPort!.id],
+    );
+    await testPool.query(
+      'UPDATE public.players SET coins = coins + 2000 WHERE email = $1',
+      ['nahkoda_b@nusantara.id'],
+    );
+    const tickRes = await testPool.query<{ tick_no: string }>(
+      'SELECT COALESCE(MAX(tick_no), 0)::text AS tick_no FROM public.tick_state',
+    );
+    await testPool.query(
+      `INSERT INTO public.ledger (player_id, tick_no, delta, reason)
+       SELECT id, $1, 2000, 'sell' FROM public.players WHERE email = $2`,
+      [Number(tickRes.rows[0]?.tick_no ?? '0'), 'nahkoda_b@nusantara.id'],
+    );
+    await testPool.query('COMMIT');
+
+    // Pemain B kini dapat menjaminkan kontrak; hasilnya dipakai Pemain A untuk membeli kapal.
     const c2 = await api.inject<{ id: number }>({
       method: 'POST',
       url: '/v1/contracts',

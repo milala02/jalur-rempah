@@ -23,6 +23,13 @@ Perbarui di akhir setiap sesi. Terbaru di atas.
     7. Musim Angin Muson, Event Dunia, SSE Stream, ETag, & Penghapusan Akun (`public.world_events`, `GET /v1/events`, `GET /v1/stream`, `ETag`/`304 Not Modified`, dan `DELETE /v1/me` dengan anonimisasi akun serta pelestarian `ledger` *append-only*).
 
 ## Log sesi
+### 2026-10-21 — Guild treasury state, combat log migration, dan stabilisasi test
+- Worker memuat saldo Guild ke `WorldState`; invariant ekonomi dan canonical state hash kini memasukkan treasury Guild.
+- Migrasi `0010_add_loot_summary_to_combat_logs.sql` menambahkan kolom `loot_summary` dan didaftarkan pada runner migrasi.
+- Perbaikan worker/API combat outcome agar sesuai constraint DB; fixture kontrak Phase 2 memindahkan dana dari treasury pelabuhan dan mencatat ledger.
+- Test isolasi DB membandingkan tabel baseline DB utama; worker recovery membaca tick terakhir dengan query MAX yang benar.
+- Verifikasi VM: `pnpm -w typecheck` lulus (`tsc -b`); `pnpm -w test` lulus (9 file, 57 test). Ini bukan klaim CI GitHub.
+
 ### 2026-10-19 (Sesi 6) — Penyelesaian Release Candidate Produksi & Ekspansi Penuh Fase 2 ("Setelah MVP")
 - **Ringkasan Pekerjaan:**
   1. **Kesiapan Produksi VPS (`apps/api/src/main.ts`, `apps/worker/src/main.ts`, `ecosystem.config.cjs`, `scripts/setup-db-roles.sql`, commit `e2af03c`)**:

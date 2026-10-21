@@ -347,7 +347,7 @@ describe('M2 & M4 — API Integration: Auth, Akun+Kapal+Ledger, Endpoint Baca, O
       headers: { authorization: `Bearer ${player1Token}` },
       body: {
         base_version: 0,
-        source: 'aturan salah: jika hargaa(pala) < 50 maka tunggu()',
+        source: 'aturan uji_kesalahan: jika x_variabel_aneh < 50 maka tunggu()',
       },
     });
     expect(invalidPut.statusCode).toBe(422);

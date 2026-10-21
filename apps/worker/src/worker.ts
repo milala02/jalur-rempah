@@ -10,6 +10,7 @@ import {
   WorldState,
   WorldPlayerState,
   WorldPortState,
+  WorldGuildState,
   WorldShipState,
   ShipRuleDecider,
   TickActionEvent,
@@ -508,6 +509,24 @@ export async function executeSingleWorldTick(
       });
     }
 
+    const guildsRes = await client.query<{
+      id: string;
+      treasury_coins: string;
+    }>(
+      `SELECT id::text, treasury_coins::text
+       FROM public.guilds
+       ORDER BY id ASC
+       FOR UPDATE`,
+    );
+    const guilds = new Map<bigint, WorldGuildState>();
+    for (const guild of guildsRes.rows) {
+      const guildId = BigInt(guild.id);
+      guilds.set(guildId, {
+        id: guildId,
+        treasury: BigInt(guild.treasury_coins),
+      });
+    }
+
     const marketRes = await client.query<{
       port_id: number;
       commodity_id: number;
@@ -824,6 +843,7 @@ export async function executeSingleWorldTick(
       tickNo: prevTickNo,
       players,
       ports,
+      guilds,
       markets,
       ships,
       cumulativeUpkeepSink: cumulativeUpkeepSinkBefore,
@@ -1666,13 +1686,13 @@ export async function executeSingleWorldTick(
             `INSERT INTO public.combat_logs (
                tick_no, attacker_id, defender_id, ship_id, damage, is_pirate, outcome, bounty_coins, loot_summary, detail
              )
-             VALUES ($1, $2, NULL, $3, $4, true, $5, 0, '{}'::jsonb, $6)`,
+             VALUES ($1, $2, NULL, $3, $4, true, $5, 0, '{}'::text, $6)`,
             [
               t,
               gs.player_id,
               gs.ship_id,
               salvoDmg,
-              bossDefeated ? 'player_win' : 'boss_hit',
+              bossDefeated ? 'player_victory' : 'pirate_victory',
               bossDefeated
                 ? `Armada Aliansi (${gs.ship_name}) menumpas World Boss Bajak Laut Armada Besar!`
                 : `Serangan bersama Aliansi (${gs.ship_name}) menghantam Bajak Laut Armada Besar (-${salvoDmg} HP, sisa ${currentBossHp}/${bossMaxHp} HP).`,

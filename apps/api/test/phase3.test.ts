@@ -606,8 +606,8 @@ describe('Fase 1 (UU PDP/ToS & Status Akun), Detail 2 (P2P Trading), Detail 3 (A
       headers: { authorization: `Bearer ${tokenP2}` },
     });
     expect(sh2AfterMuson.body.status).toBe('sailing');
-    // Rute Banda -> Makassar normalnya 4 tick; dengan Angin Muson Kencang (-50%) menjadi 2 tick
-    expect(sh2AfterMuson.body.eta_ticks).toBe(2);
+    // Rute Banda -> Makassar adalah 6 tick di data seed; muson memotong ETA menjadi 3 tick.
+    expect(sh2AfterMuson.body.eta_ticks).toBe(3);
 
     // 5.4. Pastikan GET /v1/world/events mengembalikan daftar event yang sedang aktif
     const worldEventsRes = await api.inject<{
@@ -1051,6 +1051,31 @@ describe('Fase 1 (UU PDP/ToS & Status Akun), Detail 2 (P2P Trading), Detail 3 (A
   });
 
   it('11. Fase 8 — Sistem Aliansi Dagang (POST /v1/guilds 5.000 Koin, join/leave, POST /v1/guilds/donate, GET /v1/guilds/:id, & World Boss Bajak Laut Armada Besar)', async () => {
+    // Transfer 12.500 koin dari port dengan saldo cukup, dicatat sebagai penjualan fixture.
+    await testPool.query('BEGIN');
+    const treasuryRes = await testPool.query<{ id: number; treasury: string }>(
+      'SELECT id, treasury::text FROM public.ports WHERE id <= 6 AND treasury >= 12500 ORDER BY treasury DESC LIMIT 1 FOR UPDATE',
+    );
+    const treasuryPort = treasuryRes.rows[0];
+    expect(treasuryPort).toBeDefined();
+    await testPool.query(
+      'UPDATE public.ports SET treasury = treasury - 12500 WHERE id = $1',
+      [treasuryPort!.id],
+    );
+    await testPool.query(
+      'UPDATE public.players SET coins = coins + 12500 WHERE id = $1',
+      [idP1],
+    );
+    const tickRes = await testPool.query<{ tick_no: string }>(
+      'SELECT COALESCE(MAX(tick_no), 0)::text AS tick_no FROM public.tick_state',
+    );
+    await testPool.query(
+      `INSERT INTO public.ledger (player_id, tick_no, delta, reason)
+       VALUES ($1, $2, 12500, 'sell')`,
+      [idP1, Number(tickRes.rows[0]?.tick_no ?? '0')],
+    );
+    await testPool.query('COMMIT');
+
     // 11.1. Pemain 1 mendirikan Aliansi Baru (biaya 5.000 koin dipotong dari pemain & masuk ke treasury_coins + ledger)
     const createGuildRes = await api.inject<{
       id: number;

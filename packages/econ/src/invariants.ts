@@ -12,6 +12,10 @@ export interface EconomySnapshot {
     readonly treasury: bigint;
     readonly initialTreasury: bigint;
   }[];
+  readonly guilds?: readonly {
+    readonly id: bigint;
+    readonly treasury: bigint;
+  }[];
   readonly markets: readonly {
     readonly portId: number;
     readonly commodityId: number;
@@ -73,6 +77,15 @@ export function periksaInvarianEkonomi(
     }
     totalPortTreasury += port.treasury;
     totalInitialPortTreasury += port.initialTreasury;
+  }
+
+  for (const guild of snapshot.guilds ?? []) {
+    if (guild.treasury < 0n) {
+      violations.push(
+        `Guild ${guild.id.toString()} memiliki treasury negatif: ${guild.treasury.toString()}`,
+      );
+    }
+    totalPortTreasury += guild.treasury;
   }
 
   if (snapshot.cumulativeUpkeepSink < 0n) {

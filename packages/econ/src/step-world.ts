@@ -76,6 +76,11 @@ export interface WorldPortState {
   initialTreasury: bigint;
 }
 
+export interface WorldGuildState {
+  id: bigint;
+  treasury: bigint;
+}
+
 export interface WorldShipState {
   id: bigint;
   playerId: bigint;
@@ -91,6 +96,7 @@ export interface WorldState {
   tickNo: number;
   players: Map<bigint, WorldPlayerState>;
   ports: Map<number, WorldPortState>;
+  guilds?: Map<bigint, WorldGuildState>;
   markets: Map<string, MarketRow>;
   ships: Map<bigint, WorldShipState>;
   cumulativeUpkeepSink: bigint;
@@ -236,6 +242,13 @@ export function computeCanonicalStateHash(state: Readonly<WorldState>): string {
       rescueCount: pl.rescueCount,
     }));
 
+  const sortedGuilds = Array.from(state.guilds?.values() ?? [])
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    .map((guild) => ({
+      id: guild.id.toString(),
+      treasury: guild.treasury.toString(),
+    }));
+
   const sortedShips = Array.from(state.ships.values())
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     .map((s) => ({
@@ -254,6 +267,7 @@ export function computeCanonicalStateHash(state: Readonly<WorldState>): string {
   const canonicalObj = {
     cumulativeSource: state.cumulativeSource.toString(),
     cumulativeUpkeepSink: state.cumulativeUpkeepSink.toString(),
+    ...(sortedGuilds.length > 0 ? { guilds: sortedGuilds } : {}),
     markets: sortedMarkets,
     players: sortedPlayers,
     ports: sortedPorts,
@@ -786,6 +800,10 @@ export function stepWorld(
         id: p.id,
         treasury: p.treasury,
         initialTreasury: p.initialTreasury,
+      })),
+      guilds: Array.from(state.guilds?.values() ?? []).map((guild) => ({
+        id: guild.id,
+        treasury: guild.treasury,
       })),
       markets: Array.from(state.markets.values()).map((m) => ({
         portId: m.port_id,

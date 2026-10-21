@@ -71,6 +71,10 @@ export function cloneWorldStateForSandbox(
     });
   }
 
+  const guilds = new Map(
+    Array.from(sourceState.guilds?.values() ?? [], (guild) => [guild.id, { ...guild }]),
+  );
+
   const markets = new Map();
   for (const [mKey, m] of sourceState.markets.entries()) {
     markets.set(mKey, { ...m });
@@ -101,6 +105,7 @@ export function cloneWorldStateForSandbox(
     tickNo: sourceState.tickNo,
     players,
     ports,
+    guilds,
     markets,
     ships,
     cumulativeUpkeepSink: 0n,

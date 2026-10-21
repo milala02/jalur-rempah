@@ -68,9 +68,19 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
 
   let adminPool: pg.Pool;
   let testPool: pg.Pool;
+  let mainGameTablesBefore: string[] = [];
 
   beforeAll(async () => {
     adminPool = createPool(adminDbUrl);
+    const baselineTables = await adminPool.query<{ table_name: string }>(
+      `SELECT table_name
+       FROM information_schema.tables
+       WHERE table_schema = 'public'
+         AND table_name = ANY($1::text[])
+       ORDER BY table_name`,
+      [EXPECTED_GAME_TABLES as unknown as string[]],
+    );
+    mainGameTablesBefore = baselineTables.rows.map((row) => row.table_name);
     await adminPool.query(`CREATE DATABASE ${testDbName};`);
     testPool = createPool(testDbUrl);
   });
@@ -144,6 +154,7 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
     expect(appliedFirst).toContain('0007_naval_combat_and_pirates');
     expect(appliedFirst).toContain('0008_quests_and_tutorial');
     expect(appliedFirst).toContain('0009_guilds_treasury_and_world_boss');
+    expect(appliedFirst).toContain('0010_add_loot_summary_to_combat_logs');
 
     // Eksekusi ulang migrasi pada DB yang sama harus menghasilkan [] (idempoten)
     const appliedSecond = await runMigrations(testPool);
@@ -179,14 +190,17 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
       `SELECT table_name
        FROM information_schema.tables
        WHERE table_schema = 'public'
-         AND table_name = ANY($1::text[]);`,
+         AND table_name = ANY($1::text[])
+       ORDER BY table_name;`,
       [EXPECTED_GAME_TABLES as unknown as string[]],
     );
 
     console.log(
-      `[ISOLASI-DB] DB utama (${adminDbName}) memiliki ${mainTablesRes.rows.length} tabel game; DB tes (${testDbName}) terisolasi penuh.`,
+      `[ISOLASI-DB] DB utama (${adminDbName}) baseline=${mainGameTablesBefore.length}, sekarang=${mainTablesRes.rows.length}; DB tes (${testDbName}) terisolasi penuh.`,
     );
-    expect(mainTablesRes.rows).toEqual([]);
+    expect(mainTablesRes.rows.map((row) => row.table_name)).toEqual(
+      mainGameTablesBefore,
+    );
   });
 
   it('4. Sukses melakukan seed dunia (termasuk kas pelabuhan) dan idempoten jika dijalankan ulang', async () => {

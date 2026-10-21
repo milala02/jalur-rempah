@@ -177,9 +177,11 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
   it('3. Pemulihan setelah kegagalan / crash di tengah tick: rollback transaksi menjaga DB utuh dan tick berikutnya lanjut dari max(tick_no) + 1', async () => {
     const hashBeforeRes = await testPool.query<{
       tick_no: string;
-      state_hash: string;
+      state_hash: string | null;
     }>(
-      `SELECT tick_no::text, state_hash FROM public.tick_state ORDER BY tick_no DESC LIMIT 1`,
+      `SELECT COALESCE(MAX(tick_no), 0)::text AS tick_no,
+              (SELECT state_hash FROM public.tick_state ORDER BY tick_no DESC LIMIT 1) AS state_hash
+       FROM public.tick_state`,
     );
     const tickBefore = Number(hashBeforeRes.rows[0]?.tick_no ?? '0');
 
