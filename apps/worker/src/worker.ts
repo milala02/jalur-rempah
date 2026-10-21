@@ -14,6 +14,9 @@ import {
   ShipRuleDecider,
   TickActionEvent,
   stepWorld,
+  hitungHarga,
+  createSeededRng,
+  computeCanonicalStateHash,
 } from '@jalur-rempah/econ';
 import {
   CompiledDslProgram,
@@ -104,7 +107,230 @@ export async function acquireWorkerAdvisoryLock(
 }
 
 const PORT_CODE_BY_ID = new Map(PORTS_SEED.map((p) => [p.id, p.code]));
+const PORT_NAME_BY_ID = new Map(PORTS_SEED.map((p) => [p.id, p.name]));
 const COM_CODE_BY_ID = new Map(COMMODITIES_SEED.map((c) => [c.id, c.code]));
+const COM_BASE_PRICE_BY_ID = new Map(
+  COMMODITIES_SEED.map((c) => [c.id, c.base_price]),
+);
+
+/**
+ * Menghitung Level Pemain (Fase 5 — Progressive Unlocking) berdasarkan Net Worth:
+ * - Level 1: < 5.000 koin
+ * - Level 2: 5.000 - 20.000
+ * - Level 3: 20.001 - 50.000
+ * - Level 4: 50.001 - 150.000
+ * - Level 5: 150.001 - 500.000
+ * - Level 6: 500.001 - 1.000.000
+ * - Level 7: > 1.000.000
+ */
+export function calculatePlayerLevel(netWorth: number | bigint): number {
+  const nw = Number(netWorth);
+  if (nw < 5000) return 1;
+  if (nw <= 20000) return 2;
+  if (nw <= 50000) return 3;
+  if (nw <= 150000) return 4;
+  if (nw <= 500000) return 5;
+  if (nw <= 1000000) return 6;
+  return 7;
+}
+
+export interface PirateNpcSpec {
+  readonly name: string;
+  readonly attackPower: number;
+  readonly defensePower: number;
+  readonly bountyCoins: number;
+}
+
+export const PIRATE_NPCS_SEED: readonly PirateNpcSpec[] = [
+  {
+    name: 'Bajak Laut Selat Malaka',
+    attackPower: 35,
+    defensePower: 80,
+    bountyCoins: 200,
+  },
+  {
+    name: 'Perompak Laut Banda',
+    attackPower: 30,
+    defensePower: 70,
+    bountyCoins: 160,
+  },
+  {
+    name: 'Lanun Laut Sulawesi',
+    attackPower: 40,
+    defensePower: 90,
+    bountyCoins: 250,
+  },
+] as const;
+
+/**
+ * Mengundi ancaman pencegatan NPC Bajak Laut pada tick ini (default peluang 2% per tick).
+ */
+export function spawnPirateThreat(
+  tickNo: number,
+  worldSeed: number = 101,
+  chancePerTick: number = 0.02,
+): PirateNpcSpec | null {
+  if (tickNo <= 0 || chancePerTick <= 0) {
+    return null;
+  }
+  const rng = createSeededRng(`${worldSeed}:pirate_threat:${tickNo}`);
+  const roll = rng.nextFloat();
+  if (roll >= chancePerTick) {
+    return null;
+  }
+  const idx = rng.nextInt(0, PIRATE_NPCS_SEED.length - 1);
+  return PIRATE_NPCS_SEED[idx] ?? PIRATE_NPCS_SEED[0]!;
+}
+
+export interface NavalCombatInput {
+  readonly shipId: number | bigint;
+  readonly playerId: number | bigint;
+  readonly shipName?: string;
+  readonly shipAttackPower: number;
+  readonly shipDefensePower: number;
+  readonly pirate?: PirateNpcSpec;
+  readonly cargo?: ReadonlyMap<number, bigint>;
+}
+
+export interface NavalCombatResult {
+  readonly shipId: number;
+  readonly defenderId: number;
+  readonly pirateName: string;
+  readonly isPirate: true;
+  readonly outcome: 'player_victory' | 'pirate_victory';
+  readonly damage: number;
+  readonly shipAttackPower: number;
+  readonly shipDefenseBefore: number;
+  readonly shipDefenseAfter: number;
+  readonly lootedCommodityId: number | null;
+  readonly lootedCommodityCode: string | null;
+  readonly lootedQty: bigint;
+  readonly bountyCoins: bigint;
+  readonly detail: string;
+}
+
+/**
+ * Menghitung hasil pertempuran laut secara Server-Authoritative:
+ * attack_power (Meriam/Katana kapal) vs defense_power (HP Lambung Kapal) melawan NPC Bajak Laut.
+ */
+export function resolveNavalCombat(input: NavalCombatInput): NavalCombatResult {
+  const pirate = input.pirate ?? PIRATE_NPCS_SEED[0]!;
+  const shipAtk = Math.max(0, Math.trunc(input.shipAttackPower));
+  const shipDefBefore = Math.max(1, Math.trunc(input.shipDefensePower));
+
+  const playerCombatScore = shipAtk * 2 + shipDefBefore;
+  const pirateCombatScore =
+    pirate.attackPower * 2 + Math.floor(pirate.defensePower * 0.5);
+
+  const playerWins = playerCombatScore >= pirateCombatScore;
+  const mitigation = Math.floor(shipAtk * 0.35);
+  const rawDamage = Math.max(6, pirate.attackPower - mitigation);
+  const damage = playerWins
+    ? Math.max(5, Math.floor(rawDamage * 0.5))
+    : Math.max(10, rawDamage);
+
+  const shipDefAfter = Math.max(5, shipDefBefore - damage);
+
+  let lootedComId: number | null = null;
+  let lootedComCode: string | null = null;
+  let lootedQty = 0n;
+  let bountyCoins = 0n;
+
+  if (playerWins) {
+    bountyCoins = BigInt(pirate.bountyCoins);
+  } else if (input.cargo) {
+    for (const [cid, qty] of input.cargo.entries()) {
+      if (qty > 0n) {
+        lootedComId = cid;
+        lootedComCode = COM_CODE_BY_ID.get(cid) ?? `komoditas_${cid}`;
+        const calcLoot = (qty * 40n) / 100n;
+        lootedQty = calcLoot >= 1n ? calcLoot : 1n;
+        break;
+      }
+    }
+  }
+
+  const shipLabel = input.shipName ?? `Kapal #${String(input.shipId)}`;
+  const detail = playerWins
+    ? `${shipLabel} (ATK ${shipAtk}, HP ${shipDefBefore}->${shipDefAfter}) berhasil memukul mundur ${pirate.name} (kerusakan -${damage} HP) dan meraih hadiah ${bountyCoins.toString()} koin!`
+    : lootedQty > 0n
+      ? `${pirate.name} menyergap ${shipLabel}! Lambung rusak -${damage} HP (${shipDefBefore}->${shipDefAfter}) dan ${lootedQty.toString()} unit ${lootedComCode} dirampas.`
+      : `${pirate.name} menyerang ${shipLabel}! Lambung kapal mengalami kerusakan -${damage} HP (${shipDefBefore}->${shipDefAfter}).`;
+
+  return {
+    shipId: Number(input.shipId),
+    defenderId: Number(input.playerId),
+    pirateName: pirate.name,
+    isPirate: true,
+    outcome: playerWins ? 'player_victory' : 'pirate_victory',
+    damage,
+    shipAttackPower: shipAtk,
+    shipDefenseBefore: shipDefBefore,
+    shipDefenseAfter: shipDefAfter,
+    lootedCommodityId: lootedComId,
+    lootedCommodityCode: lootedComCode,
+    lootedQty,
+    bountyCoins,
+    detail,
+  };
+}
+
+export type WorldEventKind =
+  | 'WABAH_HAMA'
+  | 'EMBARGO_PERANG'
+  | 'ANGIN_MUSON_KENCANG';
+
+export interface WorldEventTriggerInput {
+  readonly kind: WorldEventKind;
+  readonly portId?: number;
+  readonly commodityId?: number;
+  readonly durationTicks?: number;
+}
+
+export interface TriggeredWorldEventRecord {
+  readonly eventCode: string;
+  readonly title: string;
+  readonly description: string;
+  readonly portId: number | null;
+  readonly commodityId: number | null;
+  readonly activeUntilTick: number | null;
+  readonly isActive: boolean;
+  readonly effectMeta: Record<string, unknown>;
+}
+
+/**
+ * Mengundi apakah event acak dunia ("Wabah Hama", "Embargo/Perang", atau "Angin Muson Kencang")
+ * terpicu pada tick ini berdasarkan peluang tertentu (default 5% per 100 tick).
+ */
+export function rollRandomWorldEventForTick(
+  tickNo: number,
+  worldSeed: number,
+  chancePer100Ticks: number = 0.05,
+): WorldEventTriggerInput | null {
+  if (tickNo <= 0 || tickNo % 100 !== 0) {
+    return null;
+  }
+  const rng = createSeededRng(`${worldSeed}:world_event:${tickNo}`);
+  const roll = rng.nextFloat();
+  if (roll >= chancePer100Ticks) {
+    return null;
+  }
+  const kinds: readonly WorldEventKind[] = [
+    'WABAH_HAMA',
+    'EMBARGO_PERANG',
+    'ANGIN_MUSON_KENCANG',
+  ];
+  const kindIdx = rng.nextInt(0, kinds.length - 1);
+  const kind = kinds[kindIdx] ?? 'WABAH_HAMA';
+  const portId = rng.nextInt(1, 6);
+  const commodityId = rng.nextInt(1, 4);
+  return {
+    kind,
+    portId,
+    commodityId,
+    durationTicks: 25,
+  };
+}
 
 export interface SeasonDescriptor {
   readonly seasonId: 1 | 2 | 3;
@@ -210,6 +436,13 @@ export interface ExecuteTickOptions {
   readonly customRuleDecider?: ShipRuleDecider;
   readonly flushUpkeepImmediately?: boolean;
   readonly metrics?: WorkerMetrics;
+  readonly triggerWorldEvent?: WorldEventTriggerInput;
+  readonly worldEventChancePer100Ticks?: number;
+  readonly triggerPirateEncounter?: {
+    readonly shipId?: number | bigint;
+    readonly pirate?: PirateNpcSpec;
+  };
+  readonly pirateChancePerTick?: number;
   readonly beforeCommitHook?: (
     tickNo: number,
     txClient: pg.PoolClient,
@@ -221,11 +454,13 @@ export interface ExecuteTickResult {
   readonly stateHash: string;
   readonly durationMs: number;
   readonly state: WorldState;
+  readonly triggeredEvent?: TriggeredWorldEventRecord | null;
+  readonly combatResults?: readonly NavalCombatResult[];
 }
 
 /**
  * Menjalankan tepat satu tick dunia di dalam satu transaksi READ COMMITTED menggunakan
- * fungsi murni stepWorld dari @jalur-rempah/econ (docs/09 v0.2).
+ * fungsi murni stepWorld dari @jalur-rempah/econ (docs/09 v0.2) + World Events Engine (Fase 3).
  */
 export async function executeSingleWorldTick(
   pool: pg.Pool,
@@ -258,6 +493,7 @@ export async function executeSingleWorldTick(
     }>(
       `SELECT id, code, name, treasury::text, initial_treasury::text
        FROM public.ports
+       WHERE id <= 6
        ORDER BY id ASC
        FOR UPDATE`,
     );
@@ -306,8 +542,9 @@ export async function executeSingleWorldTick(
       coins: string;
       unflushed_upkeep: string;
       cumulative_upkeep_paid: string;
+      account_status: string;
     }>(
-      `SELECT id::text, coins::text, unflushed_upkeep::text, cumulative_upkeep_paid::text
+      `SELECT id::text, coins::text, unflushed_upkeep::text, cumulative_upkeep_paid::text, account_status
        FROM public.players
        ORDER BY id ASC
        FOR UPDATE`,
@@ -365,6 +602,7 @@ export async function executeSingleWorldTick(
     const coinsBeforeByPlayer = new Map<bigint, bigint>();
     const unflushedBeforeByPlayer = new Map<bigint, bigint>();
     const cumUpkeepBeforeByPlayer = new Map<bigint, bigint>();
+    const statusByPlayer = new Map<bigint, string>();
 
     for (const pl of playersRes.rows) {
       const pid = BigInt(pl.id);
@@ -379,6 +617,7 @@ export async function executeSingleWorldTick(
       coinsBeforeByPlayer.set(pid, coins);
       unflushedBeforeByPlayer.set(pid, unflushed);
       cumUpkeepBeforeByPlayer.set(pid, cumUpkeep);
+      statusByPlayer.set(pid, pl.account_status ?? 'active');
 
       players.set(pid, {
         id: pid,
@@ -393,17 +632,31 @@ export async function executeSingleWorldTick(
     const shipsRes = await client.query<{
       id: string;
       player_id: string;
+      name: string;
       capacity: number;
       status: ShipStatus;
       port_id: number | null;
       dest_port: number | null;
       arrive_tick: string | null;
+      attack_power: number;
+      defense_power: number;
     }>(
-      `SELECT id::text, player_id::text, capacity, status, port_id, dest_port, arrive_tick::text
+      `SELECT id::text, player_id::text, name, capacity, status, port_id, dest_port, arrive_tick::text, attack_power, defense_power
        FROM public.ships
        ORDER BY id ASC
        FOR UPDATE`,
     );
+    const shipCombatStats = new Map<
+      bigint,
+      { name: string; attackPower: number; defensePower: number }
+    >();
+    for (const sr of shipsRes.rows) {
+      shipCombatStats.set(BigInt(sr.id), {
+        name: sr.name,
+        attackPower: Number(sr.attack_power ?? 0),
+        defensePower: Number(sr.defense_power ?? 100),
+      });
+    }
 
     const cargoRes = await client.query<{
       ship_id: string;
@@ -431,6 +684,15 @@ export async function executeSingleWorldTick(
     }
 
     const ships = new Map<bigint, WorldShipState>();
+    const shipsSnapshotBefore = new Map<
+      bigint,
+      {
+        status: ShipStatus;
+        portId: number;
+        destPort: number | null;
+        arriveTick: number | null;
+      }
+    >();
     const shipMemories = new Map<bigint, Map<number, bigint>>();
     for (const sh of shipsRes.rows) {
       const sid = BigInt(sh.id);
@@ -443,14 +705,23 @@ export async function executeSingleWorldTick(
           [3, 0n],
           [4, 0n],
         ]);
+      const pId = Number(sh.port_id ?? 1);
+      const dPort = sh.dest_port !== null ? Number(sh.dest_port) : null;
+      const aTick = sh.arrive_tick !== null ? Number(sh.arrive_tick) : null;
+      shipsSnapshotBefore.set(sid, {
+        status: sh.status,
+        portId: pId,
+        destPort: dPort,
+        arriveTick: aTick,
+      });
       ships.set(sid, {
         id: sid,
         playerId: BigInt(sh.player_id),
         capacity: Number(sh.capacity),
         status: sh.status,
-        portId: Number(sh.port_id ?? 1),
-        destPort: sh.dest_port !== null ? Number(sh.dest_port) : null,
-        arriveTick: sh.arrive_tick !== null ? Number(sh.arrive_tick) : null,
+        portId: pId,
+        destPort: dPort,
+        arriveTick: aTick,
         cargo: cmap,
       });
     }
@@ -515,6 +786,7 @@ export async function executeSingleWorldTick(
     );
 
     // Muat versi aturan aktif tertinggi per kapal bila customRuleDecider tidak disediakan
+    // Kapal milik pemain berstatus 'banned' tidak mengeksekusi aturan (Anti-Cheat Pilar 5)
     let decider: ShipRuleDecider;
     if (options?.customRuleDecider) {
       decider = options.customRuleDecider;
@@ -529,9 +801,17 @@ export async function executeSingleWorldTick(
       );
       const programsByShip = new Map<bigint, CompiledDslProgram>();
       for (const r of rulesRes.rows) {
+        const sid = BigInt(r.ship_id);
+        const shipObj = ships.get(sid);
+        const ownerStatus = shipObj
+          ? (statusByPlayer.get(shipObj.playerId) ?? 'active')
+          : 'active';
+        if (ownerStatus === 'banned') {
+          continue;
+        }
         const revived = reviveBigIntsInAst(r.compiled) as CompiledDslProgram;
         if (revived && Array.isArray(revived.rules)) {
-          programsByShip.set(BigInt(r.ship_id), revived);
+          programsByShip.set(sid, revived);
         }
       }
       decider = createDslShipRuleDecider(programsByShip, undefined, {
@@ -570,6 +850,307 @@ export async function executeSingleWorldTick(
       throw new Error(
         `Invarian ekonomi gagal pada tick ${t}: ${events.invariantCheck.violations.join('; ')}`,
       );
+    }
+
+    // Langkah 8b (Fase 3): World Events Engine ("Wabah Hama", "Embargo/Perang", "Angin Muson Kencang")
+    // 1. Nonaktifkan event lama yang sudah melewati batas active_until_tick
+    await client.query(
+      `UPDATE public.world_events
+       SET is_active = false
+       WHERE is_active = true
+         AND active_until_tick IS NOT NULL
+         AND active_until_tick < $1`,
+      [t],
+    );
+
+    // 2. Cek apakah ada pelabuhan yang sedang berada dalam status Embargo/Perang aktif
+    const activeEmbargoRes = await client.query<{ port_id: number }>(
+      `SELECT DISTINCT port_id
+       FROM public.world_events
+       WHERE is_active = true
+         AND event_code = 'EMBARGO_PERANG'
+         AND port_id IS NOT NULL
+         AND (active_until_tick IS NULL OR active_until_tick >= $1)`,
+      [t],
+    );
+    const activeEmbargoPortIds = new Set<number>(
+      activeEmbargoRes.rows.map((r) => Number(r.port_id)),
+    );
+
+    // 3. Periksa pemicu event dunia baru (opsi eksplisit atau peluang 5% per 100 tick)
+    const triggeredInput =
+      options?.triggerWorldEvent ??
+      rollRandomWorldEventForTick(
+        t,
+        worldSeed,
+        options?.worldEventChancePer100Ticks ?? 0.05,
+      );
+
+    let triggeredEventRecord: TriggeredWorldEventRecord | null = null;
+    let stateMutatedByWorldEvent = false;
+
+    if (triggeredInput) {
+      const durationTicks = Math.max(1, triggeredInput.durationTicks ?? 25);
+      const activeUntilTick = t + durationTicks;
+
+      if (triggeredInput.kind === 'WABAH_HAMA') {
+        const targetPortId = triggeredInput.portId ?? 1;
+        const targetComId = triggeredInput.commodityId ?? 1;
+        const m = nextState.markets.get(`${targetPortId}:${targetComId}`);
+        const basePrice = COM_BASE_PRICE_BY_ID.get(targetComId) ?? 40n;
+        const portName = PORT_NAME_BY_ID.get(targetPortId) ?? 'Banda';
+        const comCode = COM_CODE_BY_ID.get(targetComId) ?? 'pala';
+
+        let stockBefore = 0n;
+        let stockAfter = 0n;
+        let priceBefore = 0n;
+        let priceAfter = 0n;
+
+        if (m) {
+          stockBefore = m.stock;
+          priceBefore = m.price;
+          // Stok berkurang drastis (-50%, minimal 1) sehingga harga naik otomatis melalui hitungHarga
+          const halved = m.stock / 2n;
+          stockAfter = halved >= 1n ? halved : 1n;
+          priceAfter = hitungHarga(stockAfter, m.target, basePrice, config);
+          if (priceAfter <= priceBefore && stockAfter < stockBefore) {
+            priceAfter = priceBefore + 1n;
+          }
+          m.stock = stockAfter;
+          m.price = priceAfter;
+          stateMutatedByWorldEvent = true;
+        }
+
+        triggeredEventRecord = {
+          eventCode: 'WABAH_HAMA',
+          title: 'Wabah Hama',
+          description: `Wabah hama menyerang perkebunan ${comCode} di ${portName}! Stok merosot dari ${stockBefore.toString()} menjadi ${stockAfter.toString()} dan harga melonjak dari ${priceBefore.toString()} ke ${priceAfter.toString()} koin.`,
+          portId: targetPortId,
+          commodityId: targetComId,
+          activeUntilTick,
+          isActive: true,
+          effectMeta: {
+            kind: 'WABAH_HAMA',
+            port_id: targetPortId,
+            commodity_id: targetComId,
+            stock_before: Number(stockBefore),
+            stock_after: Number(stockAfter),
+            price_before: Number(priceBefore),
+            price_after: Number(priceAfter),
+          },
+        };
+      } else if (triggeredInput.kind === 'EMBARGO_PERANG') {
+        const targetPortId = triggeredInput.portId ?? 3;
+        const portName = PORT_NAME_BY_ID.get(targetPortId) ?? 'Batavia';
+        activeEmbargoPortIds.add(targetPortId);
+
+        triggeredEventRecord = {
+          eventCode: 'EMBARGO_PERANG',
+          title: 'Embargo/Perang',
+          description: `Blokade & embargo laut diberlakukan di pelabuhan ${portName}! Seluruh rute pelayaran keluar dan masuk ${portName} ditutup sementara hingga tick ${activeUntilTick}.`,
+          portId: targetPortId,
+          commodityId: null,
+          activeUntilTick,
+          isActive: true,
+          effectMeta: {
+            kind: 'EMBARGO_PERANG',
+            port_id: targetPortId,
+            closed_routes: true,
+            active_until_tick: activeUntilTick,
+          },
+        };
+      } else if (triggeredInput.kind === 'ANGIN_MUSON_KENCANG') {
+        let affectedShips = 0;
+        for (const sh of nextState.ships.values()) {
+          if (
+            sh.status === 'sailing' &&
+            sh.arriveTick !== null &&
+            sh.arriveTick > t
+          ) {
+            const eta = sh.arriveTick - t;
+            const newEta = Math.max(1, Math.floor(eta * 0.5));
+            sh.arriveTick = t + newEta;
+            affectedShips += 1;
+            stateMutatedByWorldEvent = true;
+          }
+        }
+
+        triggeredEventRecord = {
+          eventCode: 'ANGIN_MUSON_KENCANG',
+          title: 'Angin Muson Kencang',
+          description: `Angin Muson Kencang berhembus di jalur pelayaran Nusantara! Waktu tempuh kapal (ETA) berkurang 50% untuk ${affectedShips} kapal yang sedang berlayar.`,
+          portId: null,
+          commodityId: null,
+          activeUntilTick,
+          isActive: true,
+          effectMeta: {
+            kind: 'ANGIN_MUSON_KENCANG',
+            eta_multiplier: 0.5,
+            affected_ships: affectedShips,
+          },
+        };
+      }
+    }
+
+    // 4. Terapkan penutupan rute untuk semua pelabuhan yang sedang terkena Embargo/Perang aktif:
+    //    Kapal tidak dapat keluar dari pelabuhan embargo maupun masuk/berlayar menuju pelabuhan embargo.
+    if (activeEmbargoPortIds.size > 0) {
+      for (const sh of nextState.ships.values()) {
+        const prevSh = shipsSnapshotBefore.get(sh.id);
+        if (!prevSh) continue;
+
+        const leavingEmbargoPort =
+          activeEmbargoPortIds.has(prevSh.portId) && sh.status === 'sailing';
+        const enteringEmbargoPort =
+          sh.status === 'sailing' &&
+          sh.destPort !== null &&
+          activeEmbargoPortIds.has(sh.destPort);
+        const arrivedAtEmbargoPort =
+          prevSh.status === 'sailing' &&
+          prevSh.destPort !== null &&
+          activeEmbargoPortIds.has(prevSh.destPort) &&
+          sh.status === 'docked' &&
+          activeEmbargoPortIds.has(sh.portId);
+
+        if (leavingEmbargoPort || enteringEmbargoPort || arrivedAtEmbargoPort) {
+          sh.status = 'docked';
+          sh.portId = prevSh.portId;
+          sh.destPort = null;
+          sh.arriveTick = null;
+          stateMutatedByWorldEvent = true;
+
+          const sList = eventsByShipFromStep(events.actionEvents, sh.id);
+          sList.push({
+            shipId: sh.id,
+            playerId: sh.playerId,
+            ruleName: 'embargo_laut',
+            actionType: 'skip',
+            result: 'dilewati',
+            failureCode: 'EMBARGO_PORT_CLOSED',
+            detail: `[embargo_laut] Rute pelayaran ke/dari pelabuhan ditutup sementara akibat Embargo/Perang`,
+          });
+        }
+      }
+    }
+
+    // Langkah 8c (Fase 6): Engine Bajak Laut & Pertempuran Laut (Server-Authoritative)
+    const combatResultsThisTick: NavalCombatResult[] = [];
+    const pirateBountyByPlayer = new Map<bigint, { coins: bigint; shipId: bigint; pirateName: string }>();
+
+    const explicitPirate = options?.triggerPirateEncounter;
+    const autoPirate =
+      !explicitPirate && t > 20
+        ? spawnPirateThreat(t, worldSeed, options?.pirateChancePerTick ?? 0.02)
+        : null;
+
+    if (explicitPirate || autoPirate) {
+      const pirateSpec =
+        explicitPirate?.pirate ?? autoPirate ?? PIRATE_NPCS_SEED[0]!;
+      let targetShip: WorldShipState | undefined;
+
+      if (explicitPirate?.shipId !== undefined) {
+        targetShip = nextState.ships.get(BigInt(explicitPirate.shipId));
+      } else {
+        const sailingShips = Array.from(nextState.ships.values()).filter(
+          (s) => s.status === 'sailing',
+        );
+        targetShip =
+          sailingShips[0] ?? Array.from(nextState.ships.values())[0];
+      }
+
+      if (targetShip) {
+        const st = shipCombatStats.get(targetShip.id) ?? {
+          name: `Kapal #${targetShip.id.toString()}`,
+          attackPower: 0,
+          defensePower: 100,
+        };
+        const combatOut = resolveNavalCombat({
+          shipId: targetShip.id,
+          playerId: targetShip.playerId,
+          shipName: st.name,
+          shipAttackPower: st.attackPower,
+          shipDefensePower: st.defensePower,
+          pirate: pirateSpec,
+          cargo: targetShip.cargo,
+        });
+
+        st.defensePower = combatOut.shipDefenseAfter;
+        shipCombatStats.set(targetShip.id, st);
+        combatResultsThisTick.push(combatOut);
+
+        if (
+          combatOut.outcome === 'pirate_victory' &&
+          combatOut.lootedCommodityId !== null &&
+          combatOut.lootedQty > 0n
+        ) {
+          const prevQty =
+            targetShip.cargo.get(combatOut.lootedCommodityId) ?? 0n;
+          const nextQty =
+            prevQty > combatOut.lootedQty ? prevQty - combatOut.lootedQty : 0n;
+          targetShip.cargo.set(combatOut.lootedCommodityId, nextQty);
+          stateMutatedByWorldEvent = true;
+        } else if (
+          combatOut.outcome === 'player_victory' &&
+          combatOut.bountyCoins > 0n
+        ) {
+          // Hadiah koin dari menumpas Bajak Laut dibayarkan dari kas pelabuhan terdekat (zero-sum conservation)
+          const nearPort =
+            nextState.ports.get(targetShip.portId) ??
+            nextState.ports.get(1);
+          const ownerPl = nextState.players.get(targetShip.playerId);
+          if (nearPort && ownerPl && nearPort.treasury >= combatOut.bountyCoins) {
+            nearPort.treasury -= combatOut.bountyCoins;
+            ownerPl.coins += combatOut.bountyCoins;
+            ownerPl.ledgerSum += combatOut.bountyCoins;
+            pirateBountyByPlayer.set(ownerPl.id, {
+              coins: combatOut.bountyCoins,
+              shipId: targetShip.id,
+              pirateName: combatOut.pirateName,
+            });
+            stateMutatedByWorldEvent = true;
+          }
+        }
+
+        await client.query(
+          `INSERT INTO public.combat_logs (
+             tick_no, attacker_id, defender_id, ship_id, pirate_name,
+             damage, is_pirate, outcome, ship_attack_power,
+             ship_defense_before, ship_defense_after,
+             looted_commodity_code, looted_qty, bounty_coins, detail
+           )
+           VALUES ($1, NULL, $2, $3, $4, $5, true, $6, $7, $8, $9, $10, $11, $12, $13)`,
+          [
+            t,
+            targetShip.playerId.toString(),
+            targetShip.id.toString(),
+            combatOut.pirateName,
+            combatOut.damage,
+            combatOut.outcome,
+            combatOut.shipAttackPower,
+            combatOut.shipDefenseBefore,
+            combatOut.shipDefenseAfter,
+            combatOut.lootedCommodityCode,
+            combatOut.lootedQty.toString(),
+            combatOut.bountyCoins.toString(),
+            combatOut.detail,
+          ],
+        );
+
+        events.actionEvents.push({
+          shipId: targetShip.id,
+          playerId: targetShip.playerId,
+          tickNo: t,
+          ruleName: 'pertempuran_laut',
+          actionType: 'wait',
+          result: combatOut.outcome === 'player_victory' ? 'ok' : 'gagal',
+          portId: targetShip.portId,
+          detail: combatOut.detail,
+        });
+      }
+    }
+
+    if (stateMutatedByWorldEvent) {
+      nextState.stateHash = computeCanonicalStateHash(nextState);
     }
 
     // Simpan perubahan pasar & riwayat harga
@@ -659,10 +1240,12 @@ export async function executeSingleWorldTick(
       );
       const rescuedThisTick = pl.lastRescueTick === t;
       const rescueDelta = rescuedThisTick ? config.RESCUE_COINS : 0n;
+      const bountyInfo = pirateBountyByPlayer.get(pl.id);
+      const bountyDelta = bountyInfo ? bountyInfo.coins : 0n;
 
       // Hitung eksak perawatan kapal yang dibayar pemain pada tick ini
       const upkeepPaidThisTick =
-        coinsBefore - pl.coins + tradeDelta + rescueDelta;
+        coinsBefore - pl.coins + tradeDelta + rescueDelta + bountyDelta;
 
       let newUnflushed =
         unflushedBefore + (upkeepPaidThisTick > 0n ? upkeepPaidThisTick : 0n);
@@ -670,7 +1253,7 @@ export async function executeSingleWorldTick(
         cumUpkeepBefore + (upkeepPaidThisTick > 0n ? upkeepPaidThisTick : 0n);
 
       const hasNonUpkeepLedgerEvent =
-        playerTrades.length > 0 || rescuedThisTick;
+        playerTrades.length > 0 || rescuedThisTick || bountyDelta > 0n;
 
       if (
         newUnflushed > 0n &&
@@ -723,16 +1306,99 @@ export async function executeSingleWorldTick(
         );
       }
 
+      if (bountyInfo && bountyDelta > 0n) {
+        await client.query(
+          `INSERT INTO public.ledger (player_id, tick_no, delta, reason, ref_ship, meta)
+           VALUES ($1, $2, $3, 'sell', $4, $5::jsonb)`,
+          [
+            pl.id.toString(),
+            t,
+            bountyDelta.toString(),
+            bountyInfo.shipId.toString(),
+            JSON.stringify({
+              pirate_bounty: true,
+              pirate_name: bountyInfo.pirateName,
+            }),
+          ],
+        );
+
+        // Fase 7: Progres Misi Harian "Pemburu Bajak Laut" (combat_win)
+        await client.query(
+          `INSERT INTO public.player_quests (player_id, quest_id, assigned_date, progress, is_completed, is_claimed)
+           SELECT $1, q.id, CURRENT_DATE, 0, false, false
+           FROM public.quests q
+           ON CONFLICT (player_id, quest_id, assigned_date) DO NOTHING`,
+          [pl.id.toString()],
+        );
+        await client.query(
+          `UPDATE public.player_quests pq
+           SET progress = LEAST(q.target_value, pq.progress + 1),
+               is_completed = (pq.progress + 1 >= q.target_value)
+           FROM public.quests q
+           WHERE pq.quest_id = q.id
+             AND pq.player_id = $1
+             AND pq.assigned_date = CURRENT_DATE
+             AND q.type = 'combat_win'`,
+          [pl.id.toString()],
+        );
+      }
+
+      // Fase 7: Progres Misi Harian "Perdagangan Pertama" (trade) bila ada transaksi beli/jual pada tick ini
+      if (playerTrades.length > 0) {
+        const tradedUnits = playerTrades.reduce(
+          (acc, tr) => acc + Number(tr.executedQty ?? 0n),
+          0,
+        );
+        if (tradedUnits > 0) {
+          await client.query(
+            `INSERT INTO public.player_quests (player_id, quest_id, assigned_date, progress, is_completed, is_claimed)
+             SELECT $1, q.id, CURRENT_DATE, 0, false, false
+             FROM public.quests q
+             ON CONFLICT (player_id, quest_id, assigned_date) DO NOTHING`,
+            [pl.id.toString()],
+          );
+          await client.query(
+            `UPDATE public.player_quests pq
+             SET progress = LEAST(q.target_value, pq.progress + $1),
+                 is_completed = (pq.progress + $1 >= q.target_value)
+             FROM public.quests q
+             WHERE pq.quest_id = q.id
+               AND pq.player_id = $2
+               AND pq.assigned_date = CURRENT_DATE
+               AND q.type = 'trade'`,
+            [tradedUnits, pl.id.toString()],
+          );
+        }
+      }
+
+      // Hitung Net Worth pemain (Koin + Nilai Kapal Tambahan + Nilai Muatan) & perbarui Level Pemain (Fase 5)
+      let playerShipCount = 0;
+      let playerCargoVal = 0n;
+      for (const sh of nextState.ships.values()) {
+        if (sh.playerId === pl.id) {
+          playerShipCount += 1;
+          for (const [cid, cqty] of sh.cargo.entries()) {
+            const bp = COM_BASE_PRICE_BY_ID.get(cid) ?? 0n;
+            playerCargoVal += cqty * bp;
+          }
+        }
+      }
+      const addShipVal = BigInt(Math.max(0, playerShipCount - 1)) * 1500n;
+      const playerNetWorth = pl.coins + addShipVal + playerCargoVal;
+      const newPlayerLevel = calculatePlayerLevel(playerNetWorth);
+
       await client.query(
         `UPDATE public.players
          SET coins = $1,
              unflushed_upkeep = $2,
-             cumulative_upkeep_paid = $3
-         WHERE id = $4`,
+             cumulative_upkeep_paid = $3,
+             level = $4
+         WHERE id = $5`,
         [
           pl.coins.toString(),
           newUnflushed.toString(),
           newCumUpkeep.toString(),
+          newPlayerLevel,
           pl.id.toString(),
         ],
       );
@@ -745,18 +1411,22 @@ export async function executeSingleWorldTick(
         groundedShipsCount += 1;
       }
 
+      const updatedDef =
+        shipCombatStats.get(sh.id)?.defensePower ?? 100;
       await client.query(
         `UPDATE public.ships
          SET status = $1,
              port_id = $2,
              dest_port = $3,
-             arrive_tick = $4
-         WHERE id = $5`,
+             arrive_tick = $4,
+             defense_power = $5
+         WHERE id = $6`,
         [
           sh.status,
           sh.status === 'sailing' ? sh.portId : sh.portId,
           sh.destPort,
           sh.arriveTick !== null ? sh.arriveTick : null,
+          updatedDef,
           sh.id.toString(),
         ],
       );
@@ -854,22 +1524,222 @@ export async function executeSingleWorldTick(
       }
     }
 
-    // Catat musim & event dunia pada tick ini (Phase 2: world_events)
+    // Sistem Kedaluwarsa P2P Trading (Detail 2B: otomatis batal setelah 1.440 tick / 24 jam & kembalikan aset ke penjual)
+    const expiredP2pRes = await client.query<{
+      id: string;
+      ship_id: string;
+      commodity_id: number;
+      qty: string;
+    }>(
+      `SELECT id::text, ship_id::text, commodity_id, qty::text
+       FROM public.p2p_orders
+       WHERE status = 'open' AND expires_tick <= $1
+       ORDER BY id ASC
+       FOR UPDATE`,
+      [t],
+    );
+    for (const expOrder of expiredP2pRes.rows) {
+      const shId = BigInt(expOrder.ship_id);
+      const shState = nextState.ships.get(shId);
+      if (shState) {
+        let totalCargo = 0n;
+        for (const q of shState.cargo.values()) totalCargo += q;
+        const freeSpace = BigInt(shState.capacity) - totalCargo;
+        const returnQty =
+          freeSpace > 0n
+            ? BigInt(expOrder.qty) <= freeSpace
+              ? BigInt(expOrder.qty)
+              : freeSpace
+            : 0n;
+        if (returnQty > 0n) {
+          const prevQty = shState.cargo.get(expOrder.commodity_id) ?? 0n;
+          const nextQty = prevQty + returnQty;
+          shState.cargo.set(expOrder.commodity_id, nextQty);
+          await client.query(
+            `INSERT INTO public.ship_cargo (ship_id, commodity_id, qty)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (ship_id, commodity_id) DO UPDATE
+             SET qty = EXCLUDED.qty`,
+            [shId.toString(), expOrder.commodity_id, nextQty.toString()],
+          );
+        }
+      }
+      await client.query(
+        `UPDATE public.p2p_orders
+         SET status = 'expired', updated_at = now()
+         WHERE id = $1`,
+        [expOrder.id],
+      );
+    }
+
+    // Fase 8: Integrasi Combat World Boss ("Bajak Laut Armada Besar") untuk Aliansi dengan kas > 10.000 koin
+    const richGuildsRes = await client.query<{
+      id: string;
+      code: string;
+      name: string;
+      treasury_coins: string;
+      boss_active: boolean;
+      boss_name: string;
+      boss_hp: number;
+      boss_max_hp: number;
+      boss_port_id: number | null;
+      boss_spawned_tick: string | null;
+    }>(
+      `SELECT
+         id::text, code, name, treasury_coins::text,
+         boss_active, boss_name, boss_hp, boss_max_hp, boss_port_id, boss_spawned_tick::text
+       FROM public.guilds
+       WHERE treasury_coins > 10000
+       ORDER BY id ASC
+       FOR UPDATE`,
+    );
+
+    for (const rg of richGuildsRes.rows) {
+      let isBossActive = Boolean(rg.boss_active);
+      let currentBossHp = Number(rg.boss_hp ?? 0);
+      const bossMaxHp = Number(rg.boss_max_hp || 500);
+      const bossPortId = rg.boss_port_id !== null ? Number(rg.boss_port_id) : 1;
+
+      if (!isBossActive && rg.boss_spawned_tick === null) {
+        isBossActive = true;
+        currentBossHp = bossMaxHp;
+        await client.query(
+          `UPDATE public.guilds
+           SET boss_active = true,
+               boss_name = 'Bajak Laut Armada Besar',
+               boss_hp = $1,
+               boss_max_hp = $2,
+               boss_port_id = $3,
+               boss_spawned_tick = $4
+           WHERE id = $5`,
+          [currentBossHp, bossMaxHp, bossPortId, t, rg.id],
+        );
+
+        if (!triggeredEventRecord) {
+          triggeredEventRecord = {
+            eventCode: 'WORLD_BOSS_BAJAK_LAUT',
+            title: 'Bajak Laut Armada Besar',
+            description: `Kas Aliansi ${rg.name} melampaui 10.000 koin! "Bajak Laut Armada Besar" muncul di perairan Banda menantang seluruh armada aliansi!`,
+            portId: bossPortId,
+            commodityId: null,
+            activeUntilTick: t + 50,
+            isActive: true,
+            effectMeta: {
+              kind: 'WORLD_BOSS_BAJAK_LAUT',
+              guild_id: Number(rg.id),
+              guild_code: rg.code,
+              guild_name: rg.name,
+              boss_name: 'Bajak Laut Armada Besar',
+              boss_hp: currentBossHp,
+              boss_max_hp: bossMaxHp,
+              port_id: bossPortId,
+            },
+          };
+        }
+      }
+
+      // Kapal anggota Guild yang memiliki senjata (attack_power > 0) ikut menembaki World Boss secara kolektif
+      if (isBossActive && currentBossHp > 0) {
+        const guildShipsRes = await client.query<{
+          ship_id: string;
+          ship_name: string;
+          player_id: string;
+          attack_power: number;
+        }>(
+          `SELECT s.id::text AS ship_id, s.name AS ship_name, s.player_id::text, s.attack_power
+           FROM public.guild_members gm
+           JOIN public.ships s ON s.player_id = gm.player_id
+           WHERE gm.guild_id = $1 AND s.attack_power > 0
+           ORDER BY s.id ASC`,
+          [rg.id],
+        );
+
+        for (const gs of guildShipsRes.rows) {
+          if (currentBossHp <= 0) break;
+          const salvoDmg = Math.min(50, Math.max(10, Number(gs.attack_power)));
+          currentBossHp = Math.max(0, currentBossHp - salvoDmg);
+          const bossDefeated = currentBossHp === 0;
+
+          await client.query(
+            `INSERT INTO public.combat_logs (
+               tick_no, attacker_id, defender_id, ship_id, damage, is_pirate, outcome, bounty_coins, loot_summary, detail
+             )
+             VALUES ($1, $2, NULL, $3, $4, true, $5, 0, '{}'::jsonb, $6)`,
+            [
+              t,
+              gs.player_id,
+              gs.ship_id,
+              salvoDmg,
+              bossDefeated ? 'player_win' : 'boss_hit',
+              bossDefeated
+                ? `Armada Aliansi (${gs.ship_name}) menumpas World Boss Bajak Laut Armada Besar!`
+                : `Serangan bersama Aliansi (${gs.ship_name}) menghantam Bajak Laut Armada Besar (-${salvoDmg} HP, sisa ${currentBossHp}/${bossMaxHp} HP).`,
+            ],
+          );
+        }
+
+        await client.query(
+          `UPDATE public.guilds
+           SET boss_hp = $1,
+               boss_active = $2
+           WHERE id = $3`,
+          [currentBossHp, currentBossHp > 0, rg.id],
+        );
+      }
+    }
+
+    // Catat musim & event dunia pada tick ini (Phase 2 & Fase 3: world_events)
     const seasonInfo = getSeasonForTick(t);
+    const evCode = triggeredEventRecord
+      ? triggeredEventRecord.eventCode
+      : seasonInfo.eventCode;
+    const evTitle = triggeredEventRecord
+      ? triggeredEventRecord.title
+      : seasonInfo.title;
+    const evDesc = triggeredEventRecord
+      ? triggeredEventRecord.description
+      : seasonInfo.description;
+    const evPortId = triggeredEventRecord ? triggeredEventRecord.portId : null;
+    const evComId = triggeredEventRecord
+      ? triggeredEventRecord.commodityId
+      : null;
+    const evActiveUntil = triggeredEventRecord
+      ? triggeredEventRecord.activeUntilTick
+      : t;
+    const evIsActive = triggeredEventRecord
+      ? triggeredEventRecord.isActive
+      : true;
+    const evMeta = triggeredEventRecord
+      ? triggeredEventRecord.effectMeta
+      : { kind: 'SEASON', season_code: seasonInfo.seasonCode };
+
     await client.query(
-      `INSERT INTO public.world_events (tick_no, season, event_code, title, description)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO public.world_events (
+         tick_no, season, event_code, title, description,
+         port_id, commodity_id, active_until_tick, is_active, effect_meta
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
        ON CONFLICT (tick_no) DO UPDATE
        SET season = EXCLUDED.season,
            event_code = EXCLUDED.event_code,
            title = EXCLUDED.title,
-           description = EXCLUDED.description`,
+           description = EXCLUDED.description,
+           port_id = EXCLUDED.port_id,
+           commodity_id = EXCLUDED.commodity_id,
+           active_until_tick = EXCLUDED.active_until_tick,
+           is_active = EXCLUDED.is_active,
+           effect_meta = EXCLUDED.effect_meta`,
       [
         t,
         seasonInfo.seasonCode,
-        seasonInfo.eventCode,
-        seasonInfo.title,
-        seasonInfo.description,
+        evCode,
+        evTitle,
+        evDesc,
+        evPortId,
+        evComId,
+        evActiveUntil,
+        evIsActive,
+        JSON.stringify(evMeta),
       ],
     );
 
@@ -922,6 +1792,8 @@ export async function executeSingleWorldTick(
       stateHash: nextState.stateHash,
       durationMs,
       state: nextState,
+      triggeredEvent: triggeredEventRecord,
+      combatResults: combatResultsThisTick,
     };
   } catch (err) {
     try {
@@ -933,6 +1805,13 @@ export async function executeSingleWorldTick(
   } finally {
     client.release();
   }
+}
+
+function eventsByShipFromStep(
+  actionEvents: TickActionEvent[],
+  shipId: bigint,
+): TickActionEvent[] {
+  return actionEvents.filter((e) => e.shipId === shipId);
 }
 
 export interface WorkerLoopController {

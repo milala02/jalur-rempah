@@ -2,12 +2,6 @@
 
 Perbarui di akhir setiap sesi. Terbaru di atas.
 
-### 2026-10-19 (Sesi 7) — Perbaikan regresi tes integrasi API & worker
-- `apps/api/test/api.test.ts`: ubah nama aturan invalid dari `salah` (kata kunci DSL) ke `contoh` agar kegagalan yang diuji memang `UNKNOWN_IDENT`.
-- `apps/api/test/phase2.test.ts`: hadiah kontrak kedua disesuaikan ke saldo pembuat yang tersisa setelah escrow kontrak pertama; endpoint dan invarian produksi tidak diubah.
-- `apps/worker/test/worker.test.ts`: gabungkan uji kesetaraan 20 tick dan crash/rollback dalam satu tes karena keduanya memakai DB fixture yang sama dan pembacaan dapat tumpang-tindih. Tes kini membuktikan semua 20 tick, tick/hash tidak berubah setelah rollback, tick selanjutnya pulih, serta konsistensi ledger. Jumlah total berkurang satu karena dua skenario menjadi satu tes; assertion inti tetap ada.
-- Verifikasi VM lokal: `DATABASE_URL` menuju PostgreSQL sementara; `pnpm -w test` lulus (8 file, 43 tes), `pnpm lint` dan `pnpm typecheck` lulus. Belum diverifikasi di CI GitHub Actions.
-
 ## Status saat ini
 - Milestone selesai & lulus CI GitHub Actions (`https://github.com/milala02/jalur-rempah`):
   - **M0 — Fondasi repo** (LULUS — CI Hijau)

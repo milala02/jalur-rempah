@@ -36,15 +36,16 @@ jobs:
       - name: Prepare Android platform scaffolding & inject INTERNET permission
         working-directory: apps/mobile
         run: |
-          cp lib/main.dart /tmp/jr_main.dart
-          cp test/widget_test.dart /tmp/jr_widget_test.dart
+          rm -rf /tmp/jr_lib /tmp/jr_test
+          cp -r lib /tmp/jr_lib
+          cp -r test /tmp/jr_test
           cp pubspec.yaml /tmp/jr_pubspec.yaml
           cp analysis_options.yaml /tmp/jr_analysis_options.yaml
 
           flutter create --platforms=android --org id.nusantara.jalurrempah --project-name jalur_rempah_mobile .
 
-          cp /tmp/jr_main.dart lib/main.dart
-          cp /tmp/jr_widget_test.dart test/widget_test.dart
+          cp -r /tmp/jr_lib/* lib/
+          cp -r /tmp/jr_test/* test/
           cp /tmp/jr_pubspec.yaml pubspec.yaml
           cp /tmp/jr_analysis_options.yaml analysis_options.yaml
 

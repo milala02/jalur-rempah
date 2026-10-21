@@ -1,7 +1,7 @@
 name: jalur_rempah_mobile
-description: Klien Android tipis Jalur Rempah (M5) — pasar, kapal, editor Bahasa Aturan, sandbox, dan peringkat.
+description: Klien Android Jalur Rempah (v0.9 Fase 9) — Google Auth, Dark Mode, Peta 8 Negara, World Events, P2P Bursa, IDE Block Builder, Naval Combat, Daily Quests, & Aliansi Dagang (Guilds).
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.9.0+9
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  google_sign_in: ^6.2.1
+  provider: ^6.1.2
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:

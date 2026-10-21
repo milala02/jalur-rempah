@@ -9,6 +9,5 @@ coverage/
 .DS_Store
 *.tsbuildinfo
 
-# Backup lokal (bukan bagian dari source)
-*.bak
-*.bak-*
+!apps/mobile/lib/
+!apps/mobile/lib/**

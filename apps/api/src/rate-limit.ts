@@ -3,12 +3,62 @@ export interface RateLimitRule {
   readonly maxRequests: number;
 }
 
+export const V1_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 menit
+export const V1_RATE_LIMIT_MAX_REQUESTS = 100; // Maksimal 100 request per 15 menit per IP Address
+export const V1_RATE_LIMIT_MESSAGE =
+  'Terlalu banyak permintaan. Silakan coba lagi nanti.';
+
 export const RATE_LIMIT_GROUPS = {
+  v1Ip: {
+    windowMs: V1_RATE_LIMIT_WINDOW_MS,
+    maxRequests: V1_RATE_LIMIT_MAX_REQUESTS,
+  },
   general: { windowMs: 60_000, maxRequests: 60 },
   auth: { windowMs: 60_000, maxRequests: 10 },
   putRules: { windowMs: 60_000, maxRequests: 10 },
   simulate: { windowMs: 5_000, maxRequests: 1 },
 } as const;
+
+export interface ExpressRateLimitConfig {
+  readonly windowMs: number;
+  readonly max: number;
+  readonly limit: number;
+  readonly standardHeaders: boolean;
+  readonly legacyHeaders: boolean;
+  readonly message: {
+    readonly message: string;
+    readonly error: {
+      readonly code: string;
+      readonly message: string;
+      readonly details: readonly unknown[];
+    };
+  };
+}
+
+/**
+ * Konfigurasi standar express-rate-limit untuk seluruh endpoint `/v1/*` (Fase 9 Langkah 1).
+ * Maksimal 100 request per 15 menit per IP Address -> HTTP 429 "Terlalu banyak permintaan. Silakan coba lagi nanti."
+ */
+export function createV1RateLimitConfig(
+  maxRequests: number = V1_RATE_LIMIT_MAX_REQUESTS,
+  windowMs: number = V1_RATE_LIMIT_WINDOW_MS,
+): ExpressRateLimitConfig {
+  return {
+    windowMs,
+    max: maxRequests,
+    limit: maxRequests,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      message: V1_RATE_LIMIT_MESSAGE,
+      error: {
+        code: 'RATE_LIMITED',
+        message: V1_RATE_LIMIT_MESSAGE,
+        details: [],
+      },
+    },
+  };
+}
 
 interface BucketEntry {
   count: number;
@@ -23,7 +73,7 @@ export class InMemoryRateLimiter {
     key: string,
     rule: RateLimitRule,
     nowMs: number = Date.now(),
-  ): { allowed: boolean; retryAfterSec: number } {
+  ): { allowed: boolean; retryAfterSec: number; remaining: number } {
     const compositeKey = `${group}:${key}`;
     const existing = this.buckets.get(compositeKey);
 
@@ -32,7 +82,11 @@ export class InMemoryRateLimiter {
         count: 1,
         resetAtMs: nowMs + rule.windowMs,
       });
-      return { allowed: true, retryAfterSec: 0 };
+      return {
+        allowed: true,
+        retryAfterSec: 0,
+        remaining: Math.max(0, rule.maxRequests - 1),
+      };
     }
 
     if (existing.count >= rule.maxRequests) {
@@ -40,11 +94,15 @@ export class InMemoryRateLimiter {
         1,
         Math.ceil((existing.resetAtMs - nowMs) / 1000),
       );
-      return { allowed: false, retryAfterSec };
+      return { allowed: false, retryAfterSec, remaining: 0 };
     }
 
     existing.count += 1;
-    return { allowed: true, retryAfterSec: 0 };
+    return {
+      allowed: true,
+      retryAfterSec: 0,
+      remaining: Math.max(0, rule.maxRequests - existing.count),
+    };
   }
 
   reset(): void {

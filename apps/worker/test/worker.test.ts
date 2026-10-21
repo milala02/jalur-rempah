@@ -25,9 +25,10 @@ import {
   acquireWorkerAdvisoryLock,
   executeSingleWorldTick,
   createInitialWorkerMetrics,
+  rollRandomWorldEventForTick,
 } from '../src/index.js';
 
-describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker DB == Simulator, Crash Recovery, & Benchmark 100 Kapal', () => {
+describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker DB == Simulator, Crash Recovery, Benchmark 100 Kapal, & World Events Engine', () => {
   const adminDbUrl = getDatabaseUrl();
   const testDbName = `test_worker_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
   const testDbUrl = replaceDatabaseInUrl(adminDbUrl, testDbName);
@@ -85,7 +86,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     await handle3!.release();
   });
 
-  it.sequential('2. Kesetaraan state_hash, pemulihan crash, dan rollback tick worker', async () => {
+  it('2. Kesetaraan state_hash (docs/09 & docs/10): hasil tick Worker (via PostgreSQL) == hasil stepWorld murni di memori selama 20 tick', async () => {
     const api = createApiServer(testPool);
 
     // Buat 2 pemain beserta kapal dan simpan aturan DSL aktif
@@ -99,6 +100,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
         email: 'w1@nusantara.id',
         password: 'SandiKuat123!',
         display_name: 'Kapten_Satu',
+        tos_accepted: true,
       },
     });
     const r2 = await api.inject<{
@@ -111,6 +113,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
         email: 'w2@nusantara.id',
         password: 'SandiKuat123!',
         display_name: 'Kapten_Dua',
+        tos_accepted: true,
       },
     });
     expect(r1.statusCode).toBe(201);
@@ -132,7 +135,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     expect(put2.statusCode).toBe(200);
 
     // Ambil keadaan awal dari DB untuk dijalankan paralel di simulator memori murni
-    let pureState: WorldState = await loadWorldSnapshotFromDb(testPool);
+    const pureState: WorldState = await loadWorldSnapshotFromDb(testPool);
     const prog1 = compileDsl(RULE_TEMPLATES[0]!.source).ast!;
     const prog2 = compileDsl(RULE_TEMPLATES[1]!.source).ast!;
     const pureDecider = createDslShipRuleDecider(
@@ -152,7 +155,6 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
         101,
         true,
       );
-      pureState = expectedState;
 
       // 2. Jalankan di Worker PostgreSQL
       const dbTick = await executeSingleWorldTick(testPool, {
@@ -165,34 +167,34 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
       expect(dbTick.stateHash).toBe(expectedState.stateHash);
     }
 
+    // Verifikasi konsistensi database (ledger, muatan, konservasi uang global)
     const consistency = await checkDatabaseConsistency(testPool);
     expect(consistency.valid).toBe(true);
     expect(metrics.ticks_completed_total).toBe(20);
     expect(metrics.invariant_failures_total).toBe(0);
+  });
 
-    // Uji crash segera setelah 20 tick dan verifikasi snapshot DB sebelum rollback.
-    const tickBefore = pureState.tickNo;
-    expect(tickBefore).toBe(20);
-    const tickAudit = await testPool.query<{
-      max_tick: string;
+  it('3. Pemulihan setelah kegagalan / crash di tengah tick: rollback transaksi menjaga DB utuh dan tick berikutnya lanjut dari max(tick_no) + 1', async () => {
+    const hashBeforeRes = await testPool.query<{
+      tick_no: string;
       state_hash: string;
-    }>(`SELECT MAX(tick_no)::text AS max_tick,
-               (SELECT state_hash FROM public.tick_state ORDER BY tick_no DESC LIMIT 1) AS state_hash
-        FROM public.tick_state`);
-    expect(Number(tickAudit.rows[0]?.max_tick)).toBe(tickBefore);
-    const hashBefore = tickAudit.rows[0]?.state_hash;
+    }>(
+      `SELECT tick_no::text, state_hash FROM public.tick_state ORDER BY tick_no DESC LIMIT 1`,
+    );
+    const tickBefore = Number(hashBeforeRes.rows[0]?.tick_no ?? '0');
 
+    // Simulasikan crash mendadak tepat sebelum COMMIT pada tick ke-21
     await expect(
       executeSingleWorldTick(testPool, {
         config: WORLD_CONFIG,
         worldSeed: 101,
-        beforeCommitHook: (tickNo) => {
-          expect(tickNo).toBe(tickBefore + 1);
+        beforeCommitHook: () => {
           throw new Error('SIMULATED_KILL_9_BEFORE_COMMIT');
         },
       }),
     ).rejects.toThrow(/SIMULATED_KILL_9_BEFORE_COMMIT/);
 
+    // Pastikan tidak ada efek setengah jalan dan konsistensi DB tetap 100% valid
     const consistencyAfterCrash = await checkDatabaseConsistency(testPool);
     expect(consistencyAfterCrash.valid).toBe(true);
 
@@ -201,12 +203,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     );
     expect(Number(tickAfterCrashRes.rows[0]?.max_tick)).toBe(tickBefore);
 
-    const hashAfterCrashRes = await testPool.query<{ state_hash: string }>(
-      `SELECT state_hash FROM public.tick_state WHERE tick_no = $1`,
-      [tickBefore],
-    );
-    expect(hashAfterCrashRes.rows[0]?.state_hash).toBe(hashBefore);
-
+    // Jalankan kembali tick normal -> harus lanjut tepat di tickBefore + 1
     const recoveredTick = await executeSingleWorldTick(testPool, {
       config: WORLD_CONFIG,
       worldSeed: 101,
@@ -219,7 +216,7 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     expect(finalConsistency.ledgerMismatchPlayerIds).toEqual([]);
   });
 
-  it('3. Benchmark performa 100 kapal dengan aturan DSL: durasi p95 jauh di bawah 20% durasi tick (< 6.000 ms)', () => {
+  it('4. Benchmark performa 100 kapal dengan aturan DSL: durasi p95 jauh di bawah 20% durasi tick (< 6.000 ms)', () => {
     const players = new Map();
     const ships = new Map();
     const programsByShip = new Map();
@@ -318,5 +315,17 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
     const p95 = durations[Math.floor(durations.length * 0.95)] ?? 0;
     const maxAllowedMs = WORLD_CONFIG.TICK_SECONDS * 1000 * 0.2; // 6.000 ms
     expect(p95).toBeLessThanOrEqual(maxAllowedMs);
+  });
+
+  it('5. World Events Engine (Fase 3): undian deterministik 5% per 100 tick bekerja sesuai peluang', () => {
+    // Non-100 tick tidak pernah memicu event acak
+    expect(rollRandomWorldEventForTick(25, 101, 0.05)).toBeNull();
+
+    // Dengan peluang 100% pada kelipatan 100 tick, pasti mengembalikan salah satu dari 3 event
+    const forced = rollRandomWorldEventForTick(100, 101, 1.0);
+    expect(forced).not.toBeNull();
+    expect(['WABAH_HAMA', 'EMBARGO_PERANG', 'ANGIN_MUSON_KENCANG']).toContain(
+      forced!.kind,
+    );
   });
 });

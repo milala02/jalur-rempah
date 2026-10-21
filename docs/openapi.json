@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Jalur Rempah API",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "description": "Kontrak HTTP API server-authoritative untuk Jalur Rempah — MVP & Fase 2 (docs/08-API-CONTRACT.md)."
   },
   "servers": [
@@ -16,7 +16,9 @@
       "get": {
         "summary": "Pemeriksaan kesehatan proses API",
         "responses": {
-          "200": { "description": "API sehat" }
+          "200": {
+            "description": "API sehat"
+          }
         }
       }
     },
@@ -24,8 +26,12 @@
       "get": {
         "summary": "Pemeriksaan kesehatan usia tick terakhir worker",
         "responses": {
-          "200": { "description": "Worker sehat" },
-          "503": { "description": "Tick worker tertinggal" }
+          "200": {
+            "description": "Worker sehat"
+          },
+          "503": {
+            "description": "Tick worker tertinggal"
+          }
         }
       }
     },
@@ -33,7 +39,9 @@
       "get": {
         "summary": "Server-Sent Events (SSE) stream untuk tick baru dan musim dunia (Fase 2)",
         "responses": {
-          "200": { "description": "Aliran SSE text/event-stream" }
+          "200": {
+            "description": "Aliran SSE text/event-stream"
+          }
         }
       }
     },
@@ -41,9 +49,15 @@
       "post": {
         "summary": "Daftar akun baru, buat kapal awal, dan catat ledger starter",
         "responses": {
-          "201": { "description": "Akun dan kapal awal berhasil dibuat" },
-          "400": { "description": "Input tidak valid (VALIDATION_ERROR)" },
-          "409": { "description": "Email atau nama tampilan duplikat (CONFLICT)" }
+          "201": {
+            "description": "Akun dan kapal awal berhasil dibuat"
+          },
+          "400": {
+            "description": "Input tidak valid (VALIDATION_ERROR)"
+          },
+          "409": {
+            "description": "Email atau nama tampilan duplikat (CONFLICT)"
+          }
         }
       }
     },
@@ -51,8 +65,12 @@
       "post": {
         "summary": "Masuk dan terima pasangan access_token serta refresh_token",
         "responses": {
-          "200": { "description": "Berhasil masuk" },
-          "401": { "description": "Kredensial tidak valid (UNAUTHENTICATED)" }
+          "200": {
+            "description": "Berhasil masuk"
+          },
+          "401": {
+            "description": "Kredensial tidak valid (UNAUTHENTICATED)"
+          }
         }
       }
     },
@@ -60,8 +78,12 @@
       "post": {
         "summary": "Rotasi refresh_token; mencabut semua sesi bila token lama dipakai ulang",
         "responses": {
-          "200": { "description": "Token baru diterbitkan" },
-          "401": { "description": "Token tidak valid atau terdeteksi dipakai ulang (UNAUTHENTICATED)" }
+          "200": {
+            "description": "Token baru diterbitkan"
+          },
+          "401": {
+            "description": "Token tidak valid atau terdeteksi dipakai ulang (UNAUTHENTICATED)"
+          }
         }
       }
     },
@@ -69,7 +91,9 @@
       "post": {
         "summary": "Cabut refresh_token aktif",
         "responses": {
-          "200": { "description": "Refresh token dicabut" }
+          "200": {
+            "description": "Refresh token dicabut"
+          }
         }
       }
     },
@@ -77,15 +101,23 @@
       "get": {
         "summary": "Profil pemain, koin, kekayaan bersih, dan peringkat",
         "responses": {
-          "200": { "description": "Profil pemain" },
-          "401": { "description": "Belum terautentikasi" }
+          "200": {
+            "description": "Profil pemain"
+          },
+          "401": {
+            "description": "Belum terautentikasi"
+          }
         }
       },
       "delete": {
         "summary": "Penghapusan dan anonimisasi akun dengan pelestarian ledger append-only (Fase 2)",
         "responses": {
-          "200": { "description": "Akun berhasil dianonimkan dan kapal dihapus" },
-          "401": { "description": "Belum terautentikasi" }
+          "200": {
+            "description": "Akun berhasil dianonimkan dan kapal dihapus"
+          },
+          "401": {
+            "description": "Belum terautentikasi"
+          }
         }
       }
     },
@@ -93,7 +125,9 @@
       "get": {
         "summary": "Riwayat mutasi koin pemain dengan paginasi kursor",
         "responses": {
-          "200": { "description": "Daftar entri ledger" }
+          "200": {
+            "description": "Daftar entri ledger"
+          }
         }
       }
     },
@@ -101,7 +135,9 @@
       "get": {
         "summary": "Kabut Informasi: daftar harga dan stok terakhir yang diketahui dari kunjungan kapal pemain (ADR-012)",
         "responses": {
-          "200": { "description": "Daftar intelijen pasar per pelabuhan" }
+          "200": {
+            "description": "Daftar intelijen pasar per pelabuhan"
+          }
         }
       }
     },
@@ -109,8 +145,12 @@
       "get": {
         "summary": "Musim angin muson saat ini dan riwayat event dunia Nusantara (Fase 2)",
         "responses": {
-          "200": { "description": "Musim dan event dunia" },
-          "304": { "description": "Tidak berubah (ETag cocok)" }
+          "200": {
+            "description": "Musim dan event dunia"
+          },
+          "304": {
+            "description": "Tidak berubah (ETag cocok)"
+          }
         }
       }
     },
@@ -118,14 +158,20 @@
       "get": {
         "summary": "Daftar serikat dagang ringan beserta jumlah anggota (Fase 2)",
         "responses": {
-          "200": { "description": "Daftar serikat dagang" }
+          "200": {
+            "description": "Daftar serikat dagang"
+          }
         }
       },
       "post": {
         "summary": "Dirikan serikat dagang baru (Fase 2)",
         "responses": {
-          "201": { "description": "Serikat dagang berhasil dibuat" },
-          "409": { "description": "Kode/nama sudah dipakai atau pemain sudah bergabung di serikat" }
+          "201": {
+            "description": "Serikat dagang berhasil dibuat"
+          },
+          "409": {
+            "description": "Kode/nama sudah dipakai atau pemain sudah bergabung di serikat"
+          }
         }
       }
     },
@@ -133,8 +179,12 @@
       "post": {
         "summary": "Bergabung ke serikat dagang berdasarkan kode (Fase 2)",
         "responses": {
-          "200": { "description": "Berhasil bergabung ke serikat dagang" },
-          "404": { "description": "Serikat dagang tidak ditemukan" }
+          "200": {
+            "description": "Berhasil bergabung ke serikat dagang"
+          },
+          "404": {
+            "description": "Serikat dagang tidak ditemukan"
+          }
         }
       }
     },
@@ -142,14 +192,20 @@
       "get": {
         "summary": "Daftar kontrak pengiriman komoditas terbuka (Fase 2)",
         "responses": {
-          "200": { "description": "Daftar kontrak pengiriman" }
+          "200": {
+            "description": "Daftar kontrak pengiriman"
+          }
         }
       },
       "post": {
         "summary": "Buat kontrak pengiriman komoditas dengan escrow kas pelabuhan (Fase 2)",
         "responses": {
-          "201": { "description": "Kontrak berhasil dibuat" },
-          "422": { "description": "Koin tidak cukup (INSUFFICIENT_COINS)" }
+          "201": {
+            "description": "Kontrak berhasil dibuat"
+          },
+          "422": {
+            "description": "Koin tidak cukup (INSUFFICIENT_COINS)"
+          }
         }
       }
     },
@@ -157,8 +213,12 @@
       "post": {
         "summary": "Penuhi kontrak pengiriman dari muatan kapal yang bersandar di pelabuhan tujuan (Fase 2)",
         "responses": {
-          "200": { "description": "Kontrak berhasil dipenuhi dan imbalan dibayarkan" },
-          "422": { "description": "Kapal tidak bersandar di tujuan atau muatan kurang" }
+          "200": {
+            "description": "Kontrak berhasil dipenuhi dan imbalan dibayarkan"
+          },
+          "422": {
+            "description": "Kapal tidak bersandar di tujuan atau muatan kurang"
+          }
         }
       }
     },
@@ -166,9 +226,15 @@
       "get": {
         "summary": "Data statis dunia, kas pelabuhan, komoditas, rute, musim, dan nomor tick",
         "responses": {
-          "200": { "description": "Data dunia" },
-          "304": { "description": "Tidak berubah (ETag cocok)" },
-          "426": { "description": "Versi klien usang (CLIENT_OUTDATED)" }
+          "200": {
+            "description": "Data dunia"
+          },
+          "304": {
+            "description": "Tidak berubah (ETag cocok)"
+          },
+          "426": {
+            "description": "Versi klien usang (CLIENT_OUTDATED)"
+          }
         }
       }
     },
@@ -176,9 +242,15 @@
       "get": {
         "summary": "Stok, target, dan harga komoditas di satu pelabuhan",
         "responses": {
-          "200": { "description": "Data pasar pelabuhan" },
-          "304": { "description": "Tidak berubah (ETag cocok)" },
-          "404": { "description": "Pelabuhan tidak ditemukan" }
+          "200": {
+            "description": "Data pasar pelabuhan"
+          },
+          "304": {
+            "description": "Tidak berubah (ETag cocok)"
+          },
+          "404": {
+            "description": "Pelabuhan tidak ditemukan"
+          }
         }
       }
     },
@@ -186,8 +258,12 @@
       "get": {
         "summary": "Deret riwayat harga komoditas di pelabuhan (maks 500 titik)",
         "responses": {
-          "200": { "description": "Deret harga" },
-          "304": { "description": "Tidak berubah (ETag cocok)" }
+          "200": {
+            "description": "Deret harga"
+          },
+          "304": {
+            "description": "Tidak berubah (ETag cocok)"
+          }
         }
       }
     },
@@ -195,8 +271,12 @@
       "get": {
         "summary": "Peringkat kekayaan bersih pemain aktif (dihitung menggunakan harga dasar)",
         "responses": {
-          "200": { "description": "Daftar peringkat" },
-          "304": { "description": "Tidak berubah (ETag cocok)" }
+          "200": {
+            "description": "Daftar peringkat"
+          },
+          "304": {
+            "description": "Tidak berubah (ETag cocok)"
+          }
         }
       }
     },
@@ -204,7 +284,9 @@
       "get": {
         "summary": "Daftar templat Bahasa Aturan siap pakai yang telah tervalidasi",
         "responses": {
-          "200": { "description": "Daftar templat aturan" }
+          "200": {
+            "description": "Daftar templat aturan"
+          }
         }
       }
     },
@@ -212,7 +294,9 @@
       "post": {
         "summary": "Validasi statis kode sumber Bahasa Aturan tanpa menyimpan",
         "responses": {
-          "200": { "description": "Hasil validasi beserta daftar galat" }
+          "200": {
+            "description": "Hasil validasi beserta daftar galat"
+          }
         }
       }
     },
@@ -220,7 +304,9 @@
       "get": {
         "summary": "Daftar kapal milik pemain",
         "responses": {
-          "200": { "description": "Daftar kapal" }
+          "200": {
+            "description": "Daftar kapal"
+          }
         }
       }
     },
@@ -228,8 +314,12 @@
       "post": {
         "summary": "Beli kapal tambahan (maksimal 5 kapal per pemain, biaya masuk ke kas pelabuhan galangan)",
         "responses": {
-          "201": { "description": "Kapal baru berhasil dibeli" },
-          "422": { "description": "Koin kurang atau batas armada tercapai" }
+          "201": {
+            "description": "Kapal baru berhasil dibeli"
+          },
+          "422": {
+            "description": "Koin kurang atau batas armada tercapai"
+          }
         }
       }
     },
@@ -237,9 +327,15 @@
       "get": {
         "summary": "Detail status, posisi, muatan, dan ETA kapal",
         "responses": {
-          "200": { "description": "Detail kapal" },
-          "403": { "description": "Kapal milik pemain lain (FORBIDDEN)" },
-          "404": { "description": "Kapal tidak ditemukan" }
+          "200": {
+            "description": "Detail kapal"
+          },
+          "403": {
+            "description": "Kapal milik pemain lain (FORBIDDEN)"
+          },
+          "404": {
+            "description": "Kapal tidak ditemukan"
+          }
         }
       }
     },
@@ -247,15 +343,23 @@
       "get": {
         "summary": "Ambil versi aktif dan sumber Bahasa Aturan kapal",
         "responses": {
-          "200": { "description": "Aturan aktif kapal" }
+          "200": {
+            "description": "Aturan aktif kapal"
+          }
         }
       },
       "put": {
         "summary": "Validasi dan simpan versi aturan baru dengan pemeriksaan base_version",
         "responses": {
-          "200": { "description": "Aturan baru disimpan" },
-          "409": { "description": "Konflik versi (VERSION_CONFLICT)" },
-          "422": { "description": "Aturan tidak valid (RULE_INVALID)" }
+          "200": {
+            "description": "Aturan baru disimpan"
+          },
+          "409": {
+            "description": "Konflik versi (VERSION_CONFLICT)"
+          },
+          "422": {
+            "description": "Aturan tidak valid (RULE_INVALID)"
+          }
         }
       }
     },
@@ -263,7 +367,9 @@
       "get": {
         "summary": "Riwayat versi aturan kapal (maksimal 20 versi terakhir)",
         "responses": {
-          "200": { "description": "Riwayat versi aturan" }
+          "200": {
+            "description": "Riwayat versi aturan"
+          }
         }
       }
     },
@@ -271,10 +377,18 @@
       "post": {
         "summary": "Simulasi sandbox aturan hingga 300 tick menggunakan stepWorld tanpa menulis ke DB",
         "responses": {
-          "200": { "description": "Hasil simulasi sandbox" },
-          "422": { "description": "Aturan tidak valid (RULE_INVALID)" },
-          "429": { "description": "Terlalu sering simulasi (RATE_LIMITED)" },
-          "503": { "description": "Antrean simulasi penuh (BUSY)" }
+          "200": {
+            "description": "Hasil simulasi sandbox"
+          },
+          "422": {
+            "description": "Aturan tidak valid (RULE_INVALID)"
+          },
+          "429": {
+            "description": "Terlalu sering simulasi (RATE_LIMITED)"
+          },
+          "503": {
+            "description": "Antrean simulasi penuh (BUSY)"
+          }
         }
       }
     },
@@ -282,8 +396,247 @@
       "get": {
         "summary": "Log evaluasi aturan dan aksi kapal per tick",
         "responses": {
-          "200": { "description": "Daftar log aksi kapal" }
+          "200": {
+            "description": "Daftar log aksi kapal"
+          }
         }
+      }
+    },
+    "/legal": {
+      "get": {
+        "summary": "Dokumen resmi Syarat & Ketentuan (ToS/EULA v1.0), Kebijakan Privasi (UU PDP No. 27/2022), dan Hukum In-Game",
+        "responses": {
+          "200": {
+            "description": "Dokumen hukum dan kepatuhan"
+          }
+        }
+      }
+    },
+    "/p2p/orders": {
+      "get": {
+        "summary": "Daftar tawaran aktif di Bursa Lelang (Auction House) dan Direct Trade",
+        "responses": {
+          "200": {
+            "description": "Daftar tawaran P2P"
+          },
+          "403": {
+            "description": "Akun sedang dalam peninjauan (shadowbanned)"
+          }
+        }
+      },
+      "post": {
+        "summary": "Buat tawaran Auction House atau Direct Trade dengan Escrow barang dan batas harga Anti-RMT (50%..200%)",
+        "responses": {
+          "201": {
+            "description": "Tawaran P2P berhasil dibuat"
+          },
+          "422": {
+            "description": "Harga di luar batas Anti-RMT (PRICE_OUT_OF_RANGE) atau stok kurang"
+          }
+        }
+      }
+    },
+    "/p2p/orders/{id}/cancel": {
+      "post": {
+        "summary": "Batalkan tawaran P2P yang belum diambil (FOR UPDATE lock) dan tarik kembali barang dari Escrow",
+        "responses": {
+          "200": {
+            "description": "Tawaran berhasil dibatalkan"
+          },
+          "409": {
+            "description": "Tawaran sudah dibeli atau dibatalkan (CONFLICT)"
+          }
+        }
+      }
+    },
+    "/p2p/orders/{id}/accept": {
+      "post": {
+        "summary": "Terima/beli tawaran P2P dengan pertukaran atomik (FOR UPDATE lock) dan deteksi anomali wash trading",
+        "responses": {
+          "200": {
+            "description": "Transaksi P2P selesai"
+          },
+          "409": {
+            "description": "Tawaran sudah tidak aktif (CONFLICT)"
+          }
+        }
+      }
+    },
+    "/admin/anomalies": {
+      "get": {
+        "summary": "Daftar peringatan deteksi anomali anti-cheat (memerlukan header X-Admin-Key)",
+        "responses": {
+          "200": {
+            "description": "Daftar anomaly_alerts"
+          }
+        }
+      }
+    },
+    "/admin/players/{id}/status": {
+      "post": {
+        "summary": "Tindakan manual Admin untuk mengubah account_status pemain (active, shadowbanned, banned)",
+        "responses": {
+          "200": {
+            "description": "Status akun berhasil diperbarui"
+          }
+        }
+      }
+    },
+    "/v1/world/events": {
+      "get": {
+        "summary": "Daftar event dunia aktif & riwayat musim (Wabah Hama, Embargo/Perang, Angin Muson Kencang)",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/dsl/compile-blocks": {
+      "post": {
+        "summary": "Block Builder Compiler API — menerjemahkan JSON blok menjadi teks Bahasa Aturan (DSL)",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Validation Error"
+          }
+        }
+      }
+    },
+    "/v1/world/ports": {
+      "get": {
+        "summary": "Daftar seluruh pelabuhan Nusantara & Internasional beserta status Progressive Unlocking (is_locked)",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/world/commodities": {
+      "get": {
+        "summary": "Daftar seluruh komoditas Nusantara & Internasional beserta status Progressive Unlocking (is_locked)",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/world/countries": {
+      "get": {
+        "summary": "Daftar 8 Negara beserta min_level_required dan status is_locked",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/ships/repair": {
+      "post": {
+        "summary": "Memperbaiki HP lambung kapal (defense_power) menggunakan koin",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/ships/equip": {
+      "post": {
+        "summary": "Memasang Meriam atau Katana ke kapal untuk meningkatkan attack_power",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/logs": {
+      "get": {
+        "summary": "Mengambil daftar log pertempuran laut (combat_logs) dan notifikasi serangan Bajak Laut",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/quests": {
+      "get": {
+        "summary": "Daftar Misi Harian (Daily Quests) aktif beserta progres pemain hari ini",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/quests/{id}/claim": {
+      "post": {
+        "summary": "Klaim hadiah koin dan EXP untuk misi harian yang telah selesai",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "409": {
+            "description": "Already Claimed"
+          },
+          "422": {
+            "description": "Not Completed"
+          }
+        }
+      }
+    },
+    "/v1/tutorial/advance": {
+      "post": {
+        "summary": "Menaikkan tutorial_step (0..3) untuk onboarding pemain baru",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/guilds": {
+      "get": {
+        "summary": "Daftar & Pencarian Aliansi Dagang (Guilds)"
+      },
+      "post": {
+        "summary": "Buat Aliansi Baru (Biaya 5.000 Koin ke Kas Guild & dicatat di Ledger)"
+      }
+    },
+    "/v1/guilds/{id}": {
+      "get": {
+        "summary": "Lihat Profil Aliansi Dagang, Daftar Anggota, Kas Guild, & Status World Boss"
+      }
+    },
+    "/v1/guilds/{id}/join": {
+      "post": {
+        "summary": "Bergabung ke Aliansi Dagang"
+      }
+    },
+    "/v1/guilds/{id}/leave": {
+      "post": {
+        "summary": "Keluar dari Aliansi Dagang"
+      }
+    },
+    "/v1/guilds/donate": {
+      "post": {
+        "summary": "Setor Donasi Koin Pribadi ke Kas Guild (Tercatat di Ledger)"
+      }
+    },
+    "/v1/guilds/{id}/attack-boss": {
+      "post": {
+        "summary": "Serang World Boss Bajak Laut Armada Besar Bersama Anggota Aliansi"
+      }
+    },
+    "/v1/auth/google": {
+      "post": {
+        "summary": "Login atau Auto-Register Pemain menggunakan Google ID Token (google-auth-library)"
       }
     }
   }

@@ -14,7 +14,9 @@
     "@jalur-rempah/dsl": "workspace:*",
     "@jalur-rempah/econ": "workspace:*",
     "@jalur-rempah/shared": "workspace:*",
-    "pg": "^8.13.0"
+    "pg": "^8.13.0",
+    "express-rate-limit": "^7.4.1",
+    "google-auth-library": "^9.14.2"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",

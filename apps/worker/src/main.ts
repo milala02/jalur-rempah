@@ -78,7 +78,12 @@ async function bootstrapWorker(): Promise<void> {
   });
 }
 
-bootstrapWorker().catch((err) => {
-  console.error('[JR-WORKER] Kegagalan fatal saat startup:', err);
-  process.exit(1);
-});
+if (
+  process.argv[1] &&
+  (process.argv[1].endsWith('main.ts') || process.argv[1].endsWith('main.js'))
+) {
+  bootstrapWorker().catch((err) => {
+    console.error('[JR-WORKER] Kegagalan fatal saat startup:', err);
+    process.exit(1);
+  });
+}

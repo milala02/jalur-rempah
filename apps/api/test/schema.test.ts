@@ -17,6 +17,7 @@ import {
 } from '@jalur-rempah/shared';
 
 const EXPECTED_GAME_TABLES = [
+  'countries',
   'commodities',
   'ports',
   'routes',
@@ -37,6 +38,11 @@ const EXPECTED_GAME_TABLES = [
   'guild_members',
   'trade_contracts',
   'world_events',
+  'p2p_orders',
+  'anomaly_alerts',
+  'combat_logs',
+  'quests',
+  'player_quests',
   'schema_migrations',
 ] as const;
 
@@ -133,6 +139,11 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
     expect(appliedFirst).toContain('0002_port_treasury_and_sinks');
     expect(appliedFirst).toContain('0003_port_income_and_ledger_compaction');
     expect(appliedFirst).toContain('0004_phase2_features');
+    expect(appliedFirst).toContain('0005_legal_status_p2p_anticheat');
+    expect(appliedFirst).toContain('0006_global_expansion_and_levels');
+    expect(appliedFirst).toContain('0007_naval_combat_and_pirates');
+    expect(appliedFirst).toContain('0008_quests_and_tutorial');
+    expect(appliedFirst).toContain('0009_guilds_treasury_and_world_boss');
 
     // Eksekusi ulang migrasi pada DB yang sama harus menghasilkan [] (idempoten)
     const appliedSecond = await runMigrations(testPool);
@@ -188,7 +199,7 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
     await seedWorld(testPool);
 
     const comCount = await testPool.query<{ count: string }>(
-      'SELECT count(*) AS count FROM public.commodities',
+      'SELECT count(*) AS count FROM public.commodities WHERE id <= 4',
     );
     expect(Number(comCount.rows[0]?.count)).toBe(COMMODITIES_SEED.length);
 
@@ -196,7 +207,7 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
       id: number;
       treasury: string;
       initial_treasury: string;
-    }>('SELECT id, treasury, initial_treasury FROM public.ports ORDER BY id ASC');
+    }>('SELECT id, treasury, initial_treasury FROM public.ports WHERE id <= 6 ORDER BY id ASC');
     expect(portRes.rows.length).toBe(PORTS_SEED.length);
     for (const row of portRes.rows) {
       expect(BigInt(row.treasury)).toBe(WORLD_CONFIG.INITIAL_PORT_TREASURY);
@@ -238,7 +249,7 @@ describe('M0 & M1 — Database Schema, Migrations (0001 + 0002), Seed, & Isolasi
     await seedWorld(testPool);
 
     const comCount2 = await testPool.query<{ count: string }>(
-      'SELECT count(*) AS count FROM public.commodities',
+      'SELECT count(*) AS count FROM public.commodities WHERE id <= 4',
     );
     expect(Number(comCount2.rows[0]?.count)).toBe(COMMODITIES_SEED.length);
 

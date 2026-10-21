@@ -35,10 +35,21 @@ export async function runMigrations(
     );
     const existingVersions = new Set(existingRows.map((r) => r.version));
 
-    const files = fs
+    const knownFiles = [
+      '0001_init.sql',
+      '0002_port_treasury_and_sinks.sql',
+      '0003_port_income_and_ledger_compaction.sql',
+      '0004_phase2_features.sql',
+      '0005_legal_status_p2p_anticheat.sql',
+      '0006_global_expansion_and_levels.sql',
+      '0007_naval_combat_and_pirates.sql',
+      '0008_quests_and_tutorial.sql',
+      '0009_guilds_treasury_and_world_boss.sql',
+    ].filter((f) => fs.existsSync(path.join(dir, f)));
+    const scannedFiles = fs
       .readdirSync(dir)
-      .filter((f) => f.endsWith('.sql'))
-      .sort();
+      .filter((f) => f.endsWith('.sql'));
+    const files = Array.from(new Set([...knownFiles, ...scannedFiles])).sort();
 
     for (const file of files) {
       const version = file.replace(/\.sql$/, '');

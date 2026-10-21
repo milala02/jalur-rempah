@@ -146,6 +146,7 @@ describe('M2 & M4 — API Integration: Auth, Akun+Kapal+Ledger, Endpoint Baca, O
         email: 'nahkoda1@nusantara.id',
         password: 'SandiKuat123!',
         display_name: 'Nahkoda_Satu',
+        tos_accepted: true,
       },
     });
     expect(reg1.statusCode).toBe(201);
@@ -166,6 +167,7 @@ describe('M2 & M4 — API Integration: Auth, Akun+Kapal+Ledger, Endpoint Baca, O
         email: 'nahkoda1@nusantara.id',
         password: 'SandiKuat123!',
         display_name: 'Nahkoda_Lain',
+        tos_accepted: true,
       },
     });
     expect(dupEmail.statusCode).toBe(409);
@@ -179,6 +181,7 @@ describe('M2 & M4 — API Integration: Auth, Akun+Kapal+Ledger, Endpoint Baca, O
         email: 'lain@nusantara.id',
         password: 'SandiKuat123!',
         display_name: 'Nahkoda_Satu',
+        tos_accepted: true,
       },
     });
     expect(dupName.statusCode).toBe(409);
@@ -191,6 +194,7 @@ describe('M2 & M4 — API Integration: Auth, Akun+Kapal+Ledger, Endpoint Baca, O
         email: 'nahkoda2@nusantara.id',
         password: 'SandiKuat123!',
         display_name: 'Nahkoda_Dua',
+        tos_accepted: true,
       },
     });
     expect(reg2.statusCode).toBe(201);
@@ -343,7 +347,7 @@ describe('M2 & M4 — API Integration: Auth, Akun+Kapal+Ledger, Endpoint Baca, O
       headers: { authorization: `Bearer ${player1Token}` },
       body: {
         base_version: 0,
-        source: 'aturan contoh: jika hargaa(pala) < 50 maka tunggu()',
+        source: 'aturan salah: jika hargaa(pala) < 50 maka tunggu()',
       },
     });
     expect(invalidPut.statusCode).toBe(422);
