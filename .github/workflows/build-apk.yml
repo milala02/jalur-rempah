@@ -79,6 +79,9 @@ jobs:
         working-directory: apps/mobile
         run: flutter build apk --release --dart-define=API_BASE_URL=https://api.bacanova.my.id
 
+      - name: Print SHA-1 Fingerprint for Google Login
+        run: keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android || true
+ 
       - name: Verify compiled APK permissions with aapt
         working-directory: apps/mobile
         run: |
