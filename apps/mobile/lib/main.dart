@@ -2491,6 +2491,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         key: const Key('p2p_order_type_dropdown'),
+                        isExpanded: true,
                         initialValue: _p2pOrderType,
                         decoration: const InputDecoration(
                           labelText: 'Tipe Bursa',
@@ -2533,6 +2534,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                           }
                           return DropdownButtonFormField<int>(
                             key: const Key('p2p_commodity_dropdown'),
+                            isExpanded: true,
                             initialValue: _p2pCommodityId,
                             decoration: InputDecoration(
                               labelText:
@@ -3186,14 +3188,16 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
     final shipId = _ship?.id ?? 1;
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => SafeArea(
         key: const Key('equip_weapon_sheet'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               const Text(
                 'Pasang Persenjataan Kapal (POST /v1/ships/equip)',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -3269,8 +3273,9 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildShipLogTab() {
     final s = _ship;
@@ -3309,8 +3314,9 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  runSpacing: 4,
                   children: [
                     Text(
                       'HP Lambung Kapal (Defense): $curHp / $maxHp HP',

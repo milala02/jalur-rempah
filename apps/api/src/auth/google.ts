@@ -80,7 +80,7 @@ export class GoogleOAuth2Verifier {
               typeof payload.name === 'string' && payload.name.trim().length > 0
                 ? payload.name.trim()
                 : payload.email.split('@')[0] ?? 'Nahkoda',
-            picture: typeof payload.picture === 'string' ? payload.picture : undefined,
+            ...(typeof payload.picture === 'string' ? { picture: payload.picture } : {}),
             aud: payload.aud!,
             iss: payload.iss!,
           };

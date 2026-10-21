@@ -229,7 +229,13 @@ void main() {
       expect(find.byKey(const Key('season_event_banner')), findsOneWidget);
       expect(find.byKey(const Key('nusantara_map_canvas')), findsOneWidget);
       expect(find.text('Peta Pelabuhan Nusantara'), findsOneWidget);
-      expect(find.text('PALA'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('port_chip_lisbon')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       // Uji ketuk pelabuhan Lisbon yang terkunci (Level 6) -> muncul dialog terkunci
       expect(find.byKey(const Key('port_chip_lisbon')), findsOneWidget);
@@ -242,9 +248,37 @@ void main() {
       await tester.tap(find.text('Mengerti'));
       await tester.pumpAndSettle();
 
+      await tester.scrollUntilVisible(
+        find.text('PALA'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('PALA'), findsOneWidget);
+
+      // Tutup dialog jika masih ada yang terbuka
+      if (find.byType(AlertDialog).evaluate().isNotEmpty || find.byType(Dialog).evaluate().isNotEmpty) {
+        if (find.text('Mengerti').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Mengerti').first);
+        } else if (find.text('Tutup').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Tutup').first);
+        }
+        await tester.pumpAndSettle();
+      }
+
       // 4. Pindah ke tab Bursa P2P
+      ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav_bursa')));
       await tester.pumpAndSettle();
+      if (find.textContaining('Bursa P2P Nusantara').evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          find.textContaining('Bursa P2P Nusantara'),
+          -100,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+      }
       expect(
         find.textContaining('Bursa P2P Nusantara'),
         findsOneWidget,
@@ -269,18 +303,46 @@ void main() {
         find.byKey(const Key('rule_editor_field')),
         'aturan beli_pala: jika di(Banda) maka beli(pala, maks)',
       );
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('save_rules_button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('save_rules_button')));
       await tester.pumpAndSettle();
       expect(find.textContaining('Aturan berhasil disimpan'), findsOneWidget);
 
       // Uji Sandbox 200 Tick
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('simulate_rules_button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('simulate_rules_button')));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('rule_status_banner')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
       expect(find.textContaining('Delta 420 koin'), findsOneWidget);
 
       // 6. Pindah ke tab Kapal & Log + Uji HP Bar, Perbaiki Kapal (Repair), Pasang Senjata (Equip), & Log Pertempuran
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav_ship')));
       await tester.pumpAndSettle();
+      if (find.textContaining('Kapal Perintis').evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          find.textContaining('Kapal Perintis'),
+          -200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+      }
       expect(find.textContaining('Kapal Perintis'), findsOneWidget);
       expect(find.byKey(const Key('ship_hp_progress_bar')), findsOneWidget);
       expect(find.byKey(const Key('ship_attack_power_text')), findsOneWidget);
@@ -326,11 +388,25 @@ void main() {
       await tester.tap(find.byKey(const Key('claim_quest_button_pirate_hunter')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('quest_feedback_banner')), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('theme_settings_card')),
+        200.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('theme_settings_card')), findsOneWidget);
 
       // 8. Pindah ke tab Aliansi (🛡️ Fase 8): Pencarian, Buat Aliansi Baru (5.000 Koin), Dashboard Guild, Donasi, & World Boss
       await tester.tap(find.byKey(const Key('nav_guild')));
       await tester.pumpAndSettle();
+      if (find.byKey(const Key('create_guild_button')).evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          find.byKey(const Key('create_guild_button')),
+          -200.0,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+      }
       expect(find.byKey(const Key('guild_search_field')), findsOneWidget);
       expect(find.byKey(const Key('create_guild_button')), findsOneWidget);
       expect(find.text('Buat Aliansi Baru (5.000 Koin)'), findsOneWidget);

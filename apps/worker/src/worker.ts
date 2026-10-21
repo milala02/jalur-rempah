@@ -1023,6 +1023,8 @@ export async function executeSingleWorldTick(
           sList.push({
             shipId: sh.id,
             playerId: sh.playerId,
+            tickNo: t,
+            portId: sh.portId,
             ruleName: 'embargo_laut',
             actionType: 'skip',
             result: 'dilewati',
@@ -1136,7 +1138,7 @@ export async function executeSingleWorldTick(
           ],
         );
 
-        events.actionEvents.push({
+        (events.actionEvents as TickActionEvent[]).push({
           shipId: targetShip.id,
           playerId: targetShip.playerId,
           tickNo: t,
@@ -1808,7 +1810,7 @@ export async function executeSingleWorldTick(
 }
 
 function eventsByShipFromStep(
-  actionEvents: TickActionEvent[],
+  actionEvents: readonly TickActionEvent[],
   shipId: bigint,
 ): TickActionEvent[] {
   return actionEvents.filter((e) => e.shipId === shipId);

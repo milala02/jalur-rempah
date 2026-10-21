@@ -22,7 +22,8 @@ export type RuleActionFailureCode =
   | 'NOT_DOCKED'
   | 'SAME_PORT'
   | 'NO_ROUTE'
-  | 'GROUNDED';
+  | 'GROUNDED'
+  | 'EMBARGO_PORT_CLOSED';
 
 export type CandidateAction =
   | {
