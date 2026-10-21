@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jalur_rempah_mobile/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -189,9 +190,19 @@ void main() {
       expect(find.byKey(const Key('auth_submit_button')), findsOneWidget);
       expect(find.byKey(const Key('auth_google_login_button')), findsOneWidget);
       expect(find.text('Masuk dengan Google'), findsOneWidget);
+      final googleCalls = <String>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/google_sign_in'),
+        (MethodCall call) async {
+          googleCalls.add(call.method);
+          return null; // init -> null, signIn -> null (dibatalkan pengguna)
+        },
+      );
       await tester.tap(find.byKey(const Key('auth_google_login_button')));
       await tester.pumpAndSettle();
-      expect(find.text('Google Login belum dikonfigurasi'), findsWidgets);
+      expect(googleCalls, contains('signIn'));
+      expect(find.textContaining('belum dikonfigurasi'), findsNothing);
 
       await tester.tap(find.byKey(const Key('auth_submit_button')));
       await tester.pumpAndSettle();

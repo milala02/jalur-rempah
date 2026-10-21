@@ -23,6 +23,12 @@ Perbarui di akhir setiap sesi. Terbaru di atas.
     7. Musim Angin Muson, Event Dunia, SSE Stream, ETag, & Penghapusan Akun (`public.world_events`, `GET /v1/events`, `GET /v1/stream`, `ETag`/`304 Not Modified`, dan `DELETE /v1/me` dengan anonimisasi akun serta pelestarian `ledger` *append-only*).
 
 ## Log sesi
+### 2026-10-21 — Aktivasi Google Sign-In nyata di klien Flutter
+- `apps/mobile/lib/main.dart`: placeholder "Google Login belum dikonfigurasi" dihapus (mock API, klien nyata, handler tombol). `_submitGoogleSignIn` memanggil `_googleSignIn.signIn()`, mengambil `idToken`, lalu `loginWithGoogle` -> `POST /v1/auth/google` `{"id_token": ...}`; token disimpan via `tokenVault`, lalu `onAuthenticated()`.
+- Perubahan tes (CLAUDE.md aturan 2): `apps/mobile/test/widget_test.dart` sebelumnya menegaskan teks placeholder muncul. Diganti dengan mock channel `plugins.flutter.io/google_sign_in` yang menegaskan `signIn` terpanggil dan teks "belum dikonfigurasi" tidak muncul. Alasan: perilaku placeholder sengaja dihapus. Celah: tes tidak mencakup POST ke backend (butuh idToken Google asli); belum ada tes untuk jalur itu.
+- Verifikasi VM (bukan CI): `flutter analyze` -> No issues found; `flutter test` -> All tests passed!
+- Terbuka: login Google end-to-end di perangkat belum diuji (butuh SHA-1 keystore terdaftar di Google Cloud dan `GOOGLE_CLIENT_ID` di backend).
+
 ### 2026-10-21 — Guild treasury state, combat log migration, dan stabilisasi test
 - Worker memuat saldo Guild ke `WorldState`; invariant ekonomi dan canonical state hash kini memasukkan treasury Guild.
 - Migrasi `0010_add_loot_summary_to_combat_logs.sql` menambahkan kolom `loot_summary` dan didaftarkan pada runner migrasi.

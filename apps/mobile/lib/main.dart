@@ -464,13 +464,6 @@ abstract class JalurRempahApiClient {
 
   // Fase 9: Autentikasi Google (POST /v1/auth/google)
   Future<Map<String, dynamic>> loginWithGoogle({String idToken = ''}) async {
-    const configuredClientId = String.fromEnvironment(
-      'GOOGLE_CLIENT_ID',
-      defaultValue: '',
-    );
-    if (idToken.trim().isEmpty && configuredClientId.trim().isEmpty) {
-      throw Exception('Google Login belum dikonfigurasi');
-    }
     return <String, dynamic>{
       'access_token': 'google-jwt-token',
       'refresh_token': 'google-refresh-token',
@@ -897,22 +890,9 @@ class HttpJalurRempahApiClient extends JalurRempahApiClient {
 
   @override
   Future<Map<String, dynamic>> loginWithGoogle({String idToken = ''}) async {
-    const configuredClientId = String.fromEnvironment(
-      'GOOGLE_CLIENT_ID',
-      defaultValue: '',
-    );
     final effectiveToken = idToken.trim();
-    if (effectiveToken.isEmpty && configuredClientId.trim().isEmpty) {
-      try {
-        await _request(
-          'POST',
-          '/v1/auth/google',
-          body: <String, dynamic>{'id_token': ''},
-        );
-      } catch (_) {
-        throw Exception('Google Login belum dikonfigurasi');
-      }
-      throw Exception('Google Login belum dikonfigurasi');
+    if (effectiveToken.isEmpty) {
+      throw Exception('idToken Google kosong');
     }
     final res = await _request(
       'POST',
@@ -1649,35 +1629,27 @@ class _AuthScreenState extends State<AuthScreen> {
       _errorMsg = null;
     });
     try {
-      const configuredClientId = String.fromEnvironment(
-        'GOOGLE_CLIENT_ID',
-        defaultValue: '',
-      );
-      String idToken = '';
-      if (configuredClientId.isNotEmpty) {
-        try {
-          final googleUser = await _googleSignIn.signIn();
-          final googleAuth = await googleUser?.authentication;
-          idToken = googleAuth?.idToken ?? 'google_oauth_id_token';
-        } catch (_) {
-          idToken = 'google_oauth_id_token';
-        }
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return; // pengguna membatalkan
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw Exception('Google tidak mengembalikan idToken');
       }
-      await widget.api.loginWithGoogle(
-        idToken: idToken,
-      );
+      await widget.api.loginWithGoogle(idToken: idToken);
       widget.onAuthenticated();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      final msg = 'Google Login gagal: $e';
       setState(() {
-        _errorMsg = 'Google Login belum dikonfigurasi';
+        _errorMsg = msg;
       });
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
-            key: Key('google_auth_error_snackbar'),
-            content: Text('Google Login belum dikonfigurasi'),
+          SnackBar(
+            key: const Key('google_auth_error_snackbar'),
+            content: Text(msg),
           ),
         );
     } finally {
