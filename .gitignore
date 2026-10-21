@@ -11,3 +11,8 @@ coverage/
 
 !apps/mobile/lib/
 !apps/mobile/lib/**
+
+# Flutter & Android Local Generated Files
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/android/local.properties
