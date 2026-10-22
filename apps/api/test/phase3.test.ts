@@ -9,7 +9,6 @@ import {
   checkDatabaseConsistency,
   createApiServer,
   ApiServer,
-  createMockGoogleIdToken,
   V1_RATE_LIMIT_MESSAGE,
   getPlayerRankTitle,
   calculatePlayerNetWorth,
@@ -54,7 +53,7 @@ describe('Fase 1 (UU PDP/ToS & Status Akun), Detail 2 (P2P Trading), Detail 3 (A
     await seedWorld(testPool);
 
     api = createApiServer(testPool, {
-      jwtSecret: 'test-secret-for-phase3-suite',
+      jwtSecret: 'test-secret-for-phase3-suite-minimum-32-chars-ok',
       adminKey: ADMIN_SECRET,
       minClientVersion: '0.1.0',
     });
@@ -1197,9 +1196,35 @@ describe('Fase 1 (UU PDP/ToS & Status Akun), Detail 2 (P2P Trading), Detail 3 (A
 
   it('12. Fase 9 — Persiapan Rilis Publik: Google Auth (POST /v1/auth/google auto-register & login) dan Security Rate Limiting (/v1/* 100 req/15 menit per IP -> 429)', async () => {
     const testGoogleClientId = '1234567890-testclient.apps.googleusercontent.com';
+
+    // Mock GoogleOAuth2Verifier: mengembalikan payload valid untuk token yang dikenal,
+    // melempar error untuk token tidak dikenal — tanpa bergantung pada jaringan/kriptografi Google.
+    const KNOWN_MOCK_TOKEN = 'mock-valid-google-id-token-for-test';
+    const mockGoogleVerifier = {
+      async verifyIdToken(opts: { idToken: string; audience?: string | readonly string[] }) {
+        const raw = (opts.idToken ?? '').trim();
+        if (raw === KNOWN_MOCK_TOKEN) {
+          return {
+            getPayload: () => ({
+              sub: 'google_kapten.google@nusantara.id',
+              email: 'kapten.google@nusantara.id',
+              email_verified: true as const,
+              name: 'Kapten Google Nusantara',
+              aud: testGoogleClientId,
+              iss: 'https://accounts.google.com',
+            }),
+          };
+        }
+        throw new Error('Token Google (id_token) tidak valid atau telah kedaluwarsa.');
+      },
+    };
+
     const googleApi = createApiServer(testPool, {
-      jwtSecret: 'test-secret-for-phase3-suite',
+      jwtSecret: 'test-secret-for-phase3-suite-minimum-32-chars-ok',
+      adminKey: ADMIN_SECRET,
       googleClientId: testGoogleClientId,
+      googleVerifier: mockGoogleVerifier,
+      trustProxy: true, // khusus tes rate limit agar x-real-ip dihormati
       minClientVersion: '0.1.0',
     });
 
@@ -1213,12 +1238,6 @@ describe('Fase 1 (UU PDP/ToS & Status Akun), Detail 2 (P2P Trading), Detail 3 (A
     expect(badGoogleRes.statusCode).toBe(401);
 
     // 12.2. Login Google pertama kali untuk email baru -> Auto-Register pemain baru (tanpa password, tos_accepted_at otomatis, kapal awal + ledger starter)
-    const validIdToken = createMockGoogleIdToken({
-      email: 'kapten.google@nusantara.id',
-      name: 'Kapten Google Nusantara',
-      aud: testGoogleClientId,
-    });
-
     const firstGoogleLogin = await googleApi.inject<{
       is_new_player: boolean;
       access_token: string;
@@ -1234,7 +1253,7 @@ describe('Fase 1 (UU PDP/ToS & Status Akun), Detail 2 (P2P Trading), Detail 3 (A
       method: 'POST',
       url: '/v1/auth/google',
       remoteAddress: '198.51.100.10',
-      body: { id_token: validIdToken },
+      body: { id_token: KNOWN_MOCK_TOKEN },
     });
     expect(firstGoogleLogin.statusCode).toBe(201);
     expect(firstGoogleLogin.body.is_new_player).toBe(true);
@@ -1253,7 +1272,7 @@ describe('Fase 1 (UU PDP/ToS & Status Akun), Detail 2 (P2P Trading), Detail 3 (A
       method: 'POST',
       url: '/v1/auth/google',
       remoteAddress: '198.51.100.10',
-      body: { id_token: validIdToken },
+      body: { id_token: KNOWN_MOCK_TOKEN },
     });
     expect(secondGoogleLogin.statusCode).toBe(200);
     expect(secondGoogleLogin.body.is_new_player).toBe(false);

@@ -1,5 +1,5 @@
 name: jalur_rempah_mobile
-description: Klien Android Jalur Rempah (v0.9 Fase 9) — Google Auth, Dark Mode, Peta 8 Negara, World Events, P2P Bursa, IDE Block Builder, Naval Combat, Daily Quests, & Aliansi Dagang (Guilds).
+description: Klien Android Jalur Rempah (v0.9 Fase 9) — Commercial Game Edition (App Icon, Native Splash, Cinematic Title Screen, Game HUD Navigation Bar, Audio BGM/SFX, Flutter Animate, Peta Dunia Equirectangular & Jalur Pelayaran Legendaris).
 publish_to: 'none'
 version: 0.9.0+9
 
@@ -9,13 +9,45 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  audioplayers: ^6.0.0
+  flutter_animate: ^4.5.0
+  google_fonts: ^6.2.1
   google_sign_in: ^6.2.1
+  intl: ^0.19.0
   provider: ^6.1.2
   shared_preferences: ^2.2.3
+  flutter_secure_storage: ^11.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon.png
+    - assets/splash.png
+    - assets/map_vintage_color.png
+    - assets/map_vintage_sepia.png
+    - assets/map_modern.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#0A192F"
+  adaptive_icon_foreground: "assets/icon.png"
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#0A192F"
+  image: "assets/splash.png"
+  color_dark: "#0A192F"
+  image_dark: "assets/splash.png"
+  fullscreen: true
+  android_12:
+    color: "#0A192F"
+    image: "assets/icon.png"
+    icon_background_color: "#0A192F"

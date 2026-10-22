@@ -16,12 +16,14 @@ export interface AccessTokenPayload {
   readonly exp: number;
 }
 
-function getJwtSecret(overrideSecret?: string): string {
-  return (
-    overrideSecret ??
-    process.env['JWT_SECRET'] ??
-    'jalur-rempah-dev-jwt-secret-key-minimum-32-bytes'
-  );
+export function getJwtSecret(overrideSecret?: string): string {
+  const secret = overrideSecret ?? process.env['JWT_SECRET'];
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      'FATAL: JWT_SECRET tidak diset atau kurang dari 32 karakter!',
+    );
+  }
+  return secret;
 }
 
 export async function hashPassword(password: string): Promise<string> {

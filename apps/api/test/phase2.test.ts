@@ -38,7 +38,8 @@ describe('Phase 2 (Setelah MVP) — Multi-Kapal, Kabut Informasi (ADR-012), Memo
     await seedWorld(testPool);
 
     api = createApiServer(testPool, {
-      jwtSecret: 'test-secret-for-phase2-suite',
+      jwtSecret: 'test-secret-for-phase2-suite-minimum-32-chars-ok',
+      adminKey: 'test-admin-key-phase2',
       minClientVersion: '0.1.0',
     });
   });

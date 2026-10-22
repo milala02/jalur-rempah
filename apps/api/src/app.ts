@@ -16,6 +16,7 @@ import {
   verifyAccessToken,
   generateRefreshToken,
   hashRefreshToken,
+  getJwtSecret,
   ACCESS_TOKEN_EXPIRES_IN_SECONDS,
   REFRESH_TOKEN_TTL_MS,
   AccessTokenPayload,
@@ -30,6 +31,8 @@ import {
 } from './rate-limit.js';
 import {
   GoogleOAuth2Verifier,
+  LoginTicketLike,
+  VerifyIdTokenOptions,
 } from './auth/google.js';
 
 
@@ -263,6 +266,10 @@ export interface ApiServerOptions {
   readonly jwtSecret?: string;
   readonly adminKey?: string;
   readonly googleClientId?: string;
+  /** Opsional: inject verifier Google untuk pengujian (mock). */
+  readonly googleVerifier?: {
+    verifyIdToken(options: VerifyIdTokenOptions): Promise<LoginTicketLike>;
+  };
   readonly v1RateLimitMaxRequests?: number;
   readonly v1RateLimitWindowMs?: number;
   readonly config?: WorldEconomyConfig;
@@ -746,9 +753,13 @@ export function createApiServer(
   const worldSeed = options?.worldSeed ?? 101;
   const minClientVersion = options?.minClientVersion ?? '0.1.0';
   const maxBodyBytes = options?.maxBodyBytes ?? 65536;
-  const trustProxy = options?.trustProxy ?? true;
-  const adminKey =
-    options?.adminKey ?? process.env['ADMIN_API_KEY'] ?? 'jr-admin-secret-key';
+  const trustProxy = options?.trustProxy ?? false;
+  const adminKeyRaw = options?.adminKey ?? process.env['ADMIN_API_KEY'];
+  if (!adminKeyRaw) {
+    throw new Error('FATAL: ADMIN_API_KEY tidak diset di environment!');
+  }
+  const adminKey: string = adminKeyRaw;
+  const jwtSecret = getJwtSecret(options?.jwtSecret);
 
   const rateLimiter = new InMemoryRateLimiter();
   const sandboxQueue = new SandboxConcurrencyQueue(
@@ -842,7 +853,7 @@ export function createApiServer(
     if (!rawToken) return null;
     return verifyAccessToken(
       rawToken,
-      options?.jwtSecret !== undefined ? { secret: options.jwtSecret } : {},
+      { secret: jwtSecret },
     );
   }
 
@@ -1173,9 +1184,7 @@ export function createApiServer(
                 email: playerRow.email,
                 display_name: playerRow.display_name,
               },
-              options?.jwtSecret !== undefined
-                ? { secret: options.jwtSecret }
-                : {},
+              { secret: jwtSecret },
             );
             const { rawToken, tokenHash } = generateRefreshToken();
             const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
@@ -1287,9 +1296,7 @@ export function createApiServer(
               email: user.email,
               display_name: user.display_name,
             },
-            options?.jwtSecret !== undefined
-              ? { secret: options.jwtSecret }
-              : {},
+            { secret: jwtSecret },
           );
           const { rawToken, tokenHash } = generateRefreshToken();
           const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
@@ -1408,9 +1415,7 @@ export function createApiServer(
                 email: user.email,
                 display_name: user.display_name,
               },
-              options?.jwtSecret !== undefined
-                ? { secret: options.jwtSecret }
-                : {},
+              { secret: jwtSecret },
             );
             const { rawToken: newRefresh, tokenHash: newHash } =
               generateRefreshToken();
@@ -1463,7 +1468,7 @@ export function createApiServer(
             );
           }
 
-          const verifier = new GoogleOAuth2Verifier(googleClientId);
+          const verifier = options?.googleVerifier ?? new GoogleOAuth2Verifier(googleClientId);
           let googlePayload;
           try {
             const ticket = await verifier.verifyIdToken({
@@ -1645,9 +1650,7 @@ export function createApiServer(
                 email: playerRow.email,
                 display_name: playerRow.display_name,
               },
-              options?.jwtSecret !== undefined
-                ? { secret: options.jwtSecret }
-                : {},
+              { secret: jwtSecret },
             );
             const { rawToken, tokenHash } = generateRefreshToken();
             const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
@@ -1708,7 +1711,13 @@ export function createApiServer(
 
       if (path.startsWith('/admin/')) {
         const providedKey = headersLower['x-admin-key'] ?? '';
-        if (providedKey !== adminKey) {
+        const keyMatch =
+          providedKey.length === adminKey.length &&
+          crypto.timingSafeEqual(
+            Buffer.from(providedKey),
+            Buffer.from(adminKey),
+          );
+        if (!keyMatch) {
           return makeError(
             403,
             'FORBIDDEN',

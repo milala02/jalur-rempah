@@ -87,7 +87,10 @@ describe('M4 — Worker Tick Loop: Advisory Lock, Kesetaraan state_hash Worker D
   });
 
   it('2. Kesetaraan state_hash (docs/09 & docs/10): hasil tick Worker (via PostgreSQL) == hasil stepWorld murni di memori selama 20 tick', async () => {
-    const api = createApiServer(testPool);
+    const api = createApiServer(testPool, {
+      adminKey: 'test-global-admin-api-key',
+      jwtSecret: 'test-global-jwt-secret-minimum-32-characters-for-testing',
+    });
 
     // Buat 2 pemain beserta kapal dan simpan aturan DSL aktif
     const r1 = await api.inject<{

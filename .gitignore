@@ -16,3 +16,7 @@ coverage/
 apps/mobile/.dart_tool/
 apps/mobile/.flutter-plugins-dependencies
 apps/mobile/android/local.properties
+*.keystore
+*.b64
+jalurrempah-release.keystore
+keystore.b64

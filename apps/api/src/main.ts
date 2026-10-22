@@ -50,9 +50,11 @@ async function bootstrapApi(): Promise<void> {
   });
 }
 
+// Di bawah PM2, argv[1] adalah wrapper PM2 (bukan main.js), jadi deteksi lewat pm_id.
 if (
-  process.argv[1] &&
-  (process.argv[1].endsWith('main.ts') || process.argv[1].endsWith('main.js'))
+  process.env['pm_id'] !== undefined ||
+  (process.argv[1] &&
+    (process.argv[1].endsWith('main.ts') || process.argv[1].endsWith('main.js')))
 ) {
   bootstrapApi().catch((err) => {
     console.error('[JR-API] Kegagalan fatal saat startup:', err);

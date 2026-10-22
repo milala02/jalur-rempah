@@ -43,6 +43,7 @@ describe('M2 & M4 — API Integration: Auth, Akun+Kapal+Ledger, Endpoint Baca, O
 
     api = createApiServer(testPool, {
       jwtSecret: 'test-secret-for-m2-m4-integration-suite',
+      adminKey: 'test-admin-key-api',
       minClientVersion: '0.1.0',
     });
   });

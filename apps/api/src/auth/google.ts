@@ -21,8 +21,8 @@ export interface LoginTicketLike {
 
 /**
  * Wrapper kompatibel google-auth-library (OAuth2Client.verifyIdToken).
- * Mencoba memuat pustaka resmi `google-auth-library` bila terpasang pada runtime;
- * dan menyediakan verifikasi JWT OAuth2 Google standar untuk lingkungan pengujian/sandbox.
+ * Verifikasi token HANYA lewat pustaka resmi `google-auth-library`.
+ * Tidak ada fallback decode-manual — jika library tidak tersedia, lempar error.
  */
 export class GoogleOAuth2Verifier {
   constructor(private readonly clientId?: string) {}
@@ -45,55 +45,7 @@ export class GoogleOAuth2Verifier {
       throw cfgErr;
     }
 
-    // 1. Jika token berformat JWT 3 bagian (header.payload.signature), periksa klaim standar Google ID Token
-    const parts = rawToken.split('.');
-    if (parts.length === 3) {
-      try {
-        const payloadJson = Buffer.from(parts[1]!, 'base64url').toString('utf8');
-        const payload = JSON.parse(payloadJson) as Partial<VerifiedGoogleProfile> & {
-          exp?: number;
-        };
-
-        const validIss =
-          payload.iss === 'https://accounts.google.com' ||
-          payload.iss === 'accounts.google.com';
-        const validAud = payload.aud === expectedAudience;
-        const nowSec = Math.floor(Date.now() / 1000);
-        const notExpired = payload.exp === undefined || payload.exp > nowSec;
-
-        if (
-          validIss &&
-          validAud &&
-          notExpired &&
-          typeof payload.email === 'string' &&
-          payload.email.includes('@') &&
-          payload.email_verified !== false
-        ) {
-          const verified: VerifiedGoogleProfile = {
-            sub:
-              typeof payload.sub === 'string' && payload.sub.length > 0
-                ? payload.sub
-                : crypto.createHash('sha256').update(payload.email).digest('hex').slice(0, 21),
-            email: payload.email.trim().toLowerCase(),
-            email_verified: true,
-            name:
-              typeof payload.name === 'string' && payload.name.trim().length > 0
-                ? payload.name.trim()
-                : payload.email.split('@')[0] ?? 'Nahkoda',
-            ...(typeof payload.picture === 'string' ? { picture: payload.picture } : {}),
-            aud: payload.aud!,
-            iss: payload.iss!,
-          };
-          return {
-            getPayload: () => verified,
-          };
-        }
-      } catch {
-        // Lanjutkan ke pemeriksaan google-auth-library atau tolak token
-      }
-    }
-
-    // 2. Coba gunakan pustaka `google-auth-library` resmi bila tersedia di node_modules
+    // Verifikasi HANYA melalui google-auth-library resmi (termasuk verifikasi tanda tangan)
     try {
       const modName = 'google-auth-library';
       const gal = (await import(modName)) as {
@@ -103,13 +55,29 @@ export class GoogleOAuth2Verifier {
       };
       if (gal && typeof gal.OAuth2Client === 'function') {
         const oauthClient = new gal.OAuth2Client(expectedAudience);
-        return await oauthClient.verifyIdToken({
+        const ticket = await oauthClient.verifyIdToken({
           idToken: rawToken,
           audience: expectedAudience,
         });
+
+        // Pastikan email_verified === true (bukan sekadar !== false)
+        const payload = ticket.getPayload();
+        if (!payload || payload.email_verified !== true) {
+          const unverifiedErr = new Error(
+            'Email pada akun Google belum diverifikasi.',
+          ) as Error & { code?: string };
+          unverifiedErr.code = 'INVALID_GOOGLE_TOKEN';
+          throw unverifiedErr;
+        }
+
+        return ticket;
       }
-    } catch {
-      // Fallback jika paket eksternal tidak dapat melakukan panggilan jaringan di sandbox
+    } catch (err) {
+      // Jika error berasal dari pengecekan email_verified di atas, re-throw
+      if ((err as { code?: string }).code === 'INVALID_GOOGLE_TOKEN') {
+        throw err;
+      }
+      // Library gagal memverifikasi tanda tangan / jaringan → tolak token
     }
 
     const invalidErr = new Error('Token Google (id_token) tidak valid atau telah kedaluwarsa.') as Error & {

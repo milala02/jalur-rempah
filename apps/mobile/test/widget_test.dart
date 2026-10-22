@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jalur_rempah_mobile/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +11,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class FakeJalurRempahApiClient extends JalurRempahApiClient {
   int savedVersion = 0;
   String savedSource = '';
+  bool logoutCalled = false;
+  String? logoutToken;
+
+  @override
+  Future<void> logout(String refreshToken) async {
+    logoutCalled = true;
+    logoutToken = refreshToken;
+  }
 
   @override
   Future<Map<String, dynamic>> login(String email, String password) async {

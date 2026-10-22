@@ -37,6 +37,19 @@ export interface GlobalCommoditySeedRow {
   readonly min_level_required: number;
 }
 
+export interface LegendarySeaRouteSeed {
+  readonly code: 'jalur_rempah' | 'jalur_sutra_laut';
+  readonly name: string;
+  readonly ports: readonly string[];
+}
+
+export const LEGENDARY_SEA_ROUTES: Readonly<
+  Record<'jalur_rempah' | 'jalur_sutra_laut', readonly string[]>
+> = {
+  jalur_rempah: ['banda', 'batavia', 'malaka', 'calicut', 'mekkah', 'lisbon'],
+  jalur_sutra_laut: ['canton', 'malaka', 'calicut', 'kairo'],
+} as const;
+
 export const COUNTRIES_GLOBAL_SEED: readonly CountrySeedRow[] = [
   {
     id: 1,
@@ -99,12 +112,12 @@ export const COUNTRIES_GLOBAL_SEED: readonly CountrySeedRow[] = [
 export const NUSANTARA_PORT_COORDS: Readonly<
   Record<number, { country_code: string; map_x: number; map_y: number }>
 > = {
-  1: { country_code: 'nusantara', map_x: 0.84, map_y: 0.62 }, // Banda
-  2: { country_code: 'nusantara', map_x: 0.77, map_y: 0.28 }, // Ternate
-  3: { country_code: 'nusantara', map_x: 0.43, map_y: 0.72 }, // Surabaya
-  4: { country_code: 'malaka_sultanate', map_x: 0.14, map_y: 0.24 }, // Malaka
-  5: { country_code: 'nusantara', map_x: 0.58, map_y: 0.56 }, // Makassar
-  6: { country_code: 'nusantara', map_x: 0.27, map_y: 0.68 }, // Batavia
+  1: { country_code: 'nusantara', map_x: 0.8608, map_y: 0.5251 }, // Banda
+  2: { country_code: 'nusantara', map_x: 0.8538, map_y: 0.4956 }, // Ternate
+  3: { country_code: 'nusantara', map_x: 0.8132, map_y: 0.5403 }, // Surabaya
+  4: { country_code: 'malaka_sultanate', map_x: 0.7840, map_y: 0.4878 }, // Malaka
+  5: { country_code: 'nusantara', map_x: 0.8318, map_y: 0.5286 }, // Makassar
+  6: { country_code: 'nusantara', map_x: 0.7967, map_y: 0.5343 }, // Batavia
 };
 
 export const INTERNATIONAL_PORTS_SEED: readonly GlobalPortSeedRow[] = [
@@ -114,8 +127,8 @@ export const INTERNATIONAL_PORTS_SEED: readonly GlobalPortSeedRow[] = [
     name: 'Mekkah',
     country_code: 'arab',
     min_level_required: 4,
-    map_x: 0.08,
-    map_y: 0.18,
+    map_x: 0.6106,
+    map_y: 0.3810,
   },
   {
     id: 8,
@@ -123,8 +136,8 @@ export const INTERNATIONAL_PORTS_SEED: readonly GlobalPortSeedRow[] = [
     name: 'Sakai',
     country_code: 'jepang',
     min_level_required: 5,
-    map_x: 0.92,
-    map_y: 0.12,
+    map_x: 0.8763,
+    map_y: 0.3079,
   },
   {
     id: 9,
@@ -132,8 +145,8 @@ export const INTERNATIONAL_PORTS_SEED: readonly GlobalPortSeedRow[] = [
     name: 'Lisbon',
     country_code: 'eropa',
     min_level_required: 6,
-    map_x: 0.02,
-    map_y: 0.08,
+    map_x: 0.4746,
+    map_y: 0.2849,
   },
   {
     id: 10,
@@ -141,8 +154,26 @@ export const INTERNATIONAL_PORTS_SEED: readonly GlobalPortSeedRow[] = [
     name: 'Kairo',
     country_code: 'mesir',
     min_level_required: 7,
-    map_x: 0.05,
-    map_y: 0.20,
+    map_x: 0.5868,
+    map_y: 0.3331,
+  },
+  {
+    id: 11,
+    code: 'calicut',
+    name: 'Calicut',
+    country_code: 'india',
+    min_level_required: 2,
+    map_x: 0.7105,
+    map_y: 0.4375,
+  },
+  {
+    id: 12,
+    code: 'canton',
+    name: 'Canton',
+    country_code: 'tiongkok',
+    min_level_required: 3,
+    map_x: 0.8146,
+    map_y: 0.3715,
   },
 ] as const;
 
@@ -269,7 +300,7 @@ export async function seedWorld(pool: pg.Pool = getPool()): Promise<void> {
       );
     }
 
-    // 3. Seed Ports Nusantara (id 1..6) beserta koordinat X/Y dan min_level_required = 1
+    // 3. Seed Ports Nusantara (id 1..6) beserta koordinat Equirectangular X/Y dan min_level_required = 1
     for (const port of PORTS_SEED) {
       const meta = NUSANTARA_PORT_COORDS[port.id] ?? {
         country_code: 'nusantara',
@@ -301,7 +332,7 @@ export async function seedWorld(pool: pg.Pool = getPool()): Promise<void> {
       );
     }
 
-    // 4. Seed 4 Pelabuhan Internasional Baru (Fase 5: Mekkah Lv 4, Sakai Lv 5, Lisbon Lv 6, Kairo Lv 7)
+    // 4. Seed Pelabuhan Internasional (Mekkah, Sakai, Lisbon, Kairo, Calicut, Canton)
     //    treasury = 0 & initial_treasury = 0 agar audit konservasi uang simulasi Nusantara (id 1..6) tetap utuh
     for (const ip of INTERNATIONAL_PORTS_SEED) {
       await client.query(
