@@ -75,15 +75,56 @@ jobs:
         working-directory: apps/mobile
         run: flutter test
 
+      - name: Decode Keystore and Setup key.properties
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > apps/mobile/android/app/release.keystore
+          cat > apps/mobile/android/key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=release.keystore
+          EOF
+
+      - name: Inject Signing Config to build.gradle.kts
+        run: |
+          cd apps/mobile/android
+          python3 -c '
+          import re
+          path = "app/build.gradle.kts"
+          with open(path, "r") as f: content = f.read()
+          
+          header = """
+          import java.util.Properties
+          import java.io.FileInputStream
+          val keystoreProperties = Properties()
+          val keystorePropertiesFile = rootProject.file(\"key.properties\")
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+          }
+          """
+          content = header + content
+          
+          signing = """
+              signingConfigs {
+                  create(\"release\") {
+                      keyAlias = keystoreProperties[\"keyAlias\"] as String?
+                      keyPassword = keystoreProperties[\"keyPassword\"] as String?
+                      storeFile = keystoreProperties[\"storeFile\"]?.let { file(it) }
+                      storePassword = keystoreProperties[\"storePassword\"] as String?
+                  }
+              }
+          """
+          content = content.replace("android {", "android {\n" + signing)
+          content = content.replace("signingConfig = signingConfigs.getByName(\"debug\")", "// Debug signing removed for production")
+          content = content.replace("buildTypes {\n        release {", "buildTypes {\n        release {\n            signingConfig = signingConfigs.getByName(\"release\")")
+          
+          with open(path, "w") as f: f.write(content)
+          '
+
       - name: Build release APK
         working-directory: apps/mobile
         run: flutter build apk --release --dart-define=API_BASE_URL=https://api.bacanova.my.id
 
-      - name: Generate Debug Keystore and Print SHA-1
-        run: |
-          mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 
       - name: Verify compiled APK permissions with aapt
         working-directory: apps/mobile
         run: |
