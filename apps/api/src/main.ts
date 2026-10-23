@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { getPool, closePool } from './db/connection.js';
 import { createApiServer } from './app.js';
 

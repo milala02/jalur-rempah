@@ -1,3 +1,5 @@
+require('dotenv').config({ path: __dirname + '/.env' });
+
 // Konfigurasi PM2 Produksi Jalur Rempah (docs/12-DEPLOYMENT-RUNBOOK.md)
 // [PERLU VERIFIKASI PEMILIK: sesuaikan PORT_API dan jumlah instances jr-api dengan vCPU VPS]
 module.exports = {

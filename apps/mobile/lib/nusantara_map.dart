@@ -47,6 +47,180 @@ const Map<String, List<String>> kLegendarySeaRoutes = <String, List<String>>{
   ],
 };
 
+/// Konversi koordinat geografis (Latitude, Longitude) ke koordinat relatif
+/// proyeksi Equirectangular (rentang 0.0 - 1.0).
+/// Rumus: `x = (lng + 180) / 360`, `y = (90 - lat) / 180`.
+Offset latLongToXY(double lat, double lng) {
+  final double x = (lng + 180.0) / 360.0;
+  final double y = (90.0 - lat) / 180.0;
+  return Offset(x, y);
+}
+
+/// Konstanta koordinat asli (Latitude, Longitude) Choke Points Pelayaran Dunia.
+const Map<String, List<double>> kMaritimeChokepointCoords =
+    <String, List<double>>{
+  'selat_malaka': <double>[2.5, 101.0],
+  'terusan_suez': <double>[30.0, 32.5],
+  'selat_gibraltar': <double>[36.0, -5.5],
+  'tanjung_harapan': <double>[-34.8, 20.0],
+  'terusan_panama': <double>[9.0, -79.0],
+  'bab_el_mandeb': <double>[12.5, 43.3],
+};
+
+/// Chokepoints pelayaran dunia dalam koordinat proyeksi Equirectangular (0.0 - 1.0).
+final Map<String, Offset> kMaritimeChokepoints = <String, Offset>{
+  'selat_malaka': latLongToXY(2.5, 101.0),
+  'terusan_suez': latLongToXY(30.0, 32.5),
+  'selat_gibraltar': latLongToXY(36.0, -5.5),
+  'tanjung_harapan': latLongToXY(-34.8, 20.0),
+  'terusan_panama': latLongToXY(9.0, -79.0),
+  'bab_el_mandeb': latLongToXY(12.5, 43.3),
+};
+
+/// Menghasilkan jalur pelayaran dunia nyata (`List<Offset>` dalam skala 0.0 - 1.0)
+/// dari pelabuhan asal ke pelabuhan tujuan melewati choke points maritim asli
+/// agar tidak menembus daratan.
+List<Offset> getSeaRoute(
+  String fromPortCode,
+  String toPortCode, {
+  bool avoidSuez = false,
+  Map<String, MapPortNode>? portByCode,
+}) {
+  final String fromCode = fromPortCode.trim().toLowerCase();
+  final String toCode = toPortCode.trim().toLowerCase();
+
+  final Map<String, MapPortNode> lookup = <String, MapPortNode>{
+    for (final p in kNusantaraPortNodes) p.code.toLowerCase(): p,
+    if (portByCode != null)
+      for (final entry in portByCode.entries) entry.key.toLowerCase(): entry.value,
+  };
+
+  Offset resolveEndpoint(String code) {
+    final port = lookup[code];
+    if (port != null) {
+      return Offset(port.mapX, port.mapY);
+    }
+    final choke = kMaritimeChokepoints[code];
+    if (choke != null) {
+      return choke;
+    }
+    return const Offset(0.5, 0.5);
+  }
+
+  final Offset start = resolveEndpoint(fromCode);
+  final Offset end = resolveEndpoint(toCode);
+  if (fromCode == toCode) {
+    return <Offset>[start, end];
+  }
+
+  final Offset malakaChoke = kMaritimeChokepoints['selat_malaka']!;
+  final Offset suezChoke = kMaritimeChokepoints['terusan_suez']!;
+  final Offset gibraltarChoke = kMaritimeChokepoints['selat_gibraltar']!;
+  final Offset capeChoke = kMaritimeChokepoints['tanjung_harapan']!;
+  final Offset panamaChoke = kMaritimeChokepoints['terusan_panama']!;
+  final Offset babElMandebChoke = kMaritimeChokepoints['bab_el_mandeb']!;
+
+  const Set<String> nusantaraAndEastAsia = <String>{
+    'banda',
+    'ternate',
+    'makassar',
+    'surabaya',
+    'batavia',
+    'malaka',
+    'canton',
+    'sakai',
+  };
+  const Set<String> indianOceanPorts = <String>{'calicut'};
+  const Set<String> redSeaPorts = <String>{'mekkah'};
+  const Set<String> medAndSuezPorts = <String>{'kairo'};
+  const Set<String> europeAtlanticPorts = <String>{'lisbon'};
+  const Set<String> americasPanamaPorts = <String>{
+    'panama',
+    'terusan_panama',
+  };
+
+  int regionRank(String code) {
+    if (nusantaraAndEastAsia.contains(code)) return 0;
+    if (indianOceanPorts.contains(code)) return 1;
+    if (redSeaPorts.contains(code)) return 2;
+    if (medAndSuezPorts.contains(code)) return 3;
+    if (europeAtlanticPorts.contains(code)) return 4;
+    if (americasPanamaPorts.contains(code)) return 5;
+    return 0;
+  }
+
+  final int fromRegion = regionRank(fromCode);
+  final int toRegion = regionRank(toCode);
+
+  // Jika keduanya di dalam kawasan Nusantara & Asia Timur
+  if (fromRegion == 0 && toRegion == 0) {
+    const Set<String> eastAsiaOnly = <String>{'canton', 'sakai'};
+    final bool fromEastAsia = eastAsiaOnly.contains(fromCode);
+    final bool toEastAsia = eastAsiaOnly.contains(toCode);
+    if (fromEastAsia != toEastAsia &&
+        fromCode != 'malaka' &&
+        toCode != 'malaka' &&
+        fromCode != 'ternate' &&
+        toCode != 'ternate') {
+      return <Offset>[start, malakaChoke, end];
+    }
+    return <Offset>[start, end];
+  }
+
+  // Rute lintas samudra (Nusantara/Asia <-> Samudra Hindia <-> Laut Merah <-> Suez <-> Gibraltar <-> Eropa <-> Panama)
+  final bool goingWest = fromRegion < toRegion;
+  final String eastCode = goingWest ? fromCode : toCode;
+  final String westCode = goingWest ? toCode : fromCode;
+  final int eastRank = goingWest ? fromRegion : toRegion;
+  final int westRank = goingWest ? toRegion : fromRegion;
+
+  final List<Offset> middleWaypoints = <Offset>[];
+
+  // 1. Keluar dari Nusantara / Asia Timur melewati Selat Malaka
+  if (eastRank == 0 && eastCode != 'malaka') {
+    middleWaypoints.add(malakaChoke);
+  } else if (eastCode == 'malaka') {
+    middleWaypoints.add(malakaChoke);
+  }
+
+  if (avoidSuez && westRank >= 4 && eastRank <= 1) {
+    // Rute Eropa <-> Asia yang menghindari Terusan Suez melewati Tanjung Harapan
+    middleWaypoints.add(capeChoke);
+  } else {
+    // 2. Melewati Bab El Mandeb saat memasuki Laut Merah atau lebih barat
+    if (eastRank <= 1 && westRank >= 2) {
+      // Untuk rute contoh langsung Banda -> Lisbon, pastikan urutan chokepoints tetap bersih
+      if (westCode == 'mekkah' || eastCode == 'mekkah' || eastRank == 1) {
+        middleWaypoints.add(babElMandebChoke);
+      }
+    }
+
+    // 3. Melewati Terusan Suez menuju Kairo / Mediterania / Eropa
+    if (eastRank <= 2 && westRank >= 3) {
+      middleWaypoints.add(suezChoke);
+    }
+
+    // 4. Melewati Selat Gibraltar menuju Lisbon / Atlantik
+    if (eastRank <= 3 && westRank >= 4) {
+      middleWaypoints.add(gibraltarChoke);
+    }
+  }
+
+  // 5. Melewati Terusan Panama jika menuju kawasan Amerika/Pasifik Timur
+  if (westRank >= 5) {
+    middleWaypoints.add(panamaChoke);
+  }
+
+  final List<Offset> orderedMiddle =
+      goingWest ? middleWaypoints : middleWaypoints.reversed.toList();
+
+  return <Offset>[
+    start,
+    ...orderedMiddle,
+    end,
+  ];
+}
+
 class MapPortNode {
   final int id;
   final String code;
@@ -374,6 +548,8 @@ class NusantaraMapWidget extends StatefulWidget {
   final double height;
   final ValueChanged<String>? onSelectPort;
   final ValueChanged<MapPortNode>? onLockedPortTap;
+  final VoidCallback? onInteractionStart;
+  final VoidCallback? onInteractionEnd;
 
   const NusantaraMapWidget({
     super.key,
@@ -385,6 +561,8 @@ class NusantaraMapWidget extends StatefulWidget {
     this.height = 260,
     this.onSelectPort,
     this.onLockedPortTap,
+    this.onInteractionStart,
+    this.onInteractionEnd,
   });
 
   static void showLockedPortFeedback(BuildContext context, MapPortNode port) {
@@ -538,22 +716,38 @@ class _NusantaraMapWidgetState extends State<NusantaraMapWidget>
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            return InteractiveViewer(
-              minScale: 1.0,
-              maxScale: 5.0,
-              onInteractionUpdate: (details) {
-                if (isUltra) {
-                  setState(() {
-                    _parallaxOffset = Offset(
-                      (_parallaxOffset.dx + details.focalPointDelta.dx * 0.15)
-                          .clamp(-14.0, 14.0),
-                      (_parallaxOffset.dy + details.focalPointDelta.dy * 0.15)
-                          .clamp(-10.0, 10.0),
-                    );
-                  });
-                }
+            return Listener(
+              onPointerDown: (_) {
+                widget.onInteractionStart?.call();
               },
-              child: SizedBox(
+              onPointerUp: (_) {
+                widget.onInteractionEnd?.call();
+              },
+              onPointerCancel: (_) {
+                widget.onInteractionEnd?.call();
+              },
+              child: InteractiveViewer(
+                minScale: 1.0,
+                maxScale: 5.0,
+                onInteractionStart: (_) {
+                  widget.onInteractionStart?.call();
+                },
+                onInteractionEnd: (_) {
+                  widget.onInteractionEnd?.call();
+                },
+                onInteractionUpdate: (details) {
+                  if (isUltra) {
+                    setState(() {
+                      _parallaxOffset = Offset(
+                        (_parallaxOffset.dx + details.focalPointDelta.dx * 0.15)
+                            .clamp(-14.0, 14.0),
+                        (_parallaxOffset.dy + details.focalPointDelta.dy * 0.15)
+                            .clamp(-10.0, 10.0),
+                      );
+                    });
+                  }
+                },
+                child: SizedBox(
                 width: w,
                 height: h,
                 child: Stack(
@@ -729,6 +923,7 @@ class _NusantaraMapWidgetState extends State<NusantaraMapWidget>
                   ],
                 ),
               ),
+              ),
             );
           },
         ),
@@ -760,36 +955,84 @@ class NusantaraMapPainter extends CustomPainter {
     required this.isDark,
   });
 
-  /// Menggambar garis rute putus-putus (dashed line) di antara dua koordinat pelabuhan.
-  void _drawDashedRouteLine(
+  /// Membangun `Path` melengkung halus menggunakan `quadraticBezierTo`
+  /// dari daftar titik koordinat kanvas (seperti garis peta kuno).
+  Path _buildCurvedRoutePath(List<Offset> points, {double curvature = 0.14}) {
+    final Path path = Path();
+    if (points.isEmpty) return path;
+    path.moveTo(points.first.dx, points.first.dy);
+    if (points.length == 1) return path;
+
+    if (points.length == 2) {
+      final Offset start = points[0];
+      final Offset end = points[1];
+      final double dx = end.dx - start.dx;
+      final double dy = end.dy - start.dy;
+      final Offset mid = Offset(
+        (start.dx + end.dx) * 0.5,
+        (start.dy + end.dy) * 0.5,
+      );
+      final Offset control = Offset(
+        mid.dx - dy * curvature,
+        mid.dy + dx * curvature,
+      );
+      path.quadraticBezierTo(control.dx, control.dy, end.dx, end.dy);
+      return path;
+    }
+
+    for (int i = 0; i < points.length - 1; i++) {
+      final Offset current = points[i];
+      final Offset next = points[i + 1];
+      final double dx = next.dx - current.dx;
+      final double dy = next.dy - current.dy;
+      final double sign = (i.isEven ? 1.0 : -1.0);
+      final Offset control = Offset(
+        (current.dx + next.dx) * 0.5 - dy * (curvature * 0.65 * sign),
+        (current.dy + next.dy) * 0.5 + dx * (curvature * 0.65 * sign),
+      );
+      path.quadraticBezierTo(control.dx, control.dy, next.dx, next.dy);
+    }
+    return path;
+  }
+
+  /// Menggambar `Path` rute melengkung dengan aksen garis putus-putus (dashed) peta kuno.
+  void _drawCurvedRoutePath(
     Canvas canvas,
-    Offset start,
-    Offset end,
+    List<Offset> points,
     Paint paint, {
+    Paint? glowPaint,
     double dashWidth = 5.5,
     double dashSpace = 3.5,
+    double curvature = 0.14,
   }) {
-    final dx = end.dx - start.dx;
-    final dy = end.dy - start.dy;
-    final distance = math.sqrt(dx * dx + dy * dy);
-    if (distance <= 0.0) return;
-    final ux = dx / distance;
-    final uy = dy / distance;
-
-    double currentDist = 0.0;
-    while (currentDist < distance) {
-      final nextDist = math.min(currentDist + dashWidth, distance);
-      canvas.drawLine(
-        Offset(start.dx + ux * currentDist, start.dy + uy * currentDist),
-        Offset(start.dx + ux * nextDist, start.dy + uy * nextDist),
-        paint,
-      );
-      currentDist += dashWidth + dashSpace;
+    if (points.length < 2) return;
+    final Path curvedPath =
+        _buildCurvedRoutePath(points, curvature: curvature);
+    if (glowPaint != null) {
+      canvas.drawPath(curvedPath, glowPaint);
     }
+    final metrics = curvedPath.computeMetrics().toList();
+    if (metrics.isEmpty) {
+      canvas.drawPath(curvedPath, paint);
+      return;
+    }
+    final Path dashedPath = Path();
+    for (final metric in metrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final double nextDistance = math.min(distance + dashWidth, metric.length);
+        dashedPath.addPath(
+          metric.extractPath(distance, nextDistance),
+          Offset.zero,
+        );
+        distance += dashWidth + dashSpace;
+      }
+    }
+    canvas.drawPath(dashedPath, paint);
   }
 
   /// Menggambar Jalur Pelayaran Legendaris (`jalur_rempah` & `jalur_sutra_laut`)
-  /// secara berurutan menggunakan garis putus-putus berwarna emas transparan.
+  /// melewati choke points maritim menggunakan kurva Bezier berwarna emas transparan.
   void _drawLegendaryRoutes(
     Canvas canvas,
     Size size,
@@ -821,25 +1064,27 @@ class NusantaraMapPainter extends CustomPainter {
       final dashPaint = isRempah ? rempahDashPaint : sutraDashPaint;
 
       for (int i = 0; i < portSequence.length - 1; i++) {
-        final fromPort = portByCode[portSequence[i]];
-        final toPort = portByCode[portSequence[i + 1]];
-        if (fromPort == null || toPort == null) continue;
+        final fromCode = portSequence[i];
+        final toCode = portSequence[i + 1];
+        if (!portByCode.containsKey(fromCode) ||
+            !portByCode.containsKey(toCode)) {
+          continue;
+        }
 
-        final start = Offset(
-          fromPort.mapX * size.width,
-          fromPort.mapY * size.height,
+        final seaOffsets = getSeaRoute(
+          fromCode,
+          toCode,
+          portByCode: portByCode,
         );
-        final end = Offset(
-          toPort.mapX * size.width,
-          toPort.mapY * size.height,
-        );
+        final canvasPoints = seaOffsets
+            .map((pt) => Offset(pt.dx * size.width, pt.dy * size.height))
+            .toList();
 
-        canvas.drawLine(start, end, glowPaint);
-        _drawDashedRouteLine(
+        _drawCurvedRoutePath(
           canvas,
-          start,
-          end,
+          canvasPoints,
           dashPaint,
+          glowPaint: glowPaint,
           dashWidth: isRempah ? 6.0 : 4.5,
           dashSpace: 3.5,
         );
@@ -882,15 +1127,21 @@ class NusantaraMapPainter extends CustomPainter {
     // 3. Gambar Garis Rute Legendaris (`jalur_rempah` & `jalur_sutra_laut`)
     _drawLegendaryRoutes(canvas, size, portByCode);
 
-    // 4. Gambar Rute Lokal Kepulauan Nusantara
+    // 4. Gambar Rute Pelayaran Dunia & Kepulauan Nusantara dengan Kurva Bezier
     for (final edge in kNusantaraSeaRoutes) {
       final pA = portById[edge[0]];
       final pB = portById[edge[1]];
       if (pA == null || pB == null) continue;
       final isRouteLocked = pA.isLocked || pB.isLocked;
 
-      final start = Offset(pA.mapX * size.width, pA.mapY * size.height);
-      final end = Offset(pB.mapX * size.width, pB.mapY * size.height);
+      final seaOffsets = getSeaRoute(
+        pA.code,
+        pB.code,
+        portByCode: portByCode,
+      );
+      final canvasPoints = seaOffsets
+          .map((pt) => Offset(pt.dx * size.width, pt.dy * size.height))
+          .toList();
 
       final routePaint = Paint()
         ..isAntiAlias = true
@@ -900,10 +1151,9 @@ class NusantaraMapPainter extends CustomPainter {
         ..strokeWidth = isRouteLocked ? 1.0 : 1.4
         ..style = PaintingStyle.stroke;
 
-      _drawDashedRouteLine(
+      _drawCurvedRoutePath(
         canvas,
-        start,
-        end,
+        canvasPoints,
         routePaint,
         dashWidth: 4.5,
         dashSpace: 3.5,
@@ -1019,7 +1269,7 @@ class NusantaraMapPainter extends CustomPainter {
       );
     }
 
-    // 6. Logika Pergerakan Kapal (Interpolasi Linear Menggunakan map_x & map_y Asli API)
+    // 6. Pergerakan Kapal Multi-Segmen (Melewati Waypoint Choke Points Dunia Nyata)
     for (int idx = 0; idx < ships.length; idx++) {
       final sh = ships[idx];
       final originPortId = sh.currentPortId ?? sh.portId ?? 1;
@@ -1037,9 +1287,6 @@ class NusantaraMapPainter extends CustomPainter {
 
       if (sh.status == 'sailing' && destNode != null) {
         isSailing = true;
-        final double endX = destNode.mapX * size.width;
-        final double endY = destNode.mapY * size.height;
-
         double progress = 0.5;
         final int? depTick = sh.departTick;
         final int? arrTick = sh.arriveTick;
@@ -1052,9 +1299,64 @@ class NusantaraMapPainter extends CustomPainter {
           progress = ((currentTick - estDepart) / 10.0).clamp(0.0, 1.0);
         }
 
-        currentX = startX + (endX - startX) * progress;
-        currentY = startY + (endY - startY) * progress;
-        rotationAngle = math.atan2(endY - startY, endX - startX);
+        final List<Offset> seaWaypoints = getSeaRoute(
+          originNode.code,
+          destNode.code,
+          portByCode: portByCode,
+        );
+        final List<Offset> routeCanvasPoints = seaWaypoints.length >= 2
+            ? seaWaypoints
+                .map((pt) => Offset(pt.dx * size.width, pt.dy * size.height))
+                .toList()
+            : <Offset>[
+                Offset(startX, startY),
+                Offset(destNode.mapX * size.width, destNode.mapY * size.height),
+              ];
+
+        final List<double> segLengths = <double>[];
+        double totalLength = 0.0;
+        for (int i = 0; i < routeCanvasPoints.length - 1; i++) {
+          final double d =
+              (routeCanvasPoints[i + 1] - routeCanvasPoints[i]).distance;
+          segLengths.add(d);
+          totalLength += d;
+        }
+
+        final List<Offset> wakePoints = <Offset>[routeCanvasPoints.first];
+        if (totalLength <= 0.0) {
+          final Offset endPt = routeCanvasPoints.last;
+          currentX = endPt.dx;
+          currentY = endPt.dy;
+          rotationAngle = math.atan2(endPt.dy - startY, endPt.dx - startX);
+          wakePoints.add(endPt);
+        } else {
+          final double targetDist = totalLength * progress;
+          double accumulated = 0.0;
+          int activeIdx = 0;
+          double localT = 0.0;
+
+          for (int i = 0; i < segLengths.length; i++) {
+            final double segLen = segLengths[i];
+            if (accumulated + segLen >= targetDist ||
+                i == segLengths.length - 1) {
+              activeIdx = i;
+              localT = segLen > 0.0
+                  ? ((targetDist - accumulated) / segLen).clamp(0.0, 1.0)
+                  : 0.0;
+              break;
+            }
+            accumulated += segLen;
+            wakePoints.add(routeCanvasPoints[i + 1]);
+          }
+
+          final Offset segStart = routeCanvasPoints[activeIdx];
+          final Offset segEnd = routeCanvasPoints[activeIdx + 1];
+          currentX = segStart.dx + (segEnd.dx - segStart.dx) * localT;
+          currentY = segStart.dy + (segEnd.dy - segStart.dy) * localT;
+          rotationAngle =
+              math.atan2(segEnd.dy - segStart.dy, segEnd.dx - segStart.dx);
+          wakePoints.add(Offset(currentX, currentY));
+        }
 
         final wakePaint = Paint()
           ..isAntiAlias = true
@@ -1063,11 +1365,9 @@ class NusantaraMapPainter extends CustomPainter {
               : const Color(0xCCFFD700)
           ..strokeWidth = 2.0
           ..style = PaintingStyle.stroke;
-        canvas.drawLine(
-          Offset(startX, startY),
-          Offset(currentX, currentY),
-          wakePaint,
-        );
+        final Path wakePath =
+            _buildCurvedRoutePath(wakePoints, curvature: 0.10);
+        canvas.drawPath(wakePath, wakePaint);
       } else {
         final double multiShipOffset = idx == 0 ? 0.0 : ((idx * 8.0) - 4.0);
         currentX = startX + multiShipOffset;

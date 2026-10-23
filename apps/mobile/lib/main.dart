@@ -870,6 +870,7 @@ abstract class TokenVault {
 
 class SecureTokenVault implements TokenVault {
   final FlutterSecureStorage _storage;
+  String? _cachedAccessToken;
 
   SecureTokenVault({FlutterSecureStorage? storage})
       : _storage = storage ?? const FlutterSecureStorage();
@@ -882,13 +883,18 @@ class SecureTokenVault implements TokenVault {
     required String accessToken,
     required String refreshToken,
   }) async {
+    _cachedAccessToken = accessToken;
     await _storage.write(key: _keyAccessToken, value: accessToken);
     await _storage.write(key: _keyRefreshToken, value: refreshToken);
   }
 
   @override
   Future<String?> readAccessToken() async {
-    return _storage.read(key: _keyAccessToken);
+    if (_cachedAccessToken != null) {
+      return _cachedAccessToken;
+    }
+    _cachedAccessToken = await _storage.read(key: _keyAccessToken);
+    return _cachedAccessToken;
   }
 
   @override
@@ -898,6 +904,7 @@ class SecureTokenVault implements TokenVault {
 
   @override
   Future<void> clear() async {
+    _cachedAccessToken = null;
     await _storage.delete(key: _keyAccessToken);
     await _storage.delete(key: _keyRefreshToken);
   }
@@ -959,6 +966,77 @@ abstract class JalurRempahApiClient {
   Future<List<LeaderboardItemModel>> getLeaderboard();
   Future<void> logout(String refreshToken) async {}
 
+  Future<void> deleteAccount() async {}
+
+  Future<List<dynamic>> getLedger({String? cursor}) async {
+    return <dynamic>[
+      <String, dynamic>{
+        'id': 3,
+        'tick_no': 42,
+        'delta': 120,
+        'reason': 'Misi Harian',
+        'created_at': '2026-10-23T10:00:00Z',
+      },
+      <String, dynamic>{
+        'id': 2,
+        'tick_no': 35,
+        'delta': -500,
+        'reason': 'Beli Kapal',
+        'created_at': '2026-10-23T09:30:00Z',
+      },
+      <String, dynamic>{
+        'id': 1,
+        'tick_no': 1,
+        'delta': 1000,
+        'reason': 'starter',
+        'created_at': '2026-10-23T08:00:00Z',
+      },
+    ];
+  }
+
+  Future<Map<String, dynamic>> getIntel(
+    String portCode,
+    String commodityCode,
+  ) async {
+    return <String, dynamic>{
+      'tick_no': latestServerTick,
+      'port_code': portCode,
+      'commodity_code': commodityCode,
+      'items': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'port_id': 1,
+          'port_code': 'banda',
+          'port_name': 'Banda',
+          'commodity_code': commodityCode,
+          'price': 70,
+          'stock': 400,
+          'tick_seen': latestServerTick,
+          'age_ticks': 0,
+        },
+        <String, dynamic>{
+          'port_id': 6,
+          'port_code': 'batavia',
+          'port_name': 'Batavia',
+          'commodity_code': commodityCode,
+          'price': 95,
+          'stock': 280,
+          'tick_seen': latestServerTick - 2,
+          'age_ticks': 2,
+        },
+        <String, dynamic>{
+          'port_id': 13,
+          'port_code': 'lisbon',
+          'port_name': 'Lisbon',
+          'commodity_code': commodityCode,
+          'price': 150,
+          'stock': 160,
+          'tick_seen': latestServerTick - 5,
+          'age_ticks': 5,
+        },
+      ],
+    };
+  }
+
   // Fase 9: Autentikasi Google (POST /v1/auth/google)
   Future<Map<String, dynamic>> loginWithGoogle({String idToken = ''}) async {
     return <String, dynamic>{
@@ -975,7 +1053,7 @@ abstract class JalurRempahApiClient {
       termsOfService:
           'Syarat & Ketentuan (ToS) & EULA Jalur Rempah v1.0: Dilarang melakukan eksploitasi bug, automasi di luar Bahasa Aturan resmi, manipulasi pasar terkoordinasi (wash trading), dan Real Money Trading (RMT).',
       privacyPolicyUupdp:
-          'Kebijakan Privasi (Kepatuhan UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi / UU PDP): Kami hanya menyimpan email, hash sandi scrypt, dan log simulasi kapal. Anda berhak menghapus & menganonimkan akun kapan saja melalui fitur Hapus Akun (DELETE /v1/me).',
+          'Kebijakan Privasi (Kepatuhan UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi / UU PDP): Kami hanya menyimpan email, hash sandi scrypt, dan log simulasi kapal. Anda berhak menghapus & menganonimkan akun kapan saja melalui fitur Hapus Akun di menu profil.',
       codeOfConduct:
           'Hukum In-Game (Code of Conduct): Transaksi P2P wajib berada pada rentang 50%-200% harga pasar. Pelanggaran dikenai Shadowban hingga Permanent Ban.',
     );
@@ -1490,6 +1568,31 @@ class HttpJalurRempahApiClient extends JalurRempahApiClient {
 
   @override
   Future<Map<String, dynamic>> getProfile() => _request('GET', '/v1/me');
+
+  @override
+  Future<void> deleteAccount() async {
+    await _request('DELETE', '/v1/me');
+    await tokenVault.clear();
+  }
+
+  @override
+  Future<List<dynamic>> getLedger({String? cursor}) async {
+    final qParam = (cursor != null && cursor.trim().isNotEmpty)
+        ? '?cursor=${Uri.encodeQueryComponent(cursor.trim())}'
+        : '';
+    final res = await _request('GET', '/v1/me/ledger$qParam');
+    return (res['items'] as List<dynamic>?) ?? const <dynamic>[];
+  }
+
+  @override
+  Future<Map<String, dynamic>> getIntel(
+    String portCode,
+    String commodityCode,
+  ) {
+    final p = Uri.encodeQueryComponent(portCode.trim());
+    final c = Uri.encodeQueryComponent(commodityCode.trim());
+    return _request('GET', '/v1/intel?port=$p&commodity=$c');
+  }
 
   @override
   Future<LegalDocumentModel> getLegalDocuments() async {
@@ -2078,6 +2181,7 @@ class _JalurRempahAppState extends State<JalurRempahApp> {
     if (mounted) {
       setState(() {
         _authenticated = false;
+        _showingTitleScreen = false;
       });
     }
   }
@@ -2086,37 +2190,42 @@ class _JalurRempahAppState extends State<JalurRempahApp> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<ThemeController>.value(
       value: _themeController,
-      child: Consumer<ThemeController>(
-        builder: (context, themeCtrl, _) {
-          return MaterialApp(
-            title: 'Jalur Rempah',
-            debugShowCheckedModeBanner: false,
-            theme: themeCtrl.lightTheme,
-            darkTheme: themeCtrl.darkTheme,
-            themeMode: themeCtrl.themeMode,
-            home: _authenticated
-                ? MainDashboardShell(
-                    api: _api,
-                    onLogout: () {
-                      _handleLogout();
-                    },
-                  )
-                : _showingTitleScreen
-                    ? TitleScreen(
-                        onStartVoyage: () {
-                          setState(() {
-                            _showingTitleScreen = false;
-                          });
+      child: ListenableBuilder(
+        listenable: _themeController,
+        builder: (context, _) {
+          return Consumer<ThemeController>(
+            builder: (context, themeCtrl, _) {
+              return MaterialApp(
+                title: 'Jalur Rempah',
+                debugShowCheckedModeBanner: false,
+                theme: themeCtrl.lightTheme,
+                darkTheme: themeCtrl.darkTheme,
+                themeMode: themeCtrl.themeMode,
+                home: _authenticated
+                    ? MainDashboardShell(
+                        api: _api,
+                        onLogout: () {
+                          _handleLogout();
                         },
                       )
-                    : AuthScreen(
-                        api: _api,
-                        onAuthenticated: () {
-                          setState(() {
-                            _authenticated = true;
-                          });
-                        },
-                      ),
+                    : _showingTitleScreen
+                        ? TitleScreen(
+                            onStartVoyage: () {
+                              setState(() {
+                                _showingTitleScreen = false;
+                              });
+                            },
+                          )
+                        : AuthScreen(
+                            api: _api,
+                            onAuthenticated: () {
+                              setState(() {
+                                _authenticated = true;
+                              });
+                            },
+                          ),
+              );
+            },
           );
         },
       ),
@@ -2609,6 +2718,188 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
   }
 }
 
+class LedgerScreen extends StatefulWidget {
+  final JalurRempahApiClient api;
+
+  const LedgerScreen({super.key, required this.api});
+
+  @override
+  State<LedgerScreen> createState() => _LedgerScreenState();
+}
+
+class _LedgerScreenState extends State<LedgerScreen> {
+  List<dynamic> _items = const <dynamic>[];
+  bool _loading = true;
+  String? _errorMsg;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLedger();
+  }
+
+  String _formatLedgerReason(String rawReason) {
+    switch (rawReason.trim().toLowerCase()) {
+      case 'starter':
+        return 'Modal Awal';
+      case 'buy':
+        return 'Beli Komoditas';
+      case 'sell':
+        return 'Jual Komoditas';
+      case 'upkeep':
+        return 'Upkeep Awak';
+      case 'ship_purchase':
+        return 'Beli Kapal';
+      case 'quest_reward':
+        return 'Misi Harian';
+      case 'guild_create':
+        return 'Buat Aliansi';
+      case 'guild_donate':
+        return 'Donasi Aliansi';
+      case 'repair':
+        return 'Perbaikan Kapal';
+      case 'equip':
+        return 'Pasang Senjata';
+      default:
+        return rawReason.trim().isEmpty ? 'Mutasi Koin' : rawReason.trim();
+    }
+  }
+
+  Future<void> _loadLedger() async {
+    setState(() {
+      _loading = true;
+      _errorMsg = null;
+    });
+    try {
+      final items = await widget.api.getLedger();
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMsg = e.toString().replaceFirst('Exception: ', '');
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: const Key('ledger_screen'),
+      backgroundColor: MaritimePalette.deepOceanBlue,
+      appBar: AppBar(
+        title: const Text('Buku Mutasi Koin'),
+        actions: [
+          IconButton(
+            key: const Key('refresh_ledger_button'),
+            tooltip: 'Segarkan Mutasi',
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadLedger,
+          ),
+        ],
+      ),
+      body: _loading
+          ? const Center(
+              child: GameLoadingIndicator(
+                size: 36,
+                label: 'Memuat Buku Mutasi Koin...',
+              ),
+            )
+          : _errorMsg != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: MaritimeWoodCard(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          _errorMsg!,
+                          style: const TextStyle(color: Colors.redAccent),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : _items.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: MaritimeWoodCard(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text('Belum ada catatan mutasi koin.'),
+                          ),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      key: const Key('ledger_list_view'),
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _items.length,
+                      itemBuilder: (context, index) {
+                        final raw = _items[index];
+                        final item = raw is Map<String, dynamic>
+                            ? raw
+                            : <String, dynamic>{};
+                        final id = (item['id'] as num?)?.toInt() ?? (index + 1);
+                        final delta = (item['delta'] as num?)?.toInt() ?? 0;
+                        final rawReason = (item['reason'] as String?) ?? '';
+                        final reasonLabel = _formatLedgerReason(rawReason);
+                        final tickNo = (item['tick_no'] as num?)?.toInt();
+                        final createdAt = (item['created_at'] as String?) ?? '';
+                        final isPositive = delta >= 0;
+                        final signedDelta =
+                            isPositive ? '+$delta' : '$delta';
+
+                        return MaritimeWoodCard(
+                          key: Key('ledger_item_card_$id'),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: isPositive
+                                  ? const Color(0xFF14532D)
+                                  : const Color(0xFF7F1D1D),
+                              child: Icon(
+                                isPositive
+                                    ? Icons.trending_up
+                                    : Icons.trending_down,
+                                color: isPositive
+                                    ? const Color(0xFF4ADE80)
+                                    : const Color(0xFFF87171),
+                              ),
+                            ),
+                            title: Text(
+                              '$signedDelta Koin ($reasonLabel)',
+                              style: MaritimePalette.cinzel(
+                                color: isPositive
+                                    ? MaritimePalette.gold
+                                    : const Color(0xFFFCA5A5),
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              tickNo != null
+                                  ? 'Tick #$tickNo${createdAt.isNotEmpty ? ' • $createdAt' : ''}'
+                                  : (createdAt.isNotEmpty
+                                      ? createdAt
+                                      : 'Catatan Kas Armada'),
+                              style: const TextStyle(
+                                color: MaritimePalette.parchmentMuted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+    );
+  }
+}
+
 class AuthScreen extends StatefulWidget {
   final JalurRempahApiClient api;
   final VoidCallback onAuthenticated;
@@ -2899,6 +3190,7 @@ class MainDashboardShell extends StatefulWidget {
 
 class _MainDashboardShellState extends State<MainDashboardShell> {
   int _tabIndex = 0;
+  bool _isMapInteracting = false;
   int _currentTick = 100;
   int _combatShakeCounter = 0;
   String? _lastFloatingRewardText;
@@ -2921,6 +3213,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
   // Data Sistem Aliansi Dagang / Guilds & World Boss (Fase 8)
   List<GuildSummaryModel> _guildDirectory = kDefaultGuildDirectory;
   GuildDetailModel? _currentGuild;
+  int? _playerGuildId;
   int? _joiningGuildId;
   String _guildSearchQuery = '';
   final _guildSearchCtrl = TextEditingController();
@@ -3000,23 +3293,29 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
   }
 
   Future<void> _refreshAll() async {
-    final profile = await widget.api.getProfile();
-    final ports = await widget.api.getPorts();
-    final worldPorts = await widget.api.getWorldPorts();
-    final worldCommodities = await widget.api.getWorldCommodities();
-    final events = await widget.api.getWorldEvents();
-    final market = await widget.api.getMarket(_selectedPortCode);
-    final history = await widget.api.getPriceHistory(
-      _selectedPortCode,
-      _selectedCommodity,
-    );
-    final ship = await widget.api.getPrimaryShip();
-    final shipsList = await widget.api.getShips();
-    final rules = await widget.api.getShipRules(ship.id);
-    final templates = await widget.api.getRuleTemplates();
-    final logs = await widget.api.getShipLogs(ship.id);
-    final lb = await widget.api.getLeaderboard();
-    final p2p = await widget.api.getP2pOrders();
+    final results = await Future.wait<dynamic>(<Future<dynamic>>[
+      widget.api.getProfile(),
+      widget.api.getPorts(),
+      widget.api.getWorldPorts(),
+      widget.api.getWorldCommodities(),
+      widget.api.getWorldEvents(),
+      widget.api.getMarket(_selectedPortCode),
+      widget.api.getPriceHistory(_selectedPortCode, _selectedCommodity),
+      widget.api.getPrimaryShip(),
+      widget.api.getShips(),
+      widget.api.getRuleTemplates(),
+    ]);
+
+    final profile = results[0] as Map<String, dynamic>;
+    final ports = results[1] as List<PortModel>;
+    final worldPorts = results[2] as List<MapPortNode>;
+    final worldCommodities = results[3] as List<CommodityCatalogItemModel>;
+    final events = results[4] as List<WorldEventItemModel>;
+    final market = results[5] as List<MarketItemModel>;
+    final history = results[6] as List<PricePointModel>;
+    final ship = results[7] as ShipModel;
+    final shipsList = results[8] as List<ShipModel>;
+    final templates = results[9] as List<RuleTemplateModel>;
 
     if (!mounted) return;
     setState(() {
@@ -3044,7 +3343,9 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       _playerXpToNextLevel =
           (profile['xp_to_next_level'] as num?)?.toInt() ??
               computeXpToNextLevelForNetWorth(_playerNetWorth);
-      _tutorialStep = (profile['tutorial_step'] as num?)?.toInt() ?? _tutorialStep;
+      _tutorialStep =
+          (profile['tutorial_step'] as num?)?.toInt() ?? _tutorialStep;
+      _playerGuildId = (profile['guild_id'] as num?)?.toInt();
 
       _ports = ports;
       _worldPorts = worldPorts
@@ -3089,14 +3390,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       _ship = ship;
       _fleet = shipsList.isNotEmpty ? shipsList : <ShipModel>[ship];
       _fleetCount = _fleet.length;
-      _ruleVersion = (rules['version'] as num?)?.toInt() ?? 0;
-      if (_ruleEditorCtrl.text.isEmpty) {
-        _ruleEditorCtrl.text = (rules['source'] as String?) ?? '';
-      }
       _templates = templates;
-      _logs = logs;
-      _leaderboard = lb;
-      _p2pOrders = p2p;
       _shipAttackPower = ship.attackPower;
       _shipDefensePower = ship.defensePower;
       _shipMaxDefensePower = ship.maxDefensePower;
@@ -3134,33 +3428,77 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
     } catch (_) {
       // Abaikan jika endpoint log belum memiliki data
     }
+  }
 
+  Future<void> _loadTabData(int tabIndex) async {
+    final shipId = _ship?.id ?? 1;
     try {
-      final quests = await widget.api.getQuests();
-      if (!mounted) return;
-      setState(() {
-        _dailyQuests = quests;
-      });
-    } catch (_) {
-      // Fallback ke kDefaultDailyQuests
-    }
-
-    try {
-      final guilds = await widget.api.getGuilds(query: _guildSearchQuery);
-      final myGuildId = (profile['guild_id'] as num?)?.toInt();
-      GuildDetailModel? detail;
-      if (myGuildId != null && myGuildId > 0) {
-        detail = await widget.api.getGuildDetail(myGuildId);
+      switch (tabIndex) {
+        case 1:
+          final p2p = await widget.api.getP2pOrders();
+          if (!mounted) return;
+          setState(() {
+            _p2pOrders = p2p;
+          });
+          break;
+        case 2:
+          final res = await Future.wait<dynamic>(<Future<dynamic>>[
+            widget.api.getShipRules(shipId),
+            widget.api.getRuleTemplates(),
+          ]);
+          final rules = res[0] as Map<String, dynamic>;
+          final templates = res[1] as List<RuleTemplateModel>;
+          if (!mounted) return;
+          setState(() {
+            _ruleVersion = (rules['version'] as num?)?.toInt() ?? 0;
+            if (_ruleEditorCtrl.text.isEmpty) {
+              _ruleEditorCtrl.text = (rules['source'] as String?) ?? '';
+            }
+            _templates = templates;
+          });
+          break;
+        case 3:
+          final logs = await widget.api.getShipLogs(shipId);
+          if (!mounted) return;
+          setState(() {
+            _logs = logs;
+          });
+          break;
+        case 4:
+          final lb = await widget.api.getLeaderboard();
+          if (mounted) {
+            setState(() {
+              _leaderboard = lb;
+            });
+          }
+          try {
+            final quests = await widget.api.getQuests();
+            if (!mounted) return;
+            setState(() {
+              _dailyQuests = quests;
+            });
+          } catch (_) {
+            // Fallback ke kDefaultDailyQuests
+          }
+          break;
+        case 5:
+          final guilds = await widget.api.getGuilds(query: _guildSearchQuery);
+          final myGuildId = _playerGuildId;
+          GuildDetailModel? detail;
+          if (myGuildId != null && myGuildId > 0) {
+            detail = await widget.api.getGuildDetail(myGuildId);
+          }
+          if (!mounted) return;
+          setState(() {
+            _guildDirectory = guilds;
+            if (detail != null) {
+              _currentGuild = detail;
+            }
+          });
+          break;
       }
-      if (!mounted) return;
-      setState(() {
-        _guildDirectory = guilds;
-        if (detail != null) {
-          _currentGuild = detail;
-        }
-      });
     } catch (_) {
-      // Fallback ke direktori default
+      // Abaikan kegagalan jaringan saat lazy load tab
     }
   }
 
@@ -3233,6 +3571,178 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
     return live?.price ?? cat.basePrice;
   }
 
+  String _resolvePortDisplayName(String portCode, String? fallbackName) {
+    if (fallbackName != null && fallbackName.trim().isNotEmpty) {
+      return fallbackName.trim();
+    }
+    final fromWorld = _worldPorts
+        .where((p) => p.code.toLowerCase() == portCode.toLowerCase())
+        .firstOrNull;
+    if (fromWorld != null && fromWorld.name.isNotEmpty) {
+      return fromWorld.name;
+    }
+    final fromPorts = _ports
+        .where((p) => p.code.toLowerCase() == portCode.toLowerCase())
+        .firstOrNull;
+    if (fromPorts != null && fromPorts.name.isNotEmpty) {
+      return fromPorts.name;
+    }
+    if (portCode.isEmpty) return 'Pelabuhan';
+    return portCode[0].toUpperCase() + portCode.substring(1).toLowerCase();
+  }
+
+  Future<void> _showMarketIntelBottomSheet(
+    String commodityCode,
+    String commodityName,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    Map<String, dynamic> intelPayload;
+    try {
+      intelPayload = await widget.api.getIntel(
+        _selectedPortCode,
+        commodityCode,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final errMsg = e.toString().replaceFirst('Exception: ', '');
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            key: const Key('market_intel_error_snackbar'),
+            backgroundColor: Colors.red,
+            content: Text(errMsg),
+          ),
+        );
+      return;
+    }
+    if (!mounted) return;
+
+    final rawItems =
+        (intelPayload['items'] as List<dynamic>?) ?? const <dynamic>[];
+    final matchingItems = rawItems.where((raw) {
+      if (raw is! Map<String, dynamic>) return false;
+      final cCode = (raw['commodity_code'] as String?)?.toLowerCase();
+      return cCode == null ||
+          cCode.isEmpty ||
+          cCode == commodityCode.toLowerCase();
+    }).toList();
+    final effectiveItems =
+        matchingItems.isNotEmpty ? matchingItems : rawItems;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: MaritimePalette.carvedMahogany,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: MaritimePalette.gold, width: 1.5),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          key: const Key('intel_bottom_sheet'),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.travel_explore,
+                      color: MaritimePalette.gold,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Intelijen Harga Pelabuhan Lain (${commodityName.toUpperCase()})',
+                        style: MaritimePalette.cinzel(
+                          color: MaritimePalette.gold,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Catatan harga jual terakhir yang diketahui awak kapal di berbagai pelabuhan tujuan:',
+                  style: TextStyle(
+                    color: MaritimePalette.parchmentMuted,
+                    fontSize: 12.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (effectiveItems.isEmpty)
+                  const MaritimeWoodCard(
+                    child: Padding(
+                      padding: EdgeInsets.all(14),
+                      child: Text('Belum ada data intelijen pelabuhan lain.'),
+                    ),
+                  )
+                else
+                  ...effectiveItems.map((raw) {
+                    final item = raw is Map<String, dynamic>
+                        ? raw
+                        : <String, dynamic>{};
+                    final portCode = (item['port_code'] as String?) ?? 'banda';
+                    final portName = _resolvePortDisplayName(
+                      portCode,
+                      item['port_name'] as String?,
+                    );
+                    final price = (item['price'] as num?)?.toInt() ?? 0;
+                    final stock = (item['stock'] as num?)?.toInt() ?? 0;
+                    final tickSeen =
+                        (item['tick_seen'] as num?)?.toInt() ?? _currentTick;
+                    final ageTicks = (item['age_ticks'] as num?)?.toInt() ?? 0;
+
+                    return MaritimeWoodCard(
+                      key: Key('intel_port_card_${portCode.toLowerCase()}'),
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: MaritimePalette.darkWoodBrown,
+                          child: Icon(
+                            Icons.anchor,
+                            color: MaritimePalette.gold,
+                            size: 18,
+                          ),
+                        ),
+                        title: Text(
+                          '$portName: $price koin',
+                          style: MaritimePalette.cinzel(
+                            color: MaritimePalette.gold,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Stok: $stock • Tick #$tickSeen ($ageTicks tick lalu)',
+                          style: const TextStyle(
+                            color: MaritimePalette.parchment,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  key: const Key('close_intel_sheet_button'),
+                  style: MaritimePalette.goldCoinButtonStyle(),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Tutup Intel'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // ==========================================================================
   // TAB 1: PASAR NUSANTARA, PETA CUSTOMPAINTER, WORLD EVENTS, & 10 KOMODITAS
   // ==========================================================================
@@ -3274,6 +3784,9 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
         return Stack(
           children: [
             ListView(
+              physics: _isMapInteracting
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
               padding: const EdgeInsets.all(16),
               children: [
         if (_tutorialStep == 0)
@@ -3383,6 +3896,20 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
           currentTick: _currentTick,
           height: isLandscape ? 320 : 260,
           onSelectPort: _selectPort,
+          onInteractionStart: () {
+            if (!_isMapInteracting) {
+              setState(() {
+                _isMapInteracting = true;
+              });
+            }
+          },
+          onInteractionEnd: () {
+            if (_isMapInteracting) {
+              setState(() {
+                _isMapInteracting = false;
+              });
+            }
+          },
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -3430,7 +3957,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
           final displayStock = live?.stock ?? 320;
           final displayTarget = live?.target ?? 400;
 
-          void handleCommodityTapOrTrade() async {
+          void handleCommodityTapOrTrade() {
             if (cat.isLocked) {
               showDialog<void>(
                 context: context,
@@ -3450,88 +3977,138 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
               );
               return;
             }
+            final messenger = ScaffoldMessenger.of(context);
+            setState(() {
+              _selectedCommodity = cat.code;
+            });
+            messenger
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  key: Key('market_trade_success_snackbar_${cat.code}'),
+                  backgroundColor: Colors.green,
+                  content: Text(
+                    'Berhasil memilih produk ${cat.name} ($displayPrice koin)!',
+                  ),
+                ),
+              );
             if (live != null) {
-              final hist = await widget.api.getPriceHistory(
+              widget.api
+                  .getPriceHistory(
                 _selectedPortCode,
                 cat.code,
-              );
-              if (!mounted) return;
-              setState(() {
-                _selectedCommodity = cat.code;
-                _priceHistory = hist;
-              });
-            } else {
-              setState(() {
-                _selectedCommodity = cat.code;
+              )
+                  .then((hist) {
+                if (!mounted) return;
+                setState(() {
+                  _priceHistory = hist;
+                });
+              }).catchError((Object e) {
+                if (!mounted) return;
+                final msg = e.toString().replaceFirst('Exception: ', '');
+                messenger
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      key: Key('market_trade_error_snackbar_${cat.code}'),
+                      backgroundColor: Colors.red,
+                      content: Text(msg),
+                    ),
+                  );
               });
             }
           }
+
+          final isSelectedCommodity =
+              _selectedCommodity.toLowerCase() == cat.code.toLowerCase();
 
           return Opacity(
             opacity: cat.isLocked ? 0.5 : 1.0,
             child: MaritimeWoodCard(
               key: Key('market_commodity_${cat.code}'),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: cat.isLocked ? Colors.grey.shade400 : null,
-                  child: Text(
-                    cat.isLocked
-                        ? '🔒'
-                        : cat.code.substring(0, 2).toUpperCase(),
-                  ),
-                ),
-                title: Row(
-                  children: [
-                    Text(
-                      cat.code.toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                          cat.isLocked ? Colors.grey.shade400 : null,
                       child: Text(
                         cat.isLocked
-                            ? '• 🔒 ${cat.name} (Lv.${cat.minLevelRequired})'
-                            : '• ${cat.name} (${cat.category})',
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12.5),
+                            ? '🔒'
+                            : cat.code.substring(0, 2).toUpperCase(),
                       ),
                     ),
-                  ],
-                ),
-                subtitle: Text(
-                  cat.isLocked
-                      ? 'Negara: ${cat.countryName} (${cat.originPort}) | Butuh Level ${cat.minLevelRequired}'
-                      : 'Asal: ${cat.originPort} (${cat.countryName}) | Stok: $displayStock / Target: $displayTarget',
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$displayPrice koin',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                    title: Row(
+                      children: [
+                        Text(
+                          cat.code.toUpperCase(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            cat.isLocked
+                                ? '• 🔒 ${cat.name} (Lv.${cat.minLevelRequired})'
+                                : '• ${cat.name} (${cat.category})',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                    subtitle: Text(
+                      cat.isLocked
+                          ? 'Negara: ${cat.countryName} (${cat.originPort}) | Butuh Level ${cat.minLevelRequired}'
+                          : 'Asal: ${cat.originPort} (${cat.countryName}) | Stok: $displayStock / Target: $displayTarget',
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$displayPrice koin',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton(
+                          key: Key('market_trade_button_${cat.code}'),
+                          tooltip: cat.isLocked
+                              ? 'Terkunci (Butuh Level ${cat.minLevelRequired})'
+                              : 'Beli / Jual ${cat.name}',
+                          icon: Icon(
+                            cat.isLocked
+                                ? Icons.lock_outline
+                                : Icons.anchor,
+                            color: cat.isLocked
+                                ? Colors.grey
+                                : MaritimePalette.gold,
+                          ),
+                          onPressed: handleCommodityTapOrTrade,
+                        ),
+                      ],
+                    ),
+                    onTap: handleCommodityTapOrTrade,
+                  ),
+                  if (isSelectedCommodity && !cat.isLocked)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: ElevatedButton.icon(
+                        key: const Key('market_intel_button'),
+                        style: MaritimePalette.goldCoinButtonStyle(),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          AudioManager().playSfx('click');
+                          _showMarketIntelBottomSheet(cat.code, cat.name);
+                        },
+                        icon: const Icon(Icons.travel_explore, size: 18),
+                        label: const Text('Lihat Intel Harga Pelabuhan Lain'),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    IconButton(
-                      key: Key('market_trade_button_${cat.code}'),
-                      tooltip: cat.isLocked
-                          ? 'Terkunci (Butuh Level ${cat.minLevelRequired})'
-                          : 'Beli / Jual ${cat.name}',
-                      icon: Icon(
-                        cat.isLocked
-                            ? Icons.lock_outline
-                            : Icons.anchor,
-                        color: cat.isLocked
-                            ? Colors.grey
-                            : MaritimePalette.gold,
-                      ),
-                      onPressed: handleCommodityTapOrTrade,
-                    ),
-                  ],
-                ),
-                onTap: handleCommodityTapOrTrade,
+                ],
               ),
             ),
           );
@@ -3607,6 +4184,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       return;
     }
 
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final targetPid = _p2pOrderType == 'direct'
           ? int.tryParse(_p2pTargetPlayerCtrl.text.trim())
@@ -3620,16 +4198,36 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
         targetPlayerId: targetPid,
       );
       if (!mounted) return;
+      final successMsg =
+          'Order P2P #${created.id} (${created.commodityCode.toUpperCase()} x${created.qty}) berhasil dipasang di Escrow!';
       setState(() {
         _p2pOrders = <P2pOrderItemModel>[created, ..._p2pOrders];
-        _p2pFeedbackBanner =
-            'Order P2P #${created.id} (${created.commodityCode.toUpperCase()} x${created.qty}) berhasil dipasang di Escrow!';
+        _p2pFeedbackBanner = successMsg;
       });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            key: const Key('p2p_create_order_success_snackbar'),
+            backgroundColor: Colors.green,
+            content: Text('Berhasil! $successMsg'),
+          ),
+        );
     } catch (e) {
       if (!mounted) return;
+      final errMsg = e.toString().replaceFirst('Exception: ', '');
       setState(() {
-        _p2pFeedbackBanner = e.toString();
+        _p2pFeedbackBanner = errMsg;
       });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            key: const Key('p2p_create_order_error_snackbar'),
+            backgroundColor: Colors.red,
+            content: Text(errMsg),
+          ),
+        );
     }
   }
 
@@ -3659,7 +4257,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Buat Tawaran Jual Baru (POST /v1/p2p/orders)',
+                  'Buat Tawaran Jual',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
@@ -3836,7 +4434,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
         ],
         const SizedBox(height: 14),
         const Text(
-          'Daftar Order Book Aktif (GET /v1/p2p/orders)',
+          'Daftar Order Book Aktif',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -3865,18 +4463,47 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                     FilledButton.tonal(
                       key: Key('p2p_accept_button_${ord.id}'),
                       onPressed: () async {
-                        await widget.api.acceptP2pOrder(
-                          ord.id,
-                          _ship?.id ?? 1,
-                        );
-                        if (!mounted) return;
-                        setState(() {
-                          _p2pOrders = _p2pOrders
-                              .where((x) => x.id != ord.id)
-                              .toList();
-                          _p2pFeedbackBanner =
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          await widget.api.acceptP2pOrder(
+                            ord.id,
+                            _ship?.id ?? 1,
+                          );
+                          if (!mounted) return;
+                          final msg =
                               'Berhasil membeli/menerima Order #${ord.id}!';
-                        });
+                          setState(() {
+                            _p2pOrders = _p2pOrders
+                                .where((x) => x.id != ord.id)
+                                .toList();
+                            _p2pFeedbackBanner = msg;
+                          });
+                          messenger
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              SnackBar(
+                                key: Key('p2p_accept_success_snackbar_${ord.id}'),
+                                backgroundColor: Colors.green,
+                                content: Text(msg),
+                              ),
+                            );
+                        } catch (e) {
+                          if (!mounted) return;
+                          final errMsg =
+                              e.toString().replaceFirst('Exception: ', '');
+                          setState(() {
+                            _p2pFeedbackBanner = errMsg;
+                          });
+                          messenger
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              SnackBar(
+                                key: Key('p2p_accept_error_snackbar_${ord.id}'),
+                                backgroundColor: Colors.red,
+                                content: Text(errMsg),
+                              ),
+                            );
+                        }
                       },
                       child: const Text('Beli/Terima'),
                     ),
@@ -3884,15 +4511,44 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                     OutlinedButton(
                       key: Key('p2p_cancel_button_${ord.id}'),
                       onPressed: () async {
-                        await widget.api.cancelP2pOrder(ord.id);
-                        if (!mounted) return;
-                        setState(() {
-                          _p2pOrders = _p2pOrders
-                              .where((x) => x.id != ord.id)
-                              .toList();
-                          _p2pFeedbackBanner =
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          await widget.api.cancelP2pOrder(ord.id);
+                          if (!mounted) return;
+                          final msg =
                               'Order #${ord.id} dibatalkan; barang dikembalikan dari Escrow ke kapal.';
-                        });
+                          setState(() {
+                            _p2pOrders = _p2pOrders
+                                .where((x) => x.id != ord.id)
+                                .toList();
+                            _p2pFeedbackBanner = msg;
+                          });
+                          messenger
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              SnackBar(
+                                key: Key('p2p_cancel_success_snackbar_${ord.id}'),
+                                backgroundColor: Colors.green,
+                                content: Text('Berhasil! $msg'),
+                              ),
+                            );
+                        } catch (e) {
+                          if (!mounted) return;
+                          final errMsg =
+                              e.toString().replaceFirst('Exception: ', '');
+                          setState(() {
+                            _p2pFeedbackBanner = errMsg;
+                          });
+                          messenger
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              SnackBar(
+                                key: Key('p2p_cancel_error_snackbar_${ord.id}'),
+                                backgroundColor: Colors.red,
+                                content: Text(errMsg),
+                              ),
+                            );
+                        }
                       },
                       child: const Text('Batalkan'),
                     ),
@@ -4325,22 +4981,99 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
 
   Future<void> _purchaseShipTier(ShipTierSpecModel tierSpec) async {
     if (_fleetCount >= 5) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_playerCoins < tierSpec.price) {
+      setState(() {
+        _fleetNotice = 'Koin tidak cukup';
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            key: Key('buy_ship_error_snackbar_${tierSpec.code}'),
+            backgroundColor: Colors.red,
+            content: const Text('Koin tidak cukup'),
+          ),
+        );
+      return;
+    }
+
     HapticFeedback.lightImpact();
     AudioManager().playSfx('click');
+
+    final oldCoins = _playerCoins;
+    final oldFleet = List<ShipModel>.from(_fleet);
+    final oldFleetCount = _fleetCount;
     final nextNum = _fleetCount + 1;
     final shipName = '${tierSpec.name} #$nextNum';
-    final created = await widget.api.buyShip(
+    final tempShip = ShipModel(
+      id: DateTime.now().millisecondsSinceEpoch,
+      name: shipName,
+      capacity: tierSpec.capacity,
+      status: 'docked',
+      portId: _ship?.portId ?? 1,
+      destPort: null,
+      arriveTick: null,
+      etaTicks: 0,
+      tier: tierSpec.tier,
+      shipType: tierSpec.code,
+      shipClass: tierSpec.shipClass,
+      speedMultiplier: tierSpec.speedMultiplier,
+      defensePower: tierSpec.hullHp,
+      maxDefensePower: tierSpec.hullHp,
+      cargo: const <CargoItemModel>[],
+    );
+    final notice =
+        '${tierSpec.name} (${tierSpec.shipClass}, Kapasitas ${tierSpec.capacity}, Harga ${tierSpec.price} koin) ditambahkan ke armada (#$nextNum).';
+
+    setState(() {
+      _playerCoins -= tierSpec.price;
+      _fleet = <ShipModel>[..._fleet, tempShip];
+      _fleetCount = _fleet.length;
+      _fleetNotice = notice;
+    });
+    AudioManager().playSfx('success');
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          key: Key('buy_ship_success_snackbar_${tierSpec.code}'),
+          backgroundColor: Colors.green,
+          content: const Text('Kapal berhasil dibeli!'),
+        ),
+      );
+
+    widget.api
+        .buyShip(
       name: shipName,
       portId: _ship?.portId ?? 1,
       tierSpec: tierSpec,
-    );
-    if (!mounted) return;
-    AudioManager().playSfx('success');
-    setState(() {
-      _fleetCount += 1;
-      _fleet = <ShipModel>[..._fleet, created];
-      _fleetNotice =
-          '${tierSpec.name} (${tierSpec.shipClass}, Kapasitas ${tierSpec.capacity}, Harga ${tierSpec.price} koin) ditambahkan ke armada (#$_fleetCount).';
+    )
+        .then((created) {
+      if (!mounted) return;
+      setState(() {
+        _fleet =
+            _fleet.map((s) => s.id == tempShip.id ? created : s).toList();
+        _fleetCount = _fleet.length;
+      });
+    }).catchError((Object e) {
+      if (!mounted) return;
+      final errMsg = e.toString().replaceFirst('Exception: ', '');
+      setState(() {
+        _playerCoins = oldCoins;
+        _fleet = oldFleet;
+        _fleetCount = oldFleetCount;
+        _fleetNotice = errMsg;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            key: Key('buy_ship_error_snackbar_${tierSpec.code}'),
+            backgroundColor: Colors.red,
+            content: Text(errMsg),
+          ),
+        );
     });
   }
 
@@ -4368,16 +5101,43 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
           FilledButton(
             key: const Key('confirm_repair_button'),
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.of(ctx).pop();
-              final res = await widget.api.repairShip(shipId);
-              if (!mounted) return;
-              setState(() {
-                _shipDefensePower =
-                    (res['defense_power'] as num?)?.toInt() ??
-                        _shipMaxDefensePower;
-                _fleetNotice =
-                    'Kapal berhasil diperbaiki ke $_shipDefensePower/$_shipMaxDefensePower HP (Biaya: $repairCost koin).';
-              });
+              try {
+                final res = await widget.api.repairShip(shipId);
+                if (!mounted) return;
+                setState(() {
+                  _shipDefensePower =
+                      (res['defense_power'] as num?)?.toInt() ??
+                          _shipMaxDefensePower;
+                  _fleetNotice =
+                      'Kapal berhasil diperbaiki ke $_shipDefensePower/$_shipMaxDefensePower HP (Biaya: $repairCost koin).';
+                });
+                messenger
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    const SnackBar(
+                      key: Key('repair_ship_success_snackbar'),
+                      backgroundColor: Colors.green,
+                      content: Text('Berhasil memperbaiki lambung kapal!'),
+                    ),
+                  );
+              } catch (e) {
+                if (!mounted) return;
+                final errMsg = e.toString().replaceFirst('Exception: ', '');
+                setState(() {
+                  _fleetNotice = errMsg;
+                });
+                messenger
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      key: const Key('repair_ship_error_snackbar'),
+                      backgroundColor: Colors.red,
+                      content: Text(errMsg),
+                    ),
+                  );
+              }
             },
             child: const Text('Perbaiki Sekarang'),
           ),
@@ -4401,7 +5161,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
               const Text(
-                'Pasang Persenjataan Kapal (POST /v1/ships/equip)',
+                'Pasang Persenjataan Kapal',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
@@ -4422,21 +5182,49 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                   ),
                   trailing: const Text('+35 ATK'),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.of(ctx).pop();
-                    final res = await widget.api.equipWeapon(
-                      shipId: shipId,
-                      weapon: 'meriam',
-                      qty: 1,
-                    );
-                    if (!mounted) return;
-                    setState(() {
+                    try {
+                      final res = await widget.api.equipWeapon(
+                        shipId: shipId,
+                        weapon: 'meriam',
+                        qty: 1,
+                      );
+                      if (!mounted) return;
                       final added =
-                          (res['attack_power_added'] as num?)?.toInt() ??
-                              35;
-                      _shipAttackPower += added;
-                      _fleetNotice =
-                          'Meriam (+35 ATK) berhasil dipasang! Total ATK kapal: $_shipAttackPower.';
-                    });
+                          (res['attack_power_added'] as num?)?.toInt() ?? 35;
+                      final msg =
+                          'Meriam (+35 ATK) berhasil dipasang! Total ATK kapal: ${_shipAttackPower + added}.';
+                      setState(() {
+                        _shipAttackPower += added;
+                        _fleetNotice = msg;
+                      });
+                      messenger
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(
+                            key: const Key('equip_meriam_success_snackbar'),
+                            backgroundColor: Colors.green,
+                            content: Text('Berhasil! $msg'),
+                          ),
+                        );
+                    } catch (e) {
+                      if (!mounted) return;
+                      final errMsg =
+                          e.toString().replaceFirst('Exception: ', '');
+                      setState(() {
+                        _fleetNotice = errMsg;
+                      });
+                      messenger
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(
+                            key: const Key('equip_meriam_error_snackbar'),
+                            backgroundColor: Colors.red,
+                            content: Text(errMsg),
+                          ),
+                        );
+                    }
                   },
                 ),
               ),
@@ -4453,21 +5241,49 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                   ),
                   trailing: const Text('+15 ATK'),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.of(ctx).pop();
-                    final res = await widget.api.equipWeapon(
-                      shipId: shipId,
-                      weapon: 'katana',
-                      qty: 1,
-                    );
-                    if (!mounted) return;
-                    setState(() {
+                    try {
+                      final res = await widget.api.equipWeapon(
+                        shipId: shipId,
+                        weapon: 'katana',
+                        qty: 1,
+                      );
+                      if (!mounted) return;
                       final added =
-                          (res['attack_power_added'] as num?)?.toInt() ??
-                              15;
-                      _shipAttackPower += added;
-                      _fleetNotice =
-                          'Katana (+15 ATK) berhasil dipasang! Total ATK kapal: $_shipAttackPower.';
-                    });
+                          (res['attack_power_added'] as num?)?.toInt() ?? 15;
+                      final msg =
+                          'Katana (+15 ATK) berhasil dipasang! Total ATK kapal: ${_shipAttackPower + added}.';
+                      setState(() {
+                        _shipAttackPower += added;
+                        _fleetNotice = msg;
+                      });
+                      messenger
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(
+                            key: const Key('equip_katana_success_snackbar'),
+                            backgroundColor: Colors.green,
+                            content: Text('Berhasil! $msg'),
+                          ),
+                        );
+                    } catch (e) {
+                      if (!mounted) return;
+                      final errMsg =
+                          e.toString().replaceFirst('Exception: ', '');
+                      setState(() {
+                        _fleetNotice = errMsg;
+                      });
+                      messenger
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(
+                            key: const Key('equip_katana_error_snackbar'),
+                            backgroundColor: Colors.red,
+                            content: Text(errMsg),
+                          ),
+                        );
+                    }
                   },
                 ),
               ),
@@ -4885,28 +5701,61 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                         FilledButton.tonalIcon(
                           key: Key('claim_quest_button_${q.code}'),
                           onPressed: () async {
-                            final res = await widget.api.claimQuest(q.id);
-                            if (!mounted) return;
-                            final rwCoins =
-                                (res['reward_coins'] as num?)?.toInt() ??
-                                    q.rewardCoins;
-                            final rwXp =
-                                (res['reward_xp'] as num?)?.toInt() ??
-                                    q.rewardXp;
-                            HapticFeedback.heavyImpact();
-                            AudioManager().playSfx('coin');
-                            setState(() {
-                              _lastFloatingRewardText = '+$rwCoins';
-                              _playerCoins += rwCoins;
-                              _playerNetWorth += rwCoins;
-                              _dailyQuests = _dailyQuests
-                                  .map((item) => item.id == q.id
-                                      ? item.copyWith(isClaimed: true)
-                                      : item)
-                                  .toList();
-                              _questFeedbackBanner =
+                            final messenger = ScaffoldMessenger.of(context);
+                            try {
+                              final res = await widget.api.claimQuest(q.id);
+                              if (!mounted) return;
+                              final rwCoins =
+                                  (res['reward_coins'] as num?)?.toInt() ??
+                                      q.rewardCoins;
+                              final rwXp =
+                                  (res['reward_xp'] as num?)?.toInt() ??
+                                      q.rewardXp;
+                              HapticFeedback.heavyImpact();
+                              AudioManager().playSfx('coin');
+                              final msg =
                                   'Hadiah misi "${q.title}" berhasil diklaim: +$rwCoins Koin & +$rwXp EXP!';
-                            });
+                              setState(() {
+                                _lastFloatingRewardText = '+$rwCoins';
+                                _playerCoins += rwCoins;
+                                _playerNetWorth += rwCoins;
+                                _dailyQuests = _dailyQuests
+                                    .map((item) => item.id == q.id
+                                        ? item.copyWith(isClaimed: true)
+                                        : item)
+                                    .toList();
+                                _questFeedbackBanner = msg;
+                              });
+                              messenger
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  SnackBar(
+                                    key: Key(
+                                      'claim_quest_success_snackbar_${q.code}',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    content: Text('Berhasil! $msg'),
+                                  ),
+                                );
+                            } catch (e) {
+                              if (!mounted) return;
+                              final errMsg =
+                                  e.toString().replaceFirst('Exception: ', '');
+                              setState(() {
+                                _questFeedbackBanner = errMsg;
+                              });
+                              messenger
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  SnackBar(
+                                    key: Key(
+                                      'claim_quest_error_snackbar_${q.code}',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    content: Text(errMsg),
+                                  ),
+                                );
+                            }
                           },
                           icon: const Icon(Icons.card_giftcard, size: 17),
                           label: const Text('Klaim Hadiah'),
@@ -5112,8 +5961,201 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
             ),
           ),
         ),
+        const SizedBox(height: 16),
+        MaritimeWoodCard(
+          key: const Key('ledger_menu_card'),
+          child: ListTile(
+            key: const Key('open_ledger_tile'),
+            leading: const Icon(
+              Icons.receipt_long_outlined,
+              color: MaritimePalette.gold,
+            ),
+            title: const Text(
+              'Buku Mutasi Koin',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text(
+              'Lihat riwayat keluar-masuk koin armada (Beli Kapal, Misi Harian, & Niaga).',
+            ),
+            trailing: ElevatedButton(
+              key: const Key('open_ledger_button'),
+              style: MaritimePalette.goldCoinButtonStyle(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
+              onPressed: _openLedgerScreen,
+              child: const Text('Buka'),
+            ),
+            onTap: _openLedgerScreen,
+          ),
+        ),
+        const SizedBox(height: 16),
+        MaritimeWoodCard(
+          key: const Key('delete_account_card'),
+          borderColor: const Color(0xFFF87171),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Zona Berbahaya — Pelindungan Data Pribadi (UU PDP)',
+                style: MaritimePalette.cinzel(
+                  color: const Color(0xFFFCA5A5),
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Anda berhak menghapus dan menganonimkan akun secara permanen kapan saja sesuai UU No. 27 Tahun 2022.',
+                style: TextStyle(
+                  color: MaritimePalette.parchmentMuted,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                key: const Key('delete_account_button'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: MaritimePalette.crimsonWax,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: const BorderSide(
+                      color: Color(0xFFF87171),
+                      width: 1.2,
+                    ),
+                  ),
+                ),
+                onPressed: _showDeleteAccountDialog,
+                icon: const Icon(
+                  Icons.delete_forever_outlined,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  'Hapus Akun (UU PDP)',
+                  style: MaritimePalette.cinzel(
+                    color: Colors.white,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
+  }
+
+  void _openLedgerScreen() {
+    HapticFeedback.lightImpact();
+    AudioManager().playSfx('click');
+    Navigator.of(context).push(
+      GamePageRoute<void>(
+        page: LedgerScreen(api: widget.api),
+      ),
+    );
+  }
+
+  Future<void> _showDeleteAccountDialog() async {
+    String confirmInput = '';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final isConfirmedText = confirmInput.trim() == 'HAPUS';
+            return AlertDialog(
+              key: const Key('delete_account_dialog'),
+              backgroundColor: MaritimePalette.carvedMahogany,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: Color(0xFFF87171), width: 1.5),
+              ),
+              title: Text(
+                'Konfirmasi Hapus Akun (UU PDP)',
+                style: MaritimePalette.cinzel(
+                  color: const Color(0xFFFCA5A5),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Tindakan ini akan menganonimkan data pribadi Anda dan menghapus seluruh kapal serta progres secara permanen. Ketik kata "HAPUS" di bawah ini untuk mengonfirmasi:',
+                    style: TextStyle(
+                      color: MaritimePalette.parchment,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('delete_account_confirm_field'),
+                    onChanged: (val) {
+                      setDialogState(() {
+                        confirmInput = val;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Ketik HAPUS',
+                      hintText: 'HAPUS',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  key: const Key('cancel_delete_account_button'),
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton.icon(
+                  key: const Key('confirm_delete_account_button'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: MaritimePalette.crimsonWax,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: isConfirmedText
+                      ? () => Navigator.of(ctx).pop(true)
+                      : null,
+                  icon: const Icon(Icons.delete_forever_outlined, size: 18),
+                  label: const Text('Konfirmasi Hapus'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final messenger = ScaffoldMessenger.of(context);
+      try {
+        await widget.api.deleteAccount();
+        if (!mounted) return;
+        widget.onLogout();
+      } catch (e) {
+        if (!mounted) return;
+        final errMsg = e.toString().replaceFirst('Exception: ', '');
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              key: const Key('delete_account_error_snackbar'),
+              backgroundColor: Colors.red,
+              content: Text(errMsg),
+            ),
+          );
+      }
+    }
   }
 
   // ==========================================================================
@@ -5163,6 +6205,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
             FilledButton.icon(
               key: const Key('confirm_create_guild_button'),
               onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 final name = _guildCreateNameCtrl.text.trim().isEmpty
                     ? 'Aliansi Rempah Nusantara'
                     : _guildCreateNameCtrl.text.trim();
@@ -5174,19 +6217,39 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                     description: desc,
                   );
                   if (!mounted) return;
+                  final msg =
+                      'Aliansi "${created.name}" berhasil didirikan! 5.000 Koin telah masuk ke Kas Guild.';
                   setState(() {
                     _currentGuild = created;
                     if (_playerCoins >= 5000) {
                       _playerCoins -= 5000;
                     }
-                    _guildFeedbackBanner =
-                        'Aliansi "${created.name}" berhasil didirikan! 5.000 Koin telah masuk ke Kas Guild.';
+                    _guildFeedbackBanner = msg;
                   });
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        key: const Key('create_guild_success_snackbar'),
+                        backgroundColor: Colors.green,
+                        content: Text('Berhasil! $msg'),
+                      ),
+                    );
                 } catch (e) {
                   if (!mounted) return;
+                  final errMsg = e.toString().replaceFirst('Exception: ', '');
                   setState(() {
-                    _guildFeedbackBanner = e.toString();
+                    _guildFeedbackBanner = errMsg;
                   });
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        key: const Key('create_guild_error_snackbar'),
+                        backgroundColor: Colors.red,
+                        content: Text(errMsg),
+                      ),
+                    );
                 }
               },
               icon: const Icon(Icons.shield),
@@ -5233,6 +6296,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
             FilledButton.icon(
               key: const Key('confirm_donate_guild_button'),
               onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 final amount =
                     int.tryParse(_guildDonateAmountCtrl.text.trim()) ?? 1000;
                 Navigator.of(ctx).pop();
@@ -5246,6 +6310,8 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                   final bossNowActive = newTreasury > 10000 ||
                       ((res['boss_active'] as bool?) ??
                           guild.worldBoss.isActive);
+                  final msg =
+                      'Berhasil menyetor $amount Koin ke Kas Aliansi! Total Kas Guild kini $newTreasury Koin.';
                   setState(() {
                     if (_playerCoins >= amount) {
                       _playerCoins -= amount;
@@ -5265,14 +6331,32 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                         portId: 1,
                       ),
                     );
-                    _guildFeedbackBanner =
-                        'Berhasil menyetor $amount Koin ke Kas Aliansi! Total Kas Guild kini $newTreasury Koin.';
+                    _guildFeedbackBanner = msg;
                   });
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        key: const Key('donate_guild_success_snackbar'),
+                        backgroundColor: Colors.green,
+                        content: Text(msg),
+                      ),
+                    );
                 } catch (e) {
                   if (!mounted) return;
+                  final errMsg = e.toString().replaceFirst('Exception: ', '');
                   setState(() {
-                    _guildFeedbackBanner = e.toString();
+                    _guildFeedbackBanner = errMsg;
                   });
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        key: const Key('donate_guild_error_snackbar'),
+                        backgroundColor: Colors.red,
+                        content: Text(errMsg),
+                      ),
+                    );
                 }
               },
               icon: const Icon(Icons.volunteer_activism),
@@ -5454,13 +6538,42 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                       OutlinedButton.icon(
                         key: const Key('leave_guild_button'),
                         onPressed: () async {
-                          await widget.api.leaveGuild(guild.id);
-                          if (!mounted) return;
-                          setState(() {
-                            _currentGuild = null;
-                            _guildFeedbackBanner =
+                          final messenger = ScaffoldMessenger.of(context);
+                          try {
+                            await widget.api.leaveGuild(guild.id);
+                            if (!mounted) return;
+                            final msg =
                                 'Anda telah keluar dari ${guild.name}.';
-                          });
+                            setState(() {
+                              _currentGuild = null;
+                              _guildFeedbackBanner = msg;
+                            });
+                            messenger
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  key: const Key('leave_guild_success_snackbar'),
+                                  backgroundColor: Colors.green,
+                                  content: Text('Berhasil! $msg'),
+                                ),
+                              );
+                          } catch (e) {
+                            if (!mounted) return;
+                            final errMsg =
+                                e.toString().replaceFirst('Exception: ', '');
+                            setState(() {
+                              _guildFeedbackBanner = errMsg;
+                            });
+                            messenger
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  key: const Key('leave_guild_error_snackbar'),
+                                  backgroundColor: Colors.red,
+                                  content: Text(errMsg),
+                                ),
+                              );
+                          }
                         },
                         icon: const Icon(Icons.exit_to_app, size: 17),
                         label: const Text('Keluar'),
@@ -5573,34 +6686,63 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                       child: FilledButton.icon(
                         key: const Key('attack_world_boss_button'),
                         onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
                           HapticFeedback.heavyImpact();
                           AudioManager().playSfx('cannon');
                           setState(() {
                             _combatShakeCounter += 1;
                           });
-                          final res = await widget.api.attackGuildWorldBoss(
-                            guild.id,
-                            shipId: _ship?.id,
-                          );
-                          if (!mounted) return;
-                          final hpAfter =
-                              (res['boss_hp_after'] as num?)?.toInt() ??
-                                  (guild.worldBoss.hp - 60).clamp(0, 500);
-                          final dmg =
-                              (res['damage_dealt'] as num?)?.toInt() ?? 60;
-                          setState(() {
-                            _currentGuild = guild.copyWith(
-                              worldBoss: GuildWorldBossModel(
-                                isActive: hpAfter > 0,
-                                name: guild.worldBoss.name,
-                                hp: hpAfter,
-                                maxHp: guild.worldBoss.maxHp,
-                                portId: guild.worldBoss.portId,
-                              ),
+                          try {
+                            final res = await widget.api.attackGuildWorldBoss(
+                              guild.id,
+                              shipId: _ship?.id,
                             );
-                            _guildFeedbackBanner =
+                            if (!mounted) return;
+                            final hpAfter =
+                                (res['boss_hp_after'] as num?)?.toInt() ??
+                                    (guild.worldBoss.hp - 60).clamp(0, 500);
+                            final dmg =
+                                (res['damage_dealt'] as num?)?.toInt() ?? 60;
+                            final msg =
                                 'Kapal Anda menyerang ${guild.worldBoss.name} (-${dmg} HP, sisa $hpAfter/${guild.worldBoss.maxHp} HP)!';
-                          });
+                            setState(() {
+                              _currentGuild = guild.copyWith(
+                                worldBoss: GuildWorldBossModel(
+                                  isActive: hpAfter > 0,
+                                  name: guild.worldBoss.name,
+                                  hp: hpAfter,
+                                  maxHp: guild.worldBoss.maxHp,
+                                  portId: guild.worldBoss.portId,
+                                ),
+                              );
+                              _guildFeedbackBanner = msg;
+                            });
+                            messenger
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  key: const Key('attack_boss_success_snackbar'),
+                                  backgroundColor: Colors.green,
+                                  content: Text('Berhasil! $msg'),
+                                ),
+                              );
+                          } catch (e) {
+                            if (!mounted) return;
+                            final errMsg =
+                                e.toString().replaceFirst('Exception: ', '');
+                            setState(() {
+                              _guildFeedbackBanner = errMsg;
+                            });
+                            messenger
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  key: const Key('attack_boss_error_snackbar'),
+                                  backgroundColor: Colors.red,
+                                  content: Text(errMsg),
+                                ),
+                              );
+                          }
                         },
                         icon: const Icon(Icons.gps_fixed),
                         label: const Text('Kirim Kapal Serang Bersama'),
@@ -5845,6 +6987,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
           setState(() {
             _tabIndex = idx;
           });
+          _loadTabData(idx);
         },
       ),
     );

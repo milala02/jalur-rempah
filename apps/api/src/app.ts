@@ -1936,24 +1936,16 @@ export function createApiServer(
         if (optToken) {
           const plRes = await pool.query<{
             level: number;
-            net_worth: string;
           }>(
-            `SELECT
-               p.level,
-               (p.coins + (GREATEST(COUNT(DISTINCT s.id) - 1, 0) * 1500) + COALESCE(SUM(sc.qty * c.base_price), 0))::text AS net_worth
-             FROM public.players p
-             LEFT JOIN public.ships s ON s.player_id = p.id
-             LEFT JOIN public.ship_cargo sc ON sc.ship_id = s.id
-             LEFT JOIN public.commodities c ON c.id = sc.commodity_id
-             WHERE p.id = $1 AND p.is_deleted = false
-             GROUP BY p.id, p.level, p.coins
+            `SELECT level
+             FROM public.players
+             WHERE id = $1 AND is_deleted = false
              LIMIT 1`,
             [optToken.sub],
           );
           const plRow = plRes.rows[0];
           if (plRow) {
-            const calcLv = calculatePlayerLevel(Number(plRow.net_worth));
-            playerLevel = Math.max(Number(plRow.level ?? 1), calcLv);
+            playerLevel = Math.max(1, Number(plRow.level ?? 1));
           }
         }
 
@@ -2568,42 +2560,41 @@ export function createApiServer(
           tutorial_step: number;
           bonus_xp: string;
           net_worth: string;
-          rank: string;
           ship_count: string;
           account_status: string;
           tos_version: string | null;
           tos_accepted_at: Date | null;
         }>(
-          `WITH ranked AS (
-             SELECT
-               p.id,
-               p.display_name,
-               p.coins,
-               p.level,
-               p.tutorial_step,
-               p.bonus_xp,
-               p.account_status,
-               p.tos_version,
-               p.tos_accepted_at,
-               COUNT(DISTINCT s.id) AS ship_count,
-               (p.coins + (GREATEST(COUNT(DISTINCT s.id) - 1, 0) * 1500) + COALESCE(SUM(sc.qty * c.base_price), 0)) AS net_worth,
-               RANK() OVER (ORDER BY (p.coins + (GREATEST(COUNT(DISTINCT s.id) - 1, 0) * 1500) + COALESCE(SUM(sc.qty * c.base_price), 0)) DESC, p.id ASC) AS rnk
-             FROM public.players p
-             LEFT JOIN public.ships s ON s.player_id = p.id
-             LEFT JOIN public.ship_cargo sc ON sc.ship_id = s.id
-             LEFT JOIN public.commodities c ON c.id = sc.commodity_id
-             WHERE p.is_deleted = false
-             GROUP BY p.id, p.display_name, p.coins, p.level, p.tutorial_step, p.bonus_xp, p.account_status, p.tos_version, p.tos_accepted_at
-           )
-           SELECT id::text, display_name, coins::text, level, tutorial_step, bonus_xp::text, net_worth::text, rnk::text AS rank, ship_count::text, account_status, tos_version, tos_accepted_at
-           FROM ranked
-           WHERE id = $1`,
+          `SELECT
+             p.id::text,
+             p.display_name,
+             p.coins::text,
+             p.level,
+             p.tutorial_step,
+             p.bonus_xp::text,
+             p.account_status,
+             p.tos_version,
+             p.tos_accepted_at,
+             COUNT(DISTINCT s.id)::text AS ship_count,
+             (p.coins + (GREATEST(COUNT(DISTINCT s.id) - 1, 0) * 1500) + COALESCE(SUM(sc.qty * c.base_price), 0))::text AS net_worth
+           FROM public.players p
+           LEFT JOIN public.ships s ON s.player_id = p.id
+           LEFT JOIN public.ship_cargo sc ON sc.ship_id = s.id
+           LEFT JOIN public.commodities c ON c.id = sc.commodity_id
+           WHERE p.id = $1 AND p.is_deleted = false
+           GROUP BY p.id, p.display_name, p.coins, p.level, p.tutorial_step, p.bonus_xp, p.account_status, p.tos_version, p.tos_accepted_at`,
           [authUser.sub],
         );
         const me = meRes.rows[0];
         if (!me) {
           return makeError(404, 'NOT_FOUND', 'Pemain tidak ditemukan.');
         }
+
+        const rankRes = await pool.query<{ rank: string }>(
+          `SELECT (COUNT(*) + 1)::text AS rank FROM (SELECT SUM(coins) as net_worth FROM players GROUP BY id HAVING SUM(coins) > $1) as higher_players`,
+          [me.coins],
+        );
+        const playerRank = Number(rankRes.rows[0]?.rank ?? '1');
 
         const nw = Number(me.net_worth);
         const sc = Number(me.ship_count);
@@ -2646,7 +2637,7 @@ export function createApiServer(
             display_name: me.display_name,
             coins: Number(me.coins),
             net_worth: nw,
-            rank: Number(me.rank),
+            rank: playerRank,
             title: getPlayerRankTitle(nw, sc),
             level: currentLevel,
             xp_to_next_level: xpToNextLevel,
@@ -3073,7 +3064,25 @@ export function createApiServer(
           100,
         );
         const cursor = parsedUrl.searchParams.get('cursor');
-        const cursorId = cursor ? BigInt(cursor) : null;
+        let cursorId: bigint | null = null;
+        if (cursor !== null && cursor !== '') {
+          if (!/^\d+$/.test(cursor)) {
+            return makeError(
+              400,
+              'VALIDATION_ERROR',
+              'Format cursor tidak valid',
+            );
+          }
+          try {
+            cursorId = BigInt(cursor);
+          } catch {
+            return makeError(
+              400,
+              'VALIDATION_ERROR',
+              'Format cursor tidak valid',
+            );
+          }
+        }
 
         const lRes =
           cursorId !== null
@@ -3665,15 +3674,37 @@ export function createApiServer(
             );
           }
 
-          // Flush upkeep kedua pemain dalam urutan ID naik untuk menghindari deadlock
+          // Flush upkeep kedua pemain dalam satu query UPDATE massal (urutan ID naik untuk menghindari deadlock)
           const firstPid =
             BigInt(authUser.sub) < BigInt(ord.seller_id)
               ? authUser.sub
               : ord.seller_id;
           const secondPid =
             firstPid === authUser.sub ? ord.seller_id : authUser.sub;
-          await flushPlayerUpkeepInTx(client, firstPid, tickNo);
-          await flushPlayerUpkeepInTx(client, secondPid, tickNo);
+          await client.query(
+            `WITH flushed AS (
+               UPDATE public.players p
+               SET unflushed_upkeep = 0
+               FROM (
+                 SELECT id, unflushed_upkeep
+                 FROM public.players
+                 WHERE id IN ($1, $2) AND unflushed_upkeep > 0
+                 ORDER BY id ASC
+                 FOR UPDATE
+               ) old_p
+               WHERE p.id = old_p.id
+               RETURNING p.id, old_p.unflushed_upkeep
+             )
+             INSERT INTO public.ledger (player_id, tick_no, delta, reason, meta)
+             SELECT id, $3, -unflushed_upkeep, 'upkeep', $4::jsonb
+             FROM flushed`,
+            [
+              firstPid,
+              secondPid,
+              tickNo,
+              JSON.stringify({ flushed_at_tick: tickNo }),
+            ],
+          );
 
           const buyerPlayerRes = await client.query<{ coins: string }>(
             `SELECT coins::text FROM public.players WHERE id = $1 FOR UPDATE`,
@@ -3762,8 +3793,8 @@ export function createApiServer(
           const pairCountRes = await client.query<{ cnt: string }>(
             `SELECT COUNT(*)::text AS cnt
              FROM public.p2p_orders
-             WHERE status = 'completed'
-               AND ((seller_id = $1 AND buyer_id = $2) OR (seller_id = $2 AND buyer_id = $1))`,
+             WHERE (seller_id = $1 AND buyer_id = $2 AND status = 'completed')
+                OR (seller_id = $2 AND buyer_id = $1 AND status = 'completed')`,
             [ord.seller_id, authUser.sub],
           );
           const pairTradesCount = Number(pairCountRes.rows[0]?.cnt ?? '0');
@@ -3897,8 +3928,13 @@ export function createApiServer(
       }
 
       if (method === 'POST' && path === '/guilds') {
-        const name =
-          typeof bodyObj['name'] === 'string' ? bodyObj['name'].trim() : '';
+        const rawName =
+          typeof bodyObj['name'] === 'string' ? bodyObj['name'] : '';
+        const rawDesc =
+          typeof bodyObj['description'] === 'string'
+            ? bodyObj['description']
+            : '';
+        const name = rawName.trim();
         let code =
           typeof bodyObj['code'] === 'string'
             ? bodyObj['code'].trim().toLowerCase()
@@ -3913,16 +3949,21 @@ export function createApiServer(
             code = `guild_${Date.now().toString().slice(-6)}`;
           }
         }
-        const description =
-          typeof bodyObj['description'] === 'string'
-            ? bodyObj['description'].trim()
-            : '';
+        const description = rawDesc.trim();
+        const unsafePattern = /[<>\x00-\x1F\x7F]/;
 
-        if (!/^[a-z0-9_]{3,16}$/.test(code) || name.length < 3 || name.length > 40) {
+        if (
+          !/^[a-z0-9_]{3,16}$/.test(code) ||
+          name.length < 3 ||
+          name.length > 40 ||
+          description.length > 200 ||
+          unsafePattern.test(rawName) ||
+          unsafePattern.test(rawDesc)
+        ) {
           return makeError(
             400,
             'VALIDATION_ERROR',
-            'Kode serikat harus 3-16 karakter alfanumerik/garis bawah dan nama 3-40 karakter.',
+            'Kode serikat harus 3-16 karakter alfanumerik/garis bawah, nama 3-40 karakter, deskripsi maksimal 200 karakter, dan tidak boleh mengandung tag HTML atau karakter kontrol.',
           );
         }
 
@@ -4210,10 +4251,52 @@ export function createApiServer(
             );
           }
 
+          const prevMemRes = await client.query<{
+            guild_id: string;
+            role: string;
+          }>(
+            `SELECT guild_id::text, role
+             FROM public.guild_members
+             WHERE player_id = $1
+             FOR UPDATE`,
+            [authUser.sub],
+          );
+          const prevMem = prevMemRes.rows[0];
+
           await client.query(
             `DELETE FROM public.guild_members WHERE player_id = $1`,
             [authUser.sub],
           );
+
+          // Jika pemain adalah leader di guild lama sebelum pindah ke guild baru, jalankan suksesi leader
+          if (prevMem && prevMem.guild_id !== gRow.id && prevMem.role === 'leader') {
+            const nextMemRes = await client.query<{
+              player_id: string;
+            }>(
+              `SELECT player_id::text
+               FROM public.guild_members
+               WHERE guild_id = $1
+               ORDER BY CASE WHEN role = 'officer' THEN 0 ELSE 1 END ASC, joined_at ASC
+               LIMIT 1`,
+              [prevMem.guild_id],
+            );
+            const nextMem = nextMemRes.rows[0];
+            if (nextMem) {
+              await client.query(
+                `UPDATE public.guild_members
+                 SET role = 'leader'
+                 WHERE guild_id = $1 AND player_id = $2`,
+                [prevMem.guild_id, nextMem.player_id],
+              );
+              await client.query(
+                `UPDATE public.guilds
+                 SET leader_id = $1
+                 WHERE id = $2`,
+                [nextMem.player_id, prevMem.guild_id],
+              );
+            }
+          }
+
           await client.query(
             `INSERT INTO public.guild_members (guild_id, player_id, role)
              VALUES ($1, $2, 'member')`,
@@ -5335,8 +5418,9 @@ export function createApiServer(
       }
 
       if (method === 'POST' && path === '/ships/buy') {
-        const shipName =
-          typeof bodyObj['name'] === 'string' ? bodyObj['name'].trim() : '';
+        const rawShipName =
+          typeof bodyObj['name'] === 'string' ? bodyObj['name'] : '';
+        const shipName = rawShipName.trim();
         const portId =
           typeof bodyObj['port_id'] === 'number'
             ? Math.trunc(bodyObj['port_id'])
@@ -5360,11 +5444,17 @@ export function createApiServer(
           ? matchedTier.capacity
           : config.STARTER_SHIP_CAPACITY;
 
-        if (shipName.length < 3 || shipName.length > 32 || portId < 1 || portId > 6) {
+        if (
+          shipName.length < 3 ||
+          shipName.length > 32 ||
+          /[<>\x00-\x1F\x7F]/.test(rawShipName) ||
+          portId < 1 ||
+          portId > 6
+        ) {
           return makeError(
             400,
             'VALIDATION_ERROR',
-            'Nama kapal harus 3-32 karakter dan port_id harus pelabuhan valid (1..6).',
+            'Nama kapal harus 3-32 karakter (tanpa tag HTML atau karakter kontrol) dan port_id harus pelabuhan valid (1..6).',
           );
         }
 
@@ -5373,12 +5463,6 @@ export function createApiServer(
           await client.query('BEGIN');
 
           await flushPlayerUpkeepInTx(client, authUser.sub, tickNo);
-
-          const pRes = await client.query<{ coins: string }>(
-            `SELECT coins::text FROM public.players WHERE id = $1 FOR UPDATE`,
-            [authUser.sub],
-          );
-          const coins = BigInt(pRes.rows[0]?.coins ?? '0');
 
           const cntRes = await client.query<{ cnt: string }>(
             `SELECT COUNT(*)::text AS cnt FROM public.ships WHERE player_id = $1`,
@@ -5394,7 +5478,12 @@ export function createApiServer(
             );
           }
 
-          if (coins < purchaseCostBig) {
+          // Potong koin pemain secara atomik dan cek kecukupan saldo dalam satu query
+          const pUpd = await client.query<{ coins: string }>(
+            `UPDATE public.players SET coins = coins - $1 WHERE id = $2 AND coins >= $1 RETURNING coins;`,
+            [purchaseCostBig.toString(), authUser.sub],
+          );
+          if (pUpd.rows.length === 0) {
             await client.query('ROLLBACK');
             return makeError(
               422,
@@ -5402,6 +5491,7 @@ export function createApiServer(
               `Koin tidak cukup untuk membeli kapal baru (biaya ${purchaseCostBig.toString()} koin).`,
             );
           }
+          const remainingCoins = BigInt(pUpd.rows[0]!.coins);
 
           const sIns = await client.query<{
             id: string;
@@ -5418,10 +5508,6 @@ export function createApiServer(
           const sRow = sIns.rows[0]!;
 
           // Pembayaran pembelian kapal masuk ke kas pelabuhan galangan kapal sehingga konservasi uang tetap utuh
-          await client.query(
-            `UPDATE public.players SET coins = coins - $1 WHERE id = $2`,
-            [purchaseCostBig.toString(), authUser.sub],
-          );
           await client.query(
             `UPDATE public.ports SET treasury = treasury + $1 WHERE id = $2`,
             [purchaseCostBig.toString(), portId],
@@ -5463,7 +5549,7 @@ export function createApiServer(
                 cargo: [],
               },
               cost: Number(purchaseCostBig),
-              remaining_coins: Number(coins - purchaseCostBig),
+              remaining_coins: Number(remainingCoins),
             } as unknown as T,
             tickHeaders,
           );
@@ -5793,7 +5879,25 @@ export function createApiServer(
             100,
           );
           const cursor = parsedUrl.searchParams.get('cursor');
-          const cursorId = cursor ? BigInt(cursor) : null;
+          let cursorId: bigint | null = null;
+          if (cursor !== null && cursor !== '') {
+            if (!/^\d+$/.test(cursor)) {
+              return makeError(
+                400,
+                'VALIDATION_ERROR',
+                'Format cursor tidak valid',
+              );
+            }
+            try {
+              cursorId = BigInt(cursor);
+            } catch {
+              return makeError(
+                400,
+                'VALIDATION_ERROR',
+                'Format cursor tidak valid',
+              );
+            }
+          }
 
           const logRes =
             cursorId !== null

@@ -458,4 +458,88 @@ void main() {
       expect(find.byKey(const Key('attack_world_boss_button')), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'Fitur Intelijen Harga (GET /v1/intel), Buku Mutasi Koin (GET /v1/me/ledger), dan Hapus Akun UU PDP (DELETE /v1/me)',
+    (WidgetTester tester) async {
+      final fakeApi = FakeJalurRempahApiClient();
+      final vault = InMemorySecureTokenVault();
+      await vault.saveTokens(
+        accessToken: 'initial-access',
+        refreshToken: 'initial-refresh',
+      );
+      await tester.pumpWidget(
+        JalurRempahApp(
+          apiClient: fakeApi,
+          tokenVault: vault,
+          showTitleScreen: false,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 1. Uji Intelijen Harga di Tab Pasar
+      await tester.tap(find.byKey(const Key('tutorial_advance_button')));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('PALA'),
+        100.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('PALA'));
+      await tester.pumpAndSettle();
+      expect(find.text('Lihat Intel Harga Pelabuhan Lain'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('market_intel_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('market_intel_button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('intel_bottom_sheet')), findsOneWidget);
+      expect(find.text('Banda: 70 koin'), findsOneWidget);
+      expect(find.text('Lisbon: 150 koin'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('close_intel_sheet_button')));
+      await tester.pumpAndSettle();
+
+      // 2. Uji Buku Mutasi Koin di Tab Profil
+      await tester.tap(find.byKey(const Key('nav_leaderboard')));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('open_ledger_button')),
+        200.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Buku Mutasi Koin'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('open_ledger_button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('ledger_screen')), findsOneWidget);
+      expect(find.text('+120 Koin (Misi Harian)'), findsOneWidget);
+      expect(find.text('-500 Koin (Beli Kapal)'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // 3. Uji Hapus Akun (UU PDP) dengan konfirmasi ganda "HAPUS"
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('delete_account_button')),
+        200.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Hapus Akun (UU PDP)'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('delete_account_button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('delete_account_dialog')), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('delete_account_confirm_field')),
+        'HAPUS',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_delete_account_button')));
+      await tester.pumpAndSettle();
+
+      // Token dibersihkan & kembali ke layar Login
+      expect(await vault.readAccessToken(), isNull);
+      expect(find.byKey(const Key('auth_submit_button')), findsOneWidget);
+    },
+  );
 }
