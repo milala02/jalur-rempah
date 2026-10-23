@@ -3950,7 +3950,7 @@ export function createApiServer(
           }
         }
         const description = rawDesc.trim();
-        const unsafePattern = /[<>\x00-\x1F\x7F]/;
+        const unsafePattern = /[<>\p{Cc}]/u;
 
         if (
           !/^[a-z0-9_]{3,16}$/.test(code) ||
@@ -5447,7 +5447,7 @@ export function createApiServer(
         if (
           shipName.length < 3 ||
           shipName.length > 32 ||
-          /[<>\x00-\x1F\x7F]/.test(rawShipName) ||
+          /[<>\p{Cc}]/u.test(rawShipName) ||
           portId < 1 ||
           portId > 6
         ) {
