@@ -1594,6 +1594,75 @@ export async function executeSingleWorldTick(
       );
     }
 
+    // Fase 3 Batch A: Auto-generate 5 Kontrak Dagang NPC setiap 10 tick (jika kontrak aktif < 5)
+    if (t > 0 && t % 10 === 0) {
+      const openContractsRes = await client.query<{ cnt: string }>(
+        `SELECT COUNT(*)::text AS cnt FROM public.trade_contracts WHERE status = 'open'`,
+      );
+      const openContractsCount = Number(openContractsRes.rows[0]?.cnt ?? '0');
+      if (openContractsCount < 5) {
+        const findPortId = (code: string, fallback: number): number =>
+          PORTS_SEED.find((p) => p.code === code)?.id ?? fallback;
+        const findComId = (code: string, fallback: number): number =>
+          COMMODITIES_SEED.find((c) => c.code === code)?.id ?? fallback;
+
+        const npcContractSpecs = [
+          {
+            issuerName: 'Gubernur Batavia',
+            portId: findPortId('batavia', 6),
+            commodityId: findComId('garam', 3),
+            qty: 50,
+            rewardCoins: 2000,
+          },
+          {
+            issuerName: 'Sultan Malaka',
+            portId: findPortId('malaka', 5),
+            commodityId: findComId('kain', 4),
+            qty: 30,
+            rewardCoins: 1800,
+          },
+          {
+            issuerName: 'Syahbandar Banda',
+            portId: findPortId('banda', 1),
+            commodityId: findComId('pala', 1),
+            qty: 25,
+            rewardCoins: 2200,
+          },
+          {
+            issuerName: 'Sultan Ternate',
+            portId: findPortId('ternate', 2),
+            commodityId: findComId('cengkeh', 2),
+            qty: 20,
+            rewardCoins: 2100,
+          },
+          {
+            issuerName: 'Adipati Surabaya',
+            portId: findPortId('surabaya', 4),
+            commodityId: findComId('garam', 3),
+            qty: 40,
+            rewardCoins: 1600,
+          },
+        ];
+
+        for (const spec of npcContractSpecs) {
+          await client.query(
+            `INSERT INTO public.trade_contracts (
+               creator_id, issuer_name, port_id, commodity_id, qty, reward_coins, status, created_tick
+             )
+             VALUES (NULL, $1, $2, $3, $4, $5, 'open', $6)`,
+            [
+              spec.issuerName,
+              spec.portId,
+              spec.commodityId,
+              spec.qty,
+              spec.rewardCoins,
+              t,
+            ],
+          );
+        }
+      }
+    }
+
     // Fase 8: Integrasi Combat World Boss ("Bajak Laut Armada Besar") untuk Aliansi dengan kas > 10.000 koin
     const richGuildsRes = await client.query<{
       id: string;

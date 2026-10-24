@@ -47,6 +47,8 @@ export async function runMigrations(
       '0009_guilds_treasury_and_world_boss.sql',
       '0010_add_loot_summary_to_combat_logs.sql',
       '0011_p2p_and_performance_indexes.sql',
+      '0012_daily_rewards.sql',
+      '0013_achievements.sql',
     ].filter((f) => fs.existsSync(path.join(dir, f)));
     const scannedFiles = fs
       .readdirSync(dir)

@@ -11,12 +11,14 @@ import 'package:provider/provider.dart';
 
 import 'audio_manager.dart';
 import 'catalog_models.dart';
+import 'npc_engine.dart';
 import 'nusantara_map.dart';
 import 'syntax_highlight_controller.dart';
 import 'theme_controller.dart';
 
 export 'audio_manager.dart';
 export 'catalog_models.dart';
+export 'npc_engine.dart';
 export 'nusantara_map.dart';
 export 'syntax_highlight_controller.dart';
 export 'theme_controller.dart';
@@ -114,6 +116,104 @@ class MaritimeWoodCard extends StatelessWidget {
           duration: 320.ms,
           curve: Curves.easeOutCubic,
         );
+  }
+}
+
+/// Widget Marquee (teks berjalan) sederhana untuk Ticker Berita Dunia di bawah AppBar Tab Pasar.
+class WorldNewsMarquee extends StatefulWidget {
+  final String text;
+
+  const WorldNewsMarquee({
+    super.key,
+    required this.text,
+  });
+
+  @override
+  State<WorldNewsMarquee> createState() => _WorldNewsMarqueeState();
+}
+
+class _WorldNewsMarqueeState extends State<WorldNewsMarquee>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  static bool get _isFlutterTest {
+    try {
+      return const bool.fromEnvironment('FLUTTER_TEST') ||
+          Platform.environment.containsKey('FLUTTER_TEST');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 14),
+    );
+    if (!_isFlutterTest) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        key: const Key('world_news_marquee'),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFF281815),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0x88FFD700), width: 1.0),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.campaign_outlined,
+              size: 14,
+              color: MaritimePalette.gold,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: ClipRect(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    final double dx = _isFlutterTest
+                        ? 0.0
+                        : (0.25 - (_controller.value * 0.5)) * 120.0;
+                    return Transform.translate(
+                      offset: Offset(dx, 0),
+                      child: child,
+                    );
+                  },
+                  child: Text(
+                    widget.text,
+                    key: const Key('world_news_marquee_text'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: MaritimePalette.parchment,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -603,6 +703,33 @@ class ShipModel {
   int? get currentPortId => portId;
   int? get destinationPortId => destPort;
 
+  ShipModel copyWith({
+    int? attackPower,
+    int? defensePower,
+    int? maxDefensePower,
+    String? status,
+  }) {
+    return ShipModel(
+      id: id,
+      name: name,
+      capacity: capacity,
+      status: status ?? this.status,
+      portId: portId,
+      destPort: destPort,
+      departTick: departTick,
+      arriveTick: arriveTick,
+      etaTicks: etaTicks,
+      cargo: cargo,
+      tier: tier,
+      shipType: shipType,
+      shipClass: shipClass,
+      speedMultiplier: speedMultiplier,
+      attackPower: attackPower ?? this.attackPower,
+      defensePower: defensePower ?? this.defensePower,
+      maxDefensePower: maxDefensePower ?? this.maxDefensePower,
+    );
+  }
+
   factory ShipModel.fromJson(Map<String, dynamic> json) {
     final rawCargo = (json['cargo'] as List<dynamic>?) ?? const <dynamic>[];
     final cap = (json['capacity'] as num?)?.toInt() ?? 35;
@@ -827,32 +954,335 @@ class GuildModel {
 
 class TradeContractModel {
   final int id;
+  final String creatorName;
   final String portCode;
   final String commodityCode;
   final int qty;
   final int rewardCoins;
   final String status;
+  final String description;
 
   const TradeContractModel({
     required this.id,
+    this.creatorName = 'Gubernur Batavia',
     required this.portCode,
     required this.commodityCode,
     required this.qty,
     required this.rewardCoins,
     required this.status,
+    this.description = '',
   });
 
+  String get displayTitle {
+    if (description.trim().isNotEmpty) return description.trim();
+    final comTitle = commodityCode.isNotEmpty
+        ? '${commodityCode[0].toUpperCase()}${commodityCode.substring(1)}'
+        : 'Rempah';
+    return '$creatorName minta $qty $comTitle → $rewardCoins koin';
+  }
+
   factory TradeContractModel.fromJson(Map<String, dynamic> json) {
+    final creator = (json['issuer_name'] as String?) ??
+        (json['creator_name'] as String?) ??
+        'Syahbandar Nusantara';
+    final portCode = (json['port_code'] as String?) ?? 'banda';
+    final comCode = (json['commodity_code'] as String?) ?? 'pala';
+    final qty = (json['qty'] as num?)?.toInt() ?? 1;
+    final rw = (json['reward_coins'] as num?)?.toInt() ?? 100;
+    final desc = (json['description'] as String?) ?? '';
     return TradeContractModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
-      portCode: (json['port_code'] as String?) ?? 'banda',
-      commodityCode: (json['commodity_code'] as String?) ?? 'pala',
-      qty: (json['qty'] as num?)?.toInt() ?? 1,
-      rewardCoins: (json['reward_coins'] as num?)?.toInt() ?? 100,
+      creatorName: creator,
+      portCode: portCode,
+      commodityCode: comCode,
+      qty: qty,
+      rewardCoins: rw,
       status: (json['status'] as String?) ?? 'open',
+      description: desc,
     );
   }
 }
+
+const List<TradeContractModel> kDefaultTradeContracts = <TradeContractModel>[
+  TradeContractModel(
+    id: 101,
+    creatorName: 'Gubernur Batavia',
+    portCode: 'batavia',
+    commodityCode: 'garam',
+    qty: 50,
+    rewardCoins: 2000,
+    status: 'open',
+    description: 'Gubernur Batavia minta 50 Garam → 2000 koin',
+  ),
+  TradeContractModel(
+    id: 102,
+    creatorName: 'Sultan Malaka',
+    portCode: 'malaka',
+    commodityCode: 'kain',
+    qty: 30,
+    rewardCoins: 1800,
+    status: 'open',
+    description: 'Sultan Malaka minta 30 Kain → 1800 koin',
+  ),
+  TradeContractModel(
+    id: 103,
+    creatorName: 'Syahbandar Banda',
+    portCode: 'banda',
+    commodityCode: 'pala',
+    qty: 25,
+    rewardCoins: 2200,
+    status: 'open',
+    description: 'Syahbandar Banda minta 25 Pala → 2200 koin',
+  ),
+  TradeContractModel(
+    id: 104,
+    creatorName: 'Sultan Ternate',
+    portCode: 'ternate',
+    commodityCode: 'cengkeh',
+    qty: 20,
+    rewardCoins: 2100,
+    status: 'open',
+    description: 'Sultan Ternate minta 20 Cengkeh → 2100 koin',
+  ),
+  TradeContractModel(
+    id: 105,
+    creatorName: 'Adipati Surabaya',
+    portCode: 'surabaya',
+    commodityCode: 'garam',
+    qty: 40,
+    rewardCoins: 1600,
+    status: 'open',
+    description: 'Adipati Surabaya minta 40 Garam → 1600 koin',
+  ),
+];
+
+class DailyRewardStatusModel {
+  final bool claimedToday;
+  final int currentStreak;
+  final int nextStreak;
+  final int nextRewardCoins;
+  final List<int> rewardsSchedule;
+
+  const DailyRewardStatusModel({
+    required this.claimedToday,
+    required this.currentStreak,
+    required this.nextStreak,
+    required this.nextRewardCoins,
+    this.rewardsSchedule = const <int>[100, 200, 300, 500, 700, 1000, 2000],
+  });
+
+  factory DailyRewardStatusModel.fromJson(Map<String, dynamic> json) {
+    final claimed = (json['claimed_today'] as bool?) ??
+        (json['has_claimed_today'] as bool?) ??
+        false;
+    final cur = (json['current_streak'] as num?)?.toInt() ?? 0;
+    final nxt = (json['next_streak'] as num?)?.toInt() ?? ((cur % 7) + 1);
+    final nxtCoins = (json['next_reward_coins'] as num?)?.toInt() ?? 100;
+    final rawSched = (json['rewards_schedule'] as List<dynamic>?)
+        ?.map((e) => (e as num).toInt())
+        .toList();
+    return DailyRewardStatusModel(
+      claimedToday: claimed,
+      currentStreak: cur,
+      nextStreak: nxt,
+      nextRewardCoins: nxtCoins,
+      rewardsSchedule: (rawSched != null && rawSched.length == 7)
+          ? rawSched
+          : const <int>[100, 200, 300, 500, 700, 1000, 2000],
+    );
+  }
+}
+
+class AchievementItemModel {
+  final String code;
+  final String title;
+  final String description;
+  final String iconEmoji;
+  final String requirementType;
+  final int requirementValue;
+  final int rewardCoins;
+  final bool isUnlocked;
+  final String? unlockedAt;
+
+  const AchievementItemModel({
+    required this.code,
+    required this.title,
+    required this.description,
+    required this.iconEmoji,
+    required this.requirementType,
+    required this.requirementValue,
+    required this.rewardCoins,
+    required this.isUnlocked,
+    this.unlockedAt,
+  });
+
+  factory AchievementItemModel.fromJson(Map<String, dynamic> json) {
+    return AchievementItemModel(
+      code: (json['code'] as String?) ?? '',
+      title: (json['title'] as String?) ?? '',
+      description: (json['description'] as String?) ?? '',
+      iconEmoji: (json['icon_emoji'] as String?) ?? '🏅',
+      requirementType: (json['requirement_type'] as String?) ?? '',
+      requirementValue: (json['requirement_value'] as num?)?.toInt() ?? 1,
+      rewardCoins: (json['reward_coins'] as num?)?.toInt() ?? 500,
+      isUnlocked: (json['is_unlocked'] as bool?) ?? false,
+      unlockedAt: json['unlocked_at'] as String?,
+    );
+  }
+}
+
+const List<AchievementItemModel> kDefaultAchievements = <AchievementItemModel>[
+  AchievementItemModel(
+    code: 'pelaut_pertama',
+    title: 'Pelaut Pertama',
+    description: 'Beli 1 kapal tambahan di galangan kapal.',
+    iconEmoji: '⛵',
+    requirementType: 'buy_ships',
+    requirementValue: 1,
+    rewardCoins: 500,
+    isUnlocked: true,
+  ),
+  AchievementItemModel(
+    code: 'saudagar',
+    title: 'Saudagar',
+    description: 'Jual total 100 unit komoditas di pasar Nusantara.',
+    iconEmoji: '⚖️',
+    requirementType: 'sell_units',
+    requirementValue: 100,
+    rewardCoins: 1000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'juragan',
+    title: 'Juragan',
+    description: 'Kumpulkan saldo 10.000 koin di kas nakhoda.',
+    iconEmoji: '💰',
+    requirementType: 'coins',
+    requirementValue: 10000,
+    rewardCoins: 500,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'sultan',
+    title: 'Sultan',
+    description: 'Kumpulkan saldo 1.000.000 koin di kas nakhoda.',
+    iconEmoji: '👑',
+    requirementType: 'coins',
+    requirementValue: 1000000,
+    rewardCoins: 10000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'penjelajah',
+    title: 'Penjelajah',
+    description: 'Kunjungi minimal 5 pelabuhan berbeda di Nusantara.',
+    iconEmoji: '🧭',
+    requirementType: 'visit_ports',
+    requirementValue: 5,
+    rewardCoins: 1500,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'pemburu_bajak_laut',
+    title: 'Pemburu Bajak Laut',
+    description: 'Menangkan 5 pertempuran laut melawan perompak.',
+    iconEmoji: '⚔️',
+    requirementType: 'win_battles',
+    requirementValue: 5,
+    rewardCoins: 1000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'nahkoda_berpengalaman',
+    title: 'Nahkoda Berpengalaman',
+    description: 'Capai Level 5 sebagai kapten armada.',
+    iconEmoji: '🎖️',
+    requirementType: 'level',
+    requirementValue: 5,
+    rewardCoins: 2000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'programmer_handal',
+    title: 'Programmer Handal',
+    description: 'Simpan minimal 10 aturan otomasi DSL.',
+    iconEmoji: '📜',
+    requirementType: 'save_dsl',
+    requirementValue: 10,
+    rewardCoins: 1500,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'kolektor',
+    title: 'Kolektor Armada',
+    description: 'Miliki 5 kapal sekaligus dalam armadamu.',
+    iconEmoji: '🚢',
+    requirementType: 'own_ships',
+    requirementValue: 5,
+    rewardCoins: 3000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'kaya_raya',
+    title: 'Kaya Raya',
+    description: 'Capai total kekayaan bersih (Net Worth) 100.000 koin.',
+    iconEmoji: '💎',
+    requirementType: 'net_worth',
+    requirementValue: 100000,
+    rewardCoins: 5000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'raja_rempah',
+    title: 'Raja Rempah',
+    description: 'Capai total kekayaan bersih (Net Worth) 1.000.000 koin.',
+    iconEmoji: '🏆',
+    requirementType: 'net_worth',
+    requirementValue: 1000000,
+    rewardCoins: 20000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'diplomat',
+    title: 'Diplomat Nusantara',
+    description: 'Bergabung atau dirikan sebuah Serikat Dagang (Aliansi).',
+    iconEmoji: '🤝',
+    requirementType: 'join_guild',
+    requirementValue: 1,
+    rewardCoins: 500,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'filantropi',
+    title: 'Filantropi Serikat',
+    description: 'Donasikan total 10.000 koin ke kas aliansi.',
+    iconEmoji: '🏛️',
+    requirementType: 'donate_guild',
+    requirementValue: 10000,
+    rewardCoins: 1000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'penakluk_boss',
+    title: 'Penakluk Armada VOC',
+    description: 'Kalahkan World Boss bersama aliansi atau armadamu.',
+    iconEmoji: '🐉',
+    requirementType: 'defeat_boss',
+    requirementValue: 1,
+    rewardCoins: 5000,
+    isUnlocked: false,
+  ),
+  AchievementItemModel(
+    code: 'veteran',
+    title: 'Veteran Samudra',
+    description: 'Bermain dan klaim hadiah harian selama 7 hari.',
+    iconEmoji: '🌟',
+    requirementType: 'play_days',
+    requirementValue: 7,
+    rewardCoins: 1000,
+    isUnlocked: false,
+  ),
+];
 
 // ============================================================================
 // 2. Abstraksi Klien API & Penyimpanan Token Aman
@@ -968,6 +1398,48 @@ abstract class JalurRempahApiClient {
 
   Future<void> deleteAccount() async {}
 
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {}
+
+  Future<DailyRewardStatusModel> getDailyRewardStatus() async {
+    return const DailyRewardStatusModel(
+      claimedToday: true,
+      currentStreak: 3,
+      nextStreak: 4,
+      nextRewardCoins: 500,
+    );
+  }
+
+  Future<Map<String, dynamic>> claimDailyReward() async {
+    return <String, dynamic>{
+      'ok': true,
+      'day_streak': 4,
+      'coins_awarded': 2000,
+      'bonus_ship_awarded': false,
+    };
+  }
+
+  Future<List<AchievementItemModel>> getAchievements() async {
+    return kDefaultAchievements;
+  }
+
+  Future<List<TradeContractModel>> getTradeContracts() async {
+    return kDefaultTradeContracts;
+  }
+
+  Future<Map<String, dynamic>> fulfillTradeContract(
+    int contractId, {
+    required int shipId,
+  }) async {
+    return <String, dynamic>{
+      'id': contractId,
+      'status': 'fulfilled',
+      'reward_coins': 2000,
+    };
+  }
+
   Future<List<dynamic>> getLedger({String? cursor}) async {
     return <dynamic>[
       <String, dynamic>{
@@ -1061,6 +1533,10 @@ abstract class JalurRempahApiClient {
 
   Future<List<MapPortNode>> getWorldPorts() async {
     return kNusantaraPortNodes;
+  }
+
+  Future<List<NpcCaptain>> getNpcCaptains() async {
+    return buildDefaultNpcCaptains();
   }
 
   Future<List<CommodityCatalogItemModel>> getWorldCommodities() async {
@@ -1408,9 +1884,13 @@ class HttpJalurRempahApiClient extends JalurRempahApiClient {
     req.write(jsonEncode(body));
     final resp = await req.close();
     final text = await resp.transform(utf8.decoder).join();
-    final decoded = text.isNotEmpty
-        ? (jsonDecode(text) as Map<String, dynamic>)
-        : <String, dynamic>{};
+    final dynamic rawDecoded =
+        text.isNotEmpty ? jsonDecode(text) : <String, dynamic>{};
+    final Map<String, dynamic> decoded = rawDecoded is Map<String, dynamic>
+        ? rawDecoded
+        : rawDecoded is List<dynamic>
+            ? <String, dynamic>{'items': rawDecoded}
+            : <String, dynamic>{};
     if (resp.statusCode >= 400) {
       final errObj = decoded['error'] as Map<String, dynamic>?;
       throw Exception(
@@ -1440,9 +1920,13 @@ class HttpJalurRempahApiClient extends JalurRempahApiClient {
     }
     final resp = await req.close();
     final text = await resp.transform(utf8.decoder).join();
-    final decoded = text.isNotEmpty
-        ? (jsonDecode(text) as Map<String, dynamic>)
-        : <String, dynamic>{};
+    final dynamic rawDecoded =
+        text.isNotEmpty ? jsonDecode(text) : <String, dynamic>{};
+    final Map<String, dynamic> decoded = rawDecoded is Map<String, dynamic>
+        ? rawDecoded
+        : rawDecoded is List<dynamic>
+            ? <String, dynamic>{'items': rawDecoded}
+            : <String, dynamic>{};
     final headerTick = int.tryParse(resp.headers.value('x-tick') ?? '');
     final bodyTick = (decoded['current_tick'] as num?)?.toInt() ??
         (decoded['tick_no'] as num?)?.toInt();
@@ -1576,6 +2060,64 @@ class HttpJalurRempahApiClient extends JalurRempahApiClient {
   }
 
   @override
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    await _request(
+      'POST',
+      '/v1/me/change-password',
+      body: <String, dynamic>{
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      },
+    );
+  }
+
+  @override
+  Future<DailyRewardStatusModel> getDailyRewardStatus() async {
+    final res = await _request('GET', '/v1/me/daily-reward');
+    return DailyRewardStatusModel.fromJson(res);
+  }
+
+  @override
+  Future<Map<String, dynamic>> claimDailyReward() {
+    return _request('POST', '/v1/me/daily-reward/claim');
+  }
+
+  @override
+  Future<List<AchievementItemModel>> getAchievements() async {
+    final res = await _request('GET', '/v1/me/achievements');
+    final raw = (res['items'] as List<dynamic>?) ?? const <dynamic>[];
+    if (raw.isEmpty) return kDefaultAchievements;
+    return raw
+        .map((e) => AchievementItemModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<TradeContractModel>> getTradeContracts() async {
+    final res = await _request('GET', '/v1/contracts');
+    final raw = (res['items'] as List<dynamic>?) ?? const <dynamic>[];
+    if (raw.isEmpty) return kDefaultTradeContracts;
+    return raw
+        .map((e) => TradeContractModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<Map<String, dynamic>> fulfillTradeContract(
+    int contractId, {
+    required int shipId,
+  }) {
+    return _request(
+      'POST',
+      '/v1/contracts/$contractId/fulfill',
+      body: <String, dynamic>{'ship_id': shipId},
+    );
+  }
+
+  @override
   Future<List<dynamic>> getLedger({String? cursor}) async {
     final qParam = (cursor != null && cursor.trim().isNotEmpty)
         ? '?cursor=${Uri.encodeQueryComponent(cursor.trim())}'
@@ -1616,6 +2158,16 @@ class HttpJalurRempahApiClient extends JalurRempahApiClient {
     if (raw.isEmpty) return kNusantaraPortNodes;
     return raw
         .map((e) => MapPortNode.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<NpcCaptain>> getNpcCaptains() async {
+    final res = await _request('GET', '/v1/world/npc-captains');
+    final raw = (res['items'] as List<dynamic>?) ?? const <dynamic>[];
+    if (raw.isEmpty) return buildDefaultNpcCaptains();
+    return raw
+        .map((e) => NpcCaptain.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
@@ -2171,13 +2723,15 @@ class _JalurRempahAppState extends State<JalurRempahApp> {
   }
 
   Future<void> _handleLogout() async {
-    final refreshToken = await _vault.readRefreshToken();
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      try {
+    try {
+      final refreshToken = await _vault.readRefreshToken();
+      if (refreshToken != null && refreshToken.isNotEmpty) {
         await _api.logout(refreshToken);
-      } catch (_) {}
-    }
-    await _vault.clear();
+      }
+    } catch (_) {}
+    try {
+      await _vault.clear();
+    } catch (_) {}
     if (mounted) {
       setState(() {
         _authenticated = false;
@@ -2900,6 +3454,180 @@ class _LedgerScreenState extends State<LedgerScreen> {
   }
 }
 
+class AchievementsScreen extends StatefulWidget {
+  final JalurRempahApiClient api;
+
+  const AchievementsScreen({
+    super.key,
+    required this.api,
+  });
+
+  @override
+  State<AchievementsScreen> createState() => _AchievementsScreenState();
+}
+
+class _AchievementsScreenState extends State<AchievementsScreen> {
+  bool _loading = true;
+  List<AchievementItemModel> _items = kDefaultAchievements;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAchievements();
+  }
+
+  Future<void> _loadAchievements() async {
+    setState(() {
+      _loading = true;
+    });
+    try {
+      final fetched = await widget.api.getAchievements();
+      if (!mounted) return;
+      setState(() {
+        _items = fetched.isNotEmpty ? fetched : kDefaultAchievements;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _items = kDefaultAchievements;
+        _loading = false;
+      });
+    }
+  }
+
+  void _showAchievementDetails(AchievementItemModel ach) {
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          key: Key('achievement_tooltip_snackbar_${ach.code}'),
+          content: Text(
+            '${ach.iconEmoji} ${ach.title}: ${ach.description} • Hadiah: +${ach.rewardCoins} koin',
+          ),
+        ),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unlockedCount = _items.where((a) => a.isUnlocked).length;
+    return Scaffold(
+      key: const Key('achievements_screen'),
+      appBar: AppBar(
+        title: Text('Pencapaian ($unlockedCount/${_items.length})'),
+        actions: [
+          IconButton(
+            key: const Key('refresh_achievements_button'),
+            tooltip: 'Muat Ulang Pencapaian',
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadAchievements,
+          ),
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : GridView.builder(
+              key: const Key('achievements_grid'),
+              padding: const EdgeInsets.all(14),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.92,
+              ),
+              itemCount: _items.length,
+              itemBuilder: (context, index) {
+                final ach = _items[index];
+                final isUnlocked = ach.isUnlocked;
+                final badgeColor =
+                    isUnlocked ? MaritimePalette.gold : Colors.grey;
+                return Tooltip(
+                  message:
+                      '${ach.description} (Hadiah: +${ach.rewardCoins} koin)',
+                  child: InkWell(
+                    key: Key('achievement_badge_${ach.code}'),
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => _showAchievementDetails(ach),
+                    child: MaritimeWoodCard(
+                      margin: EdgeInsets.zero,
+                      borderColor: badgeColor,
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isUnlocked
+                                  ? MaritimePalette.gold.withValues(alpha: 0.22)
+                                  : Colors.grey.withValues(alpha: 0.18),
+                              border: Border.all(
+                                color: badgeColor,
+                                width: 2,
+                              ),
+                            ),
+                            child: Text(
+                              ach.iconEmoji,
+                              style: TextStyle(
+                                fontSize: 22,
+                                color: isUnlocked ? null : Colors.grey,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            ach.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                              color: isUnlocked
+                                  ? MaritimePalette.gold
+                                  : Colors.grey.shade400,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            ach.description,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: isUnlocked
+                                  ? MaritimePalette.parchment
+                                  : Colors.grey.shade500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            isUnlocked
+                                ? 'Terbuka • +${ach.rewardCoins} koin'
+                                : 'Terkunci • +${ach.rewardCoins} koin',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: badgeColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
 class AuthScreen extends StatefulWidget {
   final JalurRempahApiClient api;
   final VoidCallback onAuthenticated;
@@ -2915,8 +3643,10 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final TextEditingController _confirmPasswordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId:
@@ -2932,11 +3662,21 @@ class _AuthScreenState extends State<AuthScreen> {
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
     _nameCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
+    if (_isRegisterMode) {
+      final isFormValid = _formKey.currentState?.validate() ?? true;
+      if (!isFormValid || _confirmPasswordCtrl.text != _passwordCtrl.text) {
+        setState(() {
+          _errorMsg = 'Kata sandi tidak cocok';
+        });
+        return;
+      }
+    }
     setState(() {
       _busy = true;
       _errorMsg = null;
@@ -3040,130 +3780,152 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Program Kapal Dagangmu di Nusantara',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Otomatisasi armada rempah dengan Bahasa Aturan (DSL), jelajahi 6 pelabuhan Nusantara, dan bangun kejayaan niaga.',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              key: const Key('auth_email_field'),
-              controller: _emailCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Program Kapal Dagangmu di Nusantara',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const Key('auth_password_field'),
-              controller: _passwordCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Kata Sandi',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 6),
+              const Text(
+                'Otomatisasi armada rempah dengan Bahasa Aturan (DSL), jelajahi 6 pelabuhan Nusantara, dan bangun kejayaan niaga.',
               ),
-            ),
-            if (_isRegisterMode) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
-                key: const Key('auth_display_name_field'),
-                controller: _nameCtrl,
+                key: const Key('auth_email_field'),
+                controller: _emailCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Nama Tampilan Nahkoda',
+                  labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 8),
-              CheckboxListTile(
-                key: const Key('auth_tos_checkbox'),
-                contentPadding: EdgeInsets.zero,
-                value: _tosAccepted,
-                onChanged: (val) {
-                  setState(() {
-                    _tosAccepted = val ?? false;
-                  });
-                },
-                title: const Text(
-                  'Saya menyetujui Syarat & Ketentuan',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Persetujuan wajib sesuai UU Pelindungan Data Pribadi (UU PDP) & Hukum In-Game v1.0.',
-                  style: TextStyle(fontSize: 12),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('auth_password_field'),
+                controller: _passwordCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Kata Sandi',
+                  border: OutlineInputBorder(),
                 ),
               ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  key: const Key('auth_read_tos_button'),
-                  icon: const Icon(Icons.menu_book_outlined, size: 18),
-                  label: const Text('Baca Syarat & Ketentuan'),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.of(context).push(
-                      GamePageRoute<void>(
-                        page: LegalDocumentsScreen(api: widget.api),
-                      ),
-                    );
+              if (_isRegisterMode) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: const Key('auth_confirm_password_field'),
+                  controller: _confirmPasswordCtrl,
+                  obscureText: true,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  decoration: const InputDecoration(
+                    labelText: 'Ulangi Kata Sandi',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (_) {
+                    if (_confirmPasswordCtrl.text != _passwordCtrl.text) {
+                      return 'Kata sandi tidak cocok';
+                    }
+                    return null;
                   },
                 ),
-              ),
-            ],
-            if (_errorMsg != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _errorMsg!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ],
-            const SizedBox(height: 16),
-            ElevatedButton(
-              key: const Key('auth_submit_button'),
-              onPressed: canSubmit
-                  ? () {
+                const SizedBox(height: 12),
+                TextField(
+                  key: const Key('auth_display_name_field'),
+                  controller: _nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Tampilan Nahkoda',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  key: const Key('auth_tos_checkbox'),
+                  contentPadding: EdgeInsets.zero,
+                  value: _tosAccepted,
+                  onChanged: (val) {
+                    setState(() {
+                      _tosAccepted = val ?? false;
+                    });
+                  },
+                  title: const Text(
+                    'Saya menyetujui Syarat & Ketentuan',
+                    style:
+                        TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Persetujuan wajib sesuai UU Pelindungan Data Pribadi (UU PDP) & Hukum In-Game v1.0.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const Key('auth_read_tos_button'),
+                    icon: const Icon(Icons.menu_book_outlined, size: 18),
+                    label: const Text('Baca Syarat & Ketentuan'),
+                    onPressed: () {
                       HapticFeedback.lightImpact();
-                      AudioManager().playSfx('click');
-                      _submit();
-                    }
-                  : null,
-              child: Text(_isRegisterMode ? 'Daftar & Buat Kapal' : 'Masuk'),
-            )
-                .animate()
-                .scale(
-                  begin: const Offset(0.9, 0.9),
-                  end: const Offset(1, 1),
-                  duration: 300.ms,
-                  curve: Curves.easeOutBack,
-                )
-                .shimmer(duration: 600.ms, color: const Color(0x66FFF5DC)),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              key: const Key('auth_google_login_button'),
-              onPressed: _busy ? null : _submitGoogleSignIn,
-              icon: const Icon(Icons.g_mobiledata, size: 26),
-              label: const Text('Masuk dengan Google'),
-            ),
-            TextButton(
-              key: const Key('auth_toggle_mode_button'),
-              onPressed: () {
-                setState(() {
-                  _isRegisterMode = !_isRegisterMode;
-                });
-              },
-              child: Text(
-                _isRegisterMode
-                    ? 'Sudah punya akun? Masuk'
-                    : 'Belum punya akun? Daftar Baru',
+                      Navigator.of(context).push(
+                        GamePageRoute<void>(
+                          page: LegalDocumentsScreen(api: widget.api),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              if (_errorMsg != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _errorMsg!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                key: const Key('auth_submit_button'),
+                onPressed: canSubmit
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        AudioManager().playSfx('click');
+                        _submit();
+                      }
+                    : null,
+                child: Text(_isRegisterMode ? 'Daftar & Buat Kapal' : 'Masuk'),
+              )
+                  .animate()
+                  .scale(
+                    begin: const Offset(0.9, 0.9),
+                    end: const Offset(1, 1),
+                    duration: 300.ms,
+                    curve: Curves.easeOutBack,
+                  )
+                  .shimmer(duration: 600.ms, color: const Color(0x66FFF5DC)),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                key: const Key('auth_google_login_button'),
+                onPressed: _busy ? null : _submitGoogleSignIn,
+                icon: const Icon(Icons.g_mobiledata, size: 26),
+                label: const Text('Masuk dengan Google'),
               ),
-            ),
-          ],
+              TextButton(
+                key: const Key('auth_toggle_mode_button'),
+                onPressed: () {
+                  setState(() {
+                    _isRegisterMode = !_isRegisterMode;
+                    _errorMsg = null;
+                  });
+                },
+                child: Text(
+                  _isRegisterMode
+                      ? 'Sudah punya akun? Masuk'
+                      : 'Belum punya akun? Daftar Baru',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3188,7 +3950,8 @@ class MainDashboardShell extends StatefulWidget {
   State<MainDashboardShell> createState() => _MainDashboardShellState();
 }
 
-class _MainDashboardShellState extends State<MainDashboardShell> {
+class _MainDashboardShellState extends State<MainDashboardShell>
+    with WidgetsBindingObserver {
   int _tabIndex = 0;
   bool _isMapInteracting = false;
   int _currentTick = 100;
@@ -3196,6 +3959,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
   String? _lastFloatingRewardText;
   String _selectedPortCode = 'banda';
   String _selectedCommodity = 'pala';
+  late final NpcSimulationEngine _npcEngine;
 
   // Data Profil, Rank System, & Progressive Level (Langkah 2 & 3)
   int _playerId = 1;
@@ -3235,8 +3999,20 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
 
   // Data Armada, Galangan 5 Tingkat Kapal, & Naval Combat (Fase 6)
   ShipModel? _ship;
-  List<ShipModel> _fleet = const <ShipModel>[];
-  int _fleetCount = 1;
+  List<ShipModel> _fleet = const <ShipModel>[
+    ShipModel(
+      id: 1,
+      name: 'Kapal Perintis',
+      capacity: 35,
+      status: 'docked',
+      portId: 1,
+      destPort: null,
+      arriveTick: null,
+      etaTicks: 0,
+      cargo: <CargoItemModel>[],
+    ),
+  ];
+  int get _fleetCount => _fleet.length;
   int _shipAttackPower = 0;
   int _shipDefensePower = 65;
   int _shipMaxDefensePower = 100;
@@ -3245,14 +4021,19 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       const <CombatNotificationModel>[];
   int _unreadCombatNotifications = 0;
 
-  // Data Bursa P2P (Langkah 5)
+  // Data Bursa P2P & Kontrak NPC (Langkah 5 & Fase 3)
   List<P2pOrderItemModel> _p2pOrders = const <P2pOrderItemModel>[];
+  List<TradeContractModel> _tradeContracts = kDefaultTradeContracts;
   String _p2pOrderType = 'auction';
   int _p2pCommodityId = 1;
   final _p2pQtyCtrl = TextEditingController(text: '2');
   final _p2pUnitPriceCtrl = TextEditingController(text: '75');
   final _p2pTargetPlayerCtrl = TextEditingController();
   String? _p2pFeedbackBanner;
+
+  // Auto-Tick & Daily Login Reward (Fase 2)
+  Timer? _autoTickTimer;
+  bool _checkedDailyReward = false;
 
   // Data IDE Bahasa Aturan & Block Builder (Langkah 6)
   bool _isBlockBuilderMode = false;
@@ -3273,14 +4054,59 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
   String? _statusBanner;
   String? _fleetNotice;
 
+  void _onNpcSimulationUpdated() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _startAutoTickTimer() {
+    _autoTickTimer?.cancel();
+    _autoTickTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _refreshCoreData(),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _npcEngine = NpcSimulationEngine();
+    _npcEngine.addListener(_onNpcSimulationUpdated);
+    _npcEngine.start();
+    _autoTickTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _refreshCoreData(),
+    );
     _refreshAll();
+    _checkDailyRewardOnStartup();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      _npcEngine.pause();
+      _autoTickTimer?.cancel();
+      _autoTickTimer = null;
+    } else if (state == AppLifecycleState.resumed) {
+      _npcEngine.resume();
+      if (_autoTickTimer == null) {
+        _startAutoTickTimer();
+      }
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _autoTickTimer?.cancel();
+    _autoTickTimer = null;
+    _npcEngine.removeListener(_onNpcSimulationUpdated);
+    _npcEngine.dispose();
     _ruleEditorCtrl.dispose();
     _p2pQtyCtrl.dispose();
     _p2pUnitPriceCtrl.dispose();
@@ -3292,6 +4118,237 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
     super.dispose();
   }
 
+  Future<void> _refreshCoreData() async {
+    try {
+      final results = await Future.wait<dynamic>(<Future<dynamic>>[
+        widget.api.getProfile(),
+        widget.api.getShips(),
+      ]);
+      if (!mounted) return;
+      final profile = results[0] as Map<String, dynamic>;
+      final shipsList = results[1] as List<ShipModel>;
+      setState(() {
+        final fetchedCoins =
+            (profile['coins'] as num?)?.toInt() ?? _playerCoins;
+        if (fetchedCoins > _playerCoins) {
+          final delta = fetchedCoins - _playerCoins;
+          AudioManager().playSfx('coin');
+          HapticFeedback.heavyImpact();
+          _lastFloatingRewardText = '+$delta';
+        }
+        _playerCoins = fetchedCoins;
+        _playerNetWorth =
+            (profile['net_worth'] as num?)?.toInt() ?? _playerCoins;
+        if (widget.api.latestServerTick > 0) {
+          _currentTick = widget.api.latestServerTick;
+        }
+        if (shipsList.isNotEmpty) {
+          _fleet = shipsList;
+          final activeShip = _ship != null
+              ? (_fleet.where((s) => s.id == _ship!.id).firstOrNull ??
+                  _fleet.first)
+              : _fleet.first;
+          _ship = activeShip;
+          _shipAttackPower = activeShip.attackPower;
+          _shipDefensePower = activeShip.defensePower;
+          _shipMaxDefensePower = activeShip.maxDefensePower;
+        }
+      });
+    } catch (_) {
+      // Abaikan kegagalan jaringan saat auto-tick periodik
+    }
+  }
+
+  Future<void> _checkDailyRewardOnStartup() async {
+    if (_checkedDailyReward) return;
+    _checkedDailyReward = true;
+    try {
+      final status = await widget.api.getDailyRewardStatus();
+      if (!mounted) return;
+      if (!status.claimedToday) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showDailyRewardDialog(status);
+          }
+        });
+      }
+    } catch (_) {
+      // Abaikan jika gagal mengambil status daily reward
+    }
+  }
+
+  Future<void> _showDailyRewardDialog(DailyRewardStatusModel status) async {
+    const dayRewards = <int>[100, 200, 300, 500, 700, 1000, 2000];
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          key: const Key('daily_reward_dialog'),
+          backgroundColor: MaritimePalette.carvedMahogany,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: MaritimePalette.gold, width: 1.5),
+          ),
+          title: Text(
+            'Hadiah Login Harian (Streak: ${status.currentStreak} Hari)',
+            style: MaritimePalette.cinzel(
+              color: MaritimePalette.gold,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: SizedBox(
+            width: 340,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Klaim hadiah harianmu setiap 24 jam! Hari ke-7 memberikan +2.000 Koin & 1 Kapal Tier 2 gratis.',
+                  style: TextStyle(
+                    color: MaritimePalette.parchment,
+                    fontSize: 12.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: List<Widget>.generate(7, (idx) {
+                    final day = idx + 1;
+                    final reward = dayRewards[idx];
+                    final isPassed = day <= status.currentStreak;
+                    final isCurrentDay = day == status.nextStreak;
+                    return Container(
+                      key: Key('daily_reward_day_box_$day'),
+                      width: 86,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isPassed
+                            ? MaritimePalette.gold.withValues(alpha: 0.25)
+                            : isCurrentDay
+                                ? MaritimePalette.weatheredTeak
+                                : Colors.black26,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: (isPassed || isCurrentDay)
+                              ? MaritimePalette.gold
+                              : Colors.grey.shade700,
+                          width: isCurrentDay ? 2.0 : 1.2,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Hari $day',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: isPassed
+                                  ? MaritimePalette.gold
+                                  : MaritimePalette.parchment,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '+$reward',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isPassed
+                                  ? MaritimePalette.gold
+                                  : Colors.amberAccent,
+                            ),
+                          ),
+                          if (day == 7)
+                            const Text(
+                              '+Kapal T2',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: MaritimePalette.gold,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              key: const Key('close_daily_reward_dialog_button'),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Nanti'),
+            ),
+            ElevatedButton.icon(
+              key: const Key('claim_daily_reward_button'),
+              style: MaritimePalette.goldCoinButtonStyle(),
+              onPressed: status.claimedToday
+                  ? null
+                  : () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      Navigator.of(ctx).pop();
+                      try {
+                        final res = await widget.api.claimDailyReward();
+                        if (!mounted) return;
+                        final coinsAwarded =
+                            (res['coins_awarded'] as num?)?.toInt() ??
+                                status.nextRewardCoins;
+                        HapticFeedback.heavyImpact();
+                        AudioManager().playSfx('coin');
+                        setState(() {
+                          _playerCoins += coinsAwarded;
+                          _playerNetWorth += coinsAwarded;
+                          _lastFloatingRewardText = '+2000 koin';
+                        });
+                        messenger
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(
+                              key: const Key('daily_reward_claimed_snackbar'),
+                              backgroundColor: Colors.green,
+                              content: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Hadiah harian berhasil diklaim! +$coinsAwarded koin',
+                                    ),
+                                  ),
+                                  const FloatingRewardText(text: '+2000 koin'),
+                                ],
+                              ),
+                            ),
+                          );
+                      } catch (e) {
+                        if (!mounted) return;
+                        final errMsg =
+                            e.toString().replaceFirst('Exception: ', '');
+                        messenger
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(
+                              backgroundColor: Colors.red,
+                              content: Text(errMsg),
+                            ),
+                          );
+                      }
+                    },
+              icon: const Icon(Icons.card_giftcard, size: 18),
+              label: const Text('Klaim Hadiah'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _refreshAll() async {
     final results = await Future.wait<dynamic>(<Future<dynamic>>[
       widget.api.getProfile(),
@@ -3301,9 +4358,10 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       widget.api.getWorldEvents(),
       widget.api.getMarket(_selectedPortCode),
       widget.api.getPriceHistory(_selectedPortCode, _selectedCommodity),
-      widget.api.getPrimaryShip(),
       widget.api.getShips(),
       widget.api.getRuleTemplates(),
+      widget.api.getNpcCaptains(),
+      widget.api.getTradeContracts(),
     ]);
 
     final profile = results[0] as Map<String, dynamic>;
@@ -3313,9 +4371,13 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
     final events = results[4] as List<WorldEventItemModel>;
     final market = results[5] as List<MarketItemModel>;
     final history = results[6] as List<PricePointModel>;
-    final ship = results[7] as ShipModel;
-    final shipsList = results[8] as List<ShipModel>;
-    final templates = results[9] as List<RuleTemplateModel>;
+    final shipsList = results[7] as List<ShipModel>;
+    final templates = results[8] as List<RuleTemplateModel>;
+    final npcCaptains = results[9] as List<NpcCaptain>;
+    final contracts = results[10] as List<TradeContractModel>;
+    final ShipModel fallbackShip = shipsList.isNotEmpty
+        ? shipsList.first
+        : await widget.api.getPrimaryShip();
 
     if (!mounted) return;
     setState(() {
@@ -3387,13 +4449,19 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       } else {
         _currentTick = widget.api.latestServerTick;
       }
-      _ship = ship;
-      _fleet = shipsList.isNotEmpty ? shipsList : <ShipModel>[ship];
-      _fleetCount = _fleet.length;
+      _fleet = shipsList.isNotEmpty ? shipsList : <ShipModel>[fallbackShip];
+      final ShipModel activeShip = _ship != null
+          ? (_fleet.where((s) => s.id == _ship!.id).firstOrNull ?? _fleet.first)
+          : _fleet.first;
+      _ship = activeShip;
       _templates = templates;
-      _shipAttackPower = ship.attackPower;
-      _shipDefensePower = ship.defensePower;
-      _shipMaxDefensePower = ship.maxDefensePower;
+      if (contracts.isNotEmpty) {
+        _tradeContracts = contracts;
+      }
+      _shipAttackPower = activeShip.attackPower;
+      _shipDefensePower = activeShip.defensePower;
+      _shipMaxDefensePower = activeShip.maxDefensePower;
+      _npcEngine.updateCaptains(npcCaptains, ports: _worldPorts);
     });
 
     try {
@@ -3435,10 +4503,18 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
     try {
       switch (tabIndex) {
         case 1:
-          final p2p = await widget.api.getP2pOrders();
+          final res = await Future.wait<dynamic>(<Future<dynamic>>[
+            widget.api.getP2pOrders(),
+            widget.api.getTradeContracts(),
+          ]);
+          final p2p = res[0] as List<P2pOrderItemModel>;
+          final contracts = res[1] as List<TradeContractModel>;
           if (!mounted) return;
           setState(() {
             _p2pOrders = p2p;
+            if (contracts.isNotEmpty) {
+              _tradeContracts = contracts;
+            }
           });
           break;
         case 2:
@@ -3755,6 +4831,8 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
         .map((e) => e.portId!)
         .toSet();
 
+    final int primaryShipId =
+        _ship?.id ?? (_fleet.isNotEmpty ? _fleet.first.id : 1);
     final shipMarkers = _fleet
         .map(
           (s) => MapShipMarker(
@@ -3769,6 +4847,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                     : null),
             arriveTick: s.arriveTick,
             tier: s.tier,
+            isPrimary: s.id == primaryShipId,
           ),
         )
         .toList();
@@ -3892,6 +4971,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
           selectedPortCode: _selectedPortCode,
           ports: _worldPorts,
           ships: shipMarkers,
+          npcPositions: _npcEngine.npcPositions,
           eventPortIds: eventPortIds,
           currentTick: _currentTick,
           height: isLandscape ? 320 : 260,
@@ -4152,6 +5232,14 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                   ),
                 ),
               ),
+            Positioned(
+              top: 0,
+              left: 16,
+              right: 16,
+              child: WorldNewsMarquee(
+                text: _npcEngine.latestNews,
+              ),
+            ),
           ],
         );
       },
@@ -4552,6 +5640,132 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                       },
                       child: const Text('Batalkan'),
                     ),
+                ],
+              ),
+            ),
+          );
+        }),
+        const SizedBox(height: 18),
+        const Text(
+          'Kontrak Dagang Tersedia',
+          key: Key('npc_trade_contracts_section'),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        ..._tradeContracts.map((c) {
+          final isOpen = c.status == 'open';
+          return MaritimeWoodCard(
+            key: Key('trade_contract_card_${c.id}'),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          c.displayTitle,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          '+${c.rewardCoins} koin',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: MaritimePalette.gold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pelabuhan Tujuan: ${_resolvePortDisplayName(c.portCode, null)} • Komoditas: ${c.commodityCode.toUpperCase()} (${c.qty} unit) • Pembuat: ${c.creatorName}',
+                    style: const TextStyle(fontSize: 12.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: isOpen
+                        ? FilledButton.tonalIcon(
+                            key: Key('fulfill_contract_button_${c.id}'),
+                            onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              try {
+                                final res =
+                                    await widget.api.fulfillTradeContract(
+                                  c.id,
+                                  shipId: _ship?.id ?? 1,
+                                );
+                                if (!mounted) return;
+                                final rw =
+                                    (res['reward_coins'] as num?)?.toInt() ??
+                                        c.rewardCoins;
+                                HapticFeedback.heavyImpact();
+                                AudioManager().playSfx('coin');
+                                final msg =
+                                    'Kontrak #${c.id} terpenuhi! Hadiah +$rw koin masuk ke kas Anda.';
+                                setState(() {
+                                  _playerCoins += rw;
+                                  _playerNetWorth += rw;
+                                  _lastFloatingRewardText = '+$rw koin';
+                                  _tradeContracts = _tradeContracts
+                                      .where((item) => item.id != c.id)
+                                      .toList();
+                                  _p2pFeedbackBanner = msg;
+                                });
+                                messenger
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      key: Key(
+                                        'fulfill_contract_success_snackbar_${c.id}',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                      content: Text('Berhasil! $msg'),
+                                    ),
+                                  );
+                              } catch (e) {
+                                if (!mounted) return;
+                                final errMsg =
+                                    e.toString().replaceFirst('Exception: ', '');
+                                setState(() {
+                                  _p2pFeedbackBanner = errMsg;
+                                });
+                                messenger
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      key: Key(
+                                        'fulfill_contract_error_snackbar_${c.id}',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                      content: Text(errMsg),
+                                    ),
+                                  );
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.assignment_turned_in_outlined,
+                              size: 18,
+                            ),
+                            label: const Text('Penuhi Kontrak'),
+                          )
+                        : const Text(
+                            'Selesai ✓',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
                 ],
               ),
             ),
@@ -5003,7 +6217,6 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
 
     final oldCoins = _playerCoins;
     final oldFleet = List<ShipModel>.from(_fleet);
-    final oldFleetCount = _fleetCount;
     final nextNum = _fleetCount + 1;
     final shipName = '${tierSpec.name} #$nextNum';
     final tempShip = ShipModel(
@@ -5029,7 +6242,6 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
     setState(() {
       _playerCoins -= tierSpec.price;
       _fleet = <ShipModel>[..._fleet, tempShip];
-      _fleetCount = _fleet.length;
       _fleetNotice = notice;
     });
     AudioManager().playSfx('success');
@@ -5054,7 +6266,6 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       setState(() {
         _fleet =
             _fleet.map((s) => s.id == tempShip.id ? created : s).toList();
-        _fleetCount = _fleet.length;
       });
     }).catchError((Object e) {
       if (!mounted) return;
@@ -5062,7 +6273,6 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       setState(() {
         _playerCoins = oldCoins;
         _fleet = oldFleet;
-        _fleetCount = oldFleetCount;
         _fleetNotice = errMsg;
       });
       messenger
@@ -5110,6 +6320,14 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                   _shipDefensePower =
                       (res['defense_power'] as num?)?.toInt() ??
                           _shipMaxDefensePower;
+                  _fleet = _fleet
+                      .map((s) => s.id == shipId
+                          ? s.copyWith(defensePower: _shipDefensePower)
+                          : s)
+                      .toList();
+                  if (_ship != null && _ship!.id == shipId) {
+                    _ship = _ship!.copyWith(defensePower: _shipDefensePower);
+                  }
                   _fleetNotice =
                       'Kapal berhasil diperbaiki ke $_shipDefensePower/$_shipMaxDefensePower HP (Biaya: $repairCost koin).';
                 });
@@ -5197,6 +6415,14 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                           'Meriam (+35 ATK) berhasil dipasang! Total ATK kapal: ${_shipAttackPower + added}.';
                       setState(() {
                         _shipAttackPower += added;
+                        _fleet = _fleet
+                            .map((s) => s.id == shipId
+                                ? s.copyWith(attackPower: _shipAttackPower)
+                                : s)
+                            .toList();
+                        if (_ship != null && _ship!.id == shipId) {
+                          _ship = _ship!.copyWith(attackPower: _shipAttackPower);
+                        }
                         _fleetNotice = msg;
                       });
                       messenger
@@ -5256,6 +6482,14 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
                           'Katana (+15 ATK) berhasil dipasang! Total ATK kapal: ${_shipAttackPower + added}.';
                       setState(() {
                         _shipAttackPower += added;
+                        _fleet = _fleet
+                            .map((s) => s.id == shipId
+                                ? s.copyWith(attackPower: _shipAttackPower)
+                                : s)
+                            .toList();
+                        if (_ship != null && _ship!.id == shipId) {
+                          _ship = _ship!.copyWith(attackPower: _shipAttackPower);
+                        }
                         _fleetNotice = msg;
                       });
                       messenger
@@ -5295,110 +6529,222 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
   );
 }
 
-  Widget _buildShipLogTab() {
-    final s = _ship;
+  Widget _buildShipsTab() {
     final defaultTier2 = kShipTiersCatalog[1]; // Pencalang Niaga (1.500 koin)
-    final maxHp = _shipMaxDefensePower <= 0 ? 100 : _shipMaxDefensePower;
-    final curHp = _shipDefensePower.clamp(0, maxHp);
-    final hpRatio = (curHp / maxHp).clamp(0.0, 1.0);
-    final hpBarColor = hpRatio > 0.5 ? Colors.green : Colors.red;
+    final int primaryShipId =
+        _ship?.id ?? (_fleet.isNotEmpty ? _fleet.first.id : 1);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        MaritimeWoodCard(
-          key: const Key('primary_ship_combat_card'),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_combatLogs.isNotEmpty || curHp < maxHp)
-                        FloatingRewardText(
-                          key: const Key('ship_damage_floating_text'),
-                          text: '-${_combatLogs.firstOrNull?.damage ?? (maxHp - curHp)} HP',
-                          isDamage: true,
-                        ),
-                      const Icon(
-                        Icons.sailing,
-                        size: 28,
-                        color: MaritimePalette.gold,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Armada Kapal Anda',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            Container(
+              key: const Key('fleet_total_counter_badge'),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: MaritimePalette.darkWoodBrown,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: MaritimePalette.gold,
+                  width: 1.2,
+                ),
+              ),
+              child: Text(
+                'Total Armada: $_fleetCount/5 Kapal',
+                style: MaritimePalette.cinzel(
+                  color: MaritimePalette.gold,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ListView.builder(
+          key: const Key('fleet_ships_list_view'),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _fleet.length,
+          itemBuilder: (context, index) {
+            final ShipModel shipItem = _fleet[index];
+            final bool isPrimary = shipItem.id == primaryShipId;
+            final int maxHp = isPrimary
+                ? (_shipMaxDefensePower <= 0 ? 100 : _shipMaxDefensePower)
+                : (shipItem.maxDefensePower <= 0
+                    ? 100
+                    : shipItem.maxDefensePower);
+            final int curHp = (isPrimary
+                    ? _shipDefensePower
+                    : shipItem.defensePower)
+                .clamp(0, maxHp);
+            final int atk =
+                isPrimary ? _shipAttackPower : shipItem.attackPower;
+            final double hpRatio = (curHp / maxHp).clamp(0.0, 1.0);
+            final Color hpBarColor = hpRatio > 0.5 ? Colors.green : Colors.red;
+            final int usedCargo =
+                shipItem.cargo.fold<int>(0, (sum, c) => sum + c.qty);
+            final String cargoSummary = shipItem.cargo.isEmpty
+                ? 'Kosong'
+                : shipItem.cargo
+                    .map((c) => '${c.commodity}: ${c.qty}')
+                    .join(', ');
+
+            return MaritimeWoodCard(
+              key: isPrimary
+                  ? const Key('primary_ship_combat_card')
+                  : Key('fleet_ship_card_${shipItem.id}'),
+              borderColor:
+                  isPrimary ? MaritimePalette.gold : const Color(0x66FFD700),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isPrimary &&
+                              (_combatLogs.isNotEmpty || curHp < maxHp))
+                            FloatingRewardText(
+                              key: const Key('ship_damage_floating_text'),
+                              text:
+                                  '-${_combatLogs.firstOrNull?.damage ?? (maxHp - curHp)} HP',
+                              isDamage: true,
+                            ),
+                          Icon(
+                            Icons.sailing,
+                            size: 28,
+                            color: isPrimary
+                                ? MaritimePalette.gold
+                                : MaritimePalette.parchment,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  title: Text(
-                    s?.name ?? 'Kapal Perintis',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    'Status: ${s?.status ?? 'docked'} | Kapasitas: ${s?.capacity ?? 35} | Armada: $_fleetCount/5 kapal | ETA: ${s?.etaTicks ?? 0} tick',
-                  ),
-                  trailing: OutlinedButton(
-                    key: const Key('buy_ship_button'),
-                    onPressed: _fleetCount >= 5
-                        ? null
-                        : () => _purchaseShipTier(defaultTier2),
-                    child: const Text('Beli Kapal (1.500)'),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  runSpacing: 4,
-                  children: [
-                    Text(
-                      'HP Lambung Kapal (Defense): $curHp / $maxHp HP',
-                      key: const Key('ship_hp_status_text'),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      title: Text(
+                        '${shipItem.name} • Tier ${shipItem.tier} (${shipItem.shipClass})',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        'Status: ${shipItem.status} | Kapasitas Palka: $usedCargo/${shipItem.capacity} unit (Muatan: $cargoSummary) | ETA: ${shipItem.etaTicks} tick',
+                      ),
+                      trailing: isPrimary
+                          ? OutlinedButton(
+                              key: const Key('buy_ship_button'),
+                              onPressed: _fleetCount >= 5
+                                  ? null
+                                  : () => _purchaseShipTier(defaultTier2),
+                              child: const Text('Beli Kapal (1.500)'),
+                            )
+                          : null,
                     ),
-                    Text(
-                      'Attack Power (ATK): $_shipAttackPower',
-                      key: const Key('ship_attack_power_text'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      runSpacing: 4,
+                      children: [
+                        Text(
+                          'HP Lambung Kapal (Defense): $curHp / $maxHp HP',
+                          key: isPrimary
+                              ? const Key('ship_hp_status_text')
+                              : Key('ship_hp_status_text_${shipItem.id}'),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          'Attack Power (ATK): $atk',
+                          key: isPrimary
+                              ? const Key('ship_attack_power_text')
+                              : Key('ship_attack_power_text_${shipItem.id}'),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        key: isPrimary
+                            ? const Key('ship_hp_progress_bar')
+                            : Key('ship_hp_progress_bar_${shipItem.id}'),
+                        value: hpRatio,
+                        color: hpBarColor,
+                        minHeight: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        FilledButton.tonalIcon(
+                          key: Key('activate_primary_ship_button_${shipItem.id}'),
+                          style: FilledButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          onPressed: isPrimary
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _ship = shipItem;
+                                    _shipAttackPower = shipItem.attackPower;
+                                    _shipDefensePower = shipItem.defensePower;
+                                    _shipMaxDefensePower =
+                                        shipItem.maxDefensePower;
+                                    _fleetNotice =
+                                        '${shipItem.name} diaktifkan sebagai Kapal Utama.';
+                                  });
+                                },
+                          icon: Icon(
+                            isPrimary ? Icons.star : Icons.star_border,
+                            size: 16,
+                          ),
+                          label: const Text('Aktifkan sebagai Kapal Utama'),
+                        ),
+                        if (isPrimary) ...[
+                          FilledButton.tonalIcon(
+                            key: const Key('repair_ship_button'),
+                            style: FilledButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            onPressed: _showRepairConfirmationDialog,
+                            icon: const Icon(
+                              Icons.build_circle_outlined,
+                              size: 16,
+                            ),
+                            label: const Text('Perbaiki Kapal (2 Koin/HP)'),
+                          ),
+                          OutlinedButton.icon(
+                            key: const Key('equip_weapon_button'),
+                            style: OutlinedButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            onPressed: _showEquipWeaponSheet,
+                            icon: const Icon(Icons.shield_outlined, size: 16),
+                            label: const Text('Pasang Senjata'),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    key: const Key('ship_hp_progress_bar'),
-                    value: hpRatio,
-                    color: hpBarColor,
-                    minHeight: 10,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.tonalIcon(
-                      key: const Key('repair_ship_button'),
-                      onPressed: _showRepairConfirmationDialog,
-                      icon: const Icon(Icons.build_circle_outlined, size: 18),
-                      label: const Text('Perbaiki Kapal (2 Koin/HP)'),
-                    ),
-                    OutlinedButton.icon(
-                      key: const Key('equip_weapon_button'),
-                      onPressed: _showEquipWeaponSheet,
-                      icon: const Icon(Icons.shield_outlined, size: 18),
-                      label: const Text('Pasang Senjata'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ).animate(key: ValueKey<int>(_combatShakeCounter)).shake(
-              duration: 500.ms,
-              hz: 5,
-            ),
+              ),
+            ).animate(key: ValueKey<int>(_combatShakeCounter)).shake(
+                  duration: 500.ms,
+                  hz: 5,
+                );
+          },
+        ),
         if (_fleetNotice != null) ...[
           const SizedBox(height: 8),
           MaritimeWoodCard(
@@ -5991,6 +7337,65 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
             onTap: _openLedgerScreen,
           ),
         ),
+        const SizedBox(height: 12),
+        MaritimeWoodCard(
+          key: const Key('achievements_menu_card'),
+          child: ListTile(
+            key: const Key('open_achievements_tile'),
+            leading: const Icon(
+              Icons.emoji_events_outlined,
+              color: MaritimePalette.gold,
+            ),
+            title: const Text(
+              'Pencapaian',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text(
+              'Lihat 15 lencana pencapaian nahkoda Nusantara dan hadiah koinnya.',
+            ),
+            trailing: ElevatedButton(
+              key: const Key('open_achievements_button'),
+              style: MaritimePalette.goldCoinButtonStyle(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
+              onPressed: _openAchievementsScreen,
+              child: const Text('Pencapaian'),
+            ),
+            onTap: _openAchievementsScreen,
+          ),
+        ),
+        const SizedBox(height: 12),
+        MaritimeWoodCard(
+          key: const Key('change_password_menu_card'),
+          child: ListTile(
+            leading: const Icon(
+              Icons.lock_reset_outlined,
+              color: MaritimePalette.gold,
+            ),
+            title: const Text(
+              'Keamanan Akun',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text(
+              'Perbarui kata sandi akun Anda. Semua sesi lama akan dicabut.',
+            ),
+            trailing: ElevatedButton(
+              key: const Key('change_password_button'),
+              style: MaritimePalette.goldCoinButtonStyle(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
+              onPressed: _showChangePasswordDialog,
+              child: const Text('Ganti Kata Sandi'),
+            ),
+            onTap: _showChangePasswordDialog,
+          ),
+        ),
         const SizedBox(height: 16),
         MaritimeWoodCard(
           key: const Key('delete_account_card'),
@@ -6059,6 +7464,144 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
         page: LedgerScreen(api: widget.api),
       ),
     );
+  }
+
+  void _openAchievementsScreen() {
+    HapticFeedback.lightImpact();
+    AudioManager().playSfx('click');
+    Navigator.of(context).push(
+      GamePageRoute<void>(
+        page: AchievementsScreen(api: widget.api),
+      ),
+    );
+  }
+
+  Future<void> _showChangePasswordDialog() async {
+    String oldPw = '';
+    String newPw = '';
+    String confirmPw = '';
+    String? dialogError;
+
+    final changed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              key: const Key('change_password_dialog'),
+              backgroundColor: MaritimePalette.carvedMahogany,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: MaritimePalette.gold, width: 1.5),
+              ),
+              title: Text(
+                'Ganti Kata Sandi',
+                style: MaritimePalette.cinzel(
+                  color: MaritimePalette.gold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      key: const Key('change_pw_old_field'),
+                      obscureText: true,
+                      onChanged: (val) {
+                        oldPw = val;
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Kata Sandi Lama',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      key: const Key('change_pw_new_field'),
+                      obscureText: true,
+                      onChanged: (val) {
+                        newPw = val;
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Kata Sandi Baru',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      key: const Key('change_pw_confirm_field'),
+                      obscureText: true,
+                      onChanged: (val) {
+                        confirmPw = val;
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Ulangi Kata Sandi Baru',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    if (dialogError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        dialogError!,
+                        style:
+                            const TextStyle(color: Colors.red, fontSize: 12.5),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  key: const Key('cancel_change_password_button'),
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  key: const Key('confirm_change_password_button'),
+                  style: MaritimePalette.goldCoinButtonStyle(),
+                  onPressed: () async {
+                    if (newPw != confirmPw) {
+                      setDialogState(() {
+                        dialogError = 'Kata sandi tidak cocok';
+                      });
+                      return;
+                    }
+                    if (newPw.length < 8) {
+                      setDialogState(() {
+                        dialogError = 'Kata sandi baru minimal 8 karakter';
+                      });
+                      return;
+                    }
+                    try {
+                      await widget.api.changePassword(
+                        oldPassword: oldPw,
+                        newPassword: newPw,
+                      );
+                      if (ctx.mounted) {
+                        Navigator.of(ctx).pop(true);
+                      }
+                    } catch (e) {
+                      setDialogState(() {
+                        dialogError =
+                            e.toString().replaceFirst('Exception: ', '');
+                      });
+                    }
+                  },
+                  child: const Text('Simpan & Keluar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (changed == true && mounted) {
+      widget.onLogout();
+    }
   }
 
   Future<void> _showDeleteAccountDialog() async {
@@ -6790,7 +8333,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       _buildMarketTab(),
       _buildBursaP2pTab(),
       _buildRuleEditorTab(),
-      _buildShipLogTab(),
+      _buildShipsTab(),
       _buildLeaderboardAndProfileTab(),
       _buildGuildAllianceTab(),
     ];
@@ -6984,6 +8527,7 @@ class _MainDashboardShellState extends State<MainDashboardShell> {
       bottomNavigationBar: WoodenBottomNavBar(
         selectedIndex: _tabIndex,
         onDestinationSelected: (idx) {
+          ScaffoldMessenger.of(context).clearSnackBars();
           setState(() {
             _tabIndex = idx;
           });

@@ -4,6 +4,7 @@ import pg from 'pg';
 import {
   WORLD_CONFIG,
   WorldEconomyConfig,
+  COMMODITIES_SEED,
   PORTS_SEED,
   ShipStatus,
 } from '@jalur-rempah/shared';
@@ -237,6 +238,37 @@ export const EXTENDED_COMMODITIES_CATALOG: readonly ExtendedCommoditySpec[] = [
     rarity: 'Komoditas Unggulan',
     description: 'Biji kopi pegunungan Jawa dengan cita rasa khas yang diekspor melalui pelabuhan Batavia.',
   },
+] as const;
+
+export interface NpcCaptainSpec {
+  readonly id: number;
+  readonly name: string;
+  readonly startPortId: number;
+  readonly color: string;
+  readonly personality: 'agresif' | 'konservatif';
+}
+
+export const NPC_CAPTAINS_CATALOG: readonly NpcCaptainSpec[] = [
+  { id: 1, name: 'Laksamana Jaya', startPortId: 6, color: '#60A5FA', personality: 'agresif' },
+  { id: 2, name: 'Sultan Babullah', startPortId: 2, color: '#94A3B8', personality: 'agresif' },
+  { id: 3, name: 'Laksamana Malahayati', startPortId: 4, color: '#38BDF8', personality: 'agresif' },
+  { id: 4, name: 'Pangeran Dipati Unus', startPortId: 3, color: '#64748B', personality: 'agresif' },
+  { id: 5, name: 'Sultan Hasanuddin', startPortId: 5, color: '#818CF8', personality: 'agresif' },
+  { id: 6, name: 'Kapitan Pattimura', startPortId: 1, color: '#7DD3FC', personality: 'agresif' },
+  { id: 7, name: 'Karaeng Matoaya', startPortId: 5, color: '#93C5FD', personality: 'konservatif' },
+  { id: 8, name: 'Syahbandar Nyai Gede Pinatih', startPortId: 3, color: '#A5B4FC', personality: 'konservatif' },
+  { id: 9, name: 'Hang Tuah', startPortId: 4, color: '#CBD5E1', personality: 'agresif' },
+  { id: 10, name: 'Sultan Baabullah Muda', startPortId: 2, color: '#67E8F9', personality: 'konservatif' },
+  { id: 11, name: 'Daeng Marewa', startPortId: 5, color: '#94A3B8', personality: 'agresif' },
+  { id: 12, name: 'Ki Juru Martani', startPortId: 6, color: '#64748B', personality: 'konservatif' },
+  { id: 13, name: 'Ratu Kalinyamat', startPortId: 3, color: '#60A5FA', personality: 'agresif' },
+  { id: 14, name: 'Sultan Nuku', startPortId: 2, color: '#38BDF8', personality: 'agresif' },
+  { id: 15, name: 'Orangkaya Banda', startPortId: 1, color: '#93C5FD', personality: 'konservatif' },
+  { id: 16, name: 'Juragan Datuk Bendahara', startPortId: 4, color: '#CBD5E1', personality: 'konservatif' },
+  { id: 17, name: 'Nahkoda La Maddukelleng', startPortId: 5, color: '#7DD3FC', personality: 'agresif' },
+  { id: 18, name: 'Saudagar Jayakarta', startPortId: 6, color: '#818CF8', personality: 'konservatif' },
+  { id: 19, name: 'Panglima Wangkang', startPortId: 3, color: '#64748B', personality: 'konservatif' },
+  { id: 20, name: 'Kapten Raden Patah', startPortId: 1, color: '#94A3B8', personality: 'konservatif' },
 ] as const;
 
 export interface ApiErrorResponse {
@@ -745,6 +777,299 @@ export async function loadWorldSnapshotFromDb(
   return state;
 }
 
+export const DAILY_REWARD_SCHEDULE: readonly number[] = [
+  100, 200, 300, 500, 700, 1000, 2000,
+] as const;
+
+export interface UnlockedAchievementItem {
+  readonly code: string;
+  readonly title: string;
+  readonly description: string;
+  readonly icon_emoji: string;
+  readonly requirement_type: string;
+  readonly requirement_value: number;
+  readonly reward_coins: number;
+}
+
+export async function checkAchievements(
+  playerId: string | number | bigint,
+  db: pg.Pool | pg.PoolClient,
+  tickNoInput?: number,
+): Promise<UnlockedAchievementItem[]> {
+  const pid = String(playerId);
+
+  const achRes = await db.query<{
+    code: string;
+    title: string;
+    description: string;
+    icon_emoji: string;
+    requirement_type: string;
+    requirement_value: string;
+    reward_coins: string;
+    is_unlocked: boolean;
+  }>(
+    `SELECT
+       a.code,
+       a.title,
+       a.description,
+       a.icon_emoji,
+       a.requirement_type,
+       a.requirement_value::text,
+       a.reward_coins::text,
+       (pa.achievement_code IS NOT NULL) AS is_unlocked
+     FROM public.achievements a
+     LEFT JOIN public.player_achievements pa
+       ON pa.achievement_code = a.code AND pa.player_id = $1
+     ORDER BY a.code ASC`,
+    [pid],
+  );
+
+  const lockedRows = achRes.rows.filter((r) => !r.is_unlocked);
+  if (lockedRows.length === 0) {
+    return [];
+  }
+
+  const plRes = await db.query<{
+    coins: string;
+    level: number;
+    unflushed_upkeep: string;
+    ship_count: string;
+    net_worth: string;
+  }>(
+    `SELECT
+       p.coins::text AS coins,
+       p.level,
+       p.unflushed_upkeep::text AS unflushed_upkeep,
+       COUNT(DISTINCT s.id)::text AS ship_count,
+       (p.coins + (GREATEST(COUNT(DISTINCT s.id) - 1, 0) * 1500) + COALESCE(SUM(sc.qty * c.base_price), 0))::text AS net_worth
+     FROM public.players p
+     LEFT JOIN public.ships s ON s.player_id = p.id
+     LEFT JOIN public.ship_cargo sc ON sc.ship_id = s.id
+     LEFT JOIN public.commodities c ON c.id = sc.commodity_id
+     WHERE p.id = $1 AND p.is_deleted = false
+     GROUP BY p.id, p.coins, p.level, p.unflushed_upkeep`,
+    [pid],
+  );
+  const pl = plRes.rows[0];
+  if (!pl) {
+    return [];
+  }
+
+  const statsRes = await db.query<{
+    bought_ships: string;
+    sold_units: string;
+    visited_ports: string;
+    won_battles: string;
+    saved_dsl: string;
+    in_guild: string;
+    donated_guild_coins: string;
+    defeated_boss: string;
+    play_days: string;
+  }>(
+    `SELECT
+       COALESCE((
+         SELECT COUNT(*) FROM public.ledger
+         WHERE player_id = $1 AND meta->>'ship_purchase' = 'true'
+       ), 0)::text AS bought_ships,
+       COALESCE((
+         SELECT SUM(
+           CASE
+             WHEN (meta->>'qty') ~ '^\\d+$' THEN (meta->>'qty')::bigint
+             ELSE 0
+           END
+         )
+         FROM public.ledger
+         WHERE player_id = $1 AND reason = 'sell'
+       ), 0)::text AS sold_units,
+       COALESCE((
+         SELECT COUNT(DISTINCT port_id) FROM public.port_intel WHERE player_id = $1
+       ), 0)::text AS visited_ports,
+       COALESCE((
+         SELECT COUNT(*) FROM public.combat_logs
+         WHERE (defender_id = $1 OR attacker_id = $1) AND outcome = 'player_victory'
+       ), 0)::text AS won_battles,
+       COALESCE((
+         SELECT GREATEST(COUNT(*), COALESCE(MAX(rs.version), 0))
+         FROM public.rule_sets rs
+         JOIN public.ships sh ON sh.id = rs.ship_id
+         WHERE sh.player_id = $1
+       ), 0)::text AS saved_dsl,
+       COALESCE((
+         SELECT COUNT(*) FROM public.guild_members WHERE player_id = $1
+       ), 0)::text AS in_guild,
+       COALESCE((
+         SELECT SUM(
+           CASE
+             WHEN (meta->>'amount') ~ '^\\d+$' THEN (meta->>'amount')::bigint
+             ELSE GREATEST(0, -delta)
+           END
+         )
+         FROM public.ledger
+         WHERE player_id = $1 AND meta->>'guild_donate' = 'true'
+       ), 0)::text AS donated_guild_coins,
+       COALESCE((
+         SELECT COUNT(*) FROM public.combat_logs
+         WHERE (attacker_id = $1 OR defender_id = $1)
+           AND outcome = 'player_victory'
+           AND detail ILIKE '%World Boss%'
+       ), 0)::text AS defeated_boss,
+       COALESCE((
+         SELECT GREATEST(COUNT(*), COALESCE(MAX(day_streak), 0))
+         FROM public.daily_rewards_log
+         WHERE player_id = $1
+       ), 0)::text AS play_days`,
+    [pid],
+  );
+  const st = statsRes.rows[0];
+  if (!st) {
+    return [];
+  }
+
+  const coinsVal = BigInt(pl.coins);
+  const netWorthVal = BigInt(pl.net_worth);
+  const shipCountVal = BigInt(pl.ship_count);
+  const computedLevel = BigInt(
+    Math.max(Number(pl.level ?? 1), calculatePlayerLevel(Number(pl.net_worth))),
+  );
+  const boughtShipsVal = BigInt(st.bought_ships);
+  const soldUnitsVal = BigInt(st.sold_units);
+  const visitedPortsVal = BigInt(st.visited_ports);
+  const wonBattlesVal = BigInt(st.won_battles);
+  const savedDslVal = BigInt(st.saved_dsl);
+  const inGuildVal = BigInt(st.in_guild);
+  const donatedGuildVal = BigInt(st.donated_guild_coins);
+  const defeatedBossVal = BigInt(st.defeated_boss);
+  const playDaysVal = BigInt(st.play_days);
+
+  const newlyMatched = lockedRows.filter((row) => {
+    const reqVal = BigInt(row.requirement_value ?? '1');
+    switch (row.code) {
+      case 'pelaut_pertama':
+        return boughtShipsVal >= reqVal || shipCountVal >= 2n;
+      case 'saudagar':
+        return soldUnitsVal >= reqVal;
+      case 'juragan':
+      case 'sultan':
+        return coinsVal >= reqVal;
+      case 'penjelajah':
+        return visitedPortsVal >= reqVal;
+      case 'pemburu_bajak_laut':
+        return wonBattlesVal >= reqVal;
+      case 'nahkoda_berpengalaman':
+        return computedLevel >= reqVal;
+      case 'programmer_handal':
+        return savedDslVal >= reqVal;
+      case 'kolektor':
+        return shipCountVal >= reqVal;
+      case 'kaya_raya':
+      case 'raja_rempah':
+        return netWorthVal >= reqVal;
+      case 'diplomat':
+        return inGuildVal >= reqVal;
+      case 'filantropi':
+        return donatedGuildVal >= reqVal;
+      case 'penakluk_boss':
+        return defeatedBossVal >= reqVal;
+      case 'veteran':
+        return playDaysVal >= reqVal;
+      default:
+        return false;
+    }
+  });
+
+  if (newlyMatched.length === 0) {
+    return [];
+  }
+
+  let tickNo = tickNoInput;
+  if (tickNo === undefined) {
+    const tRes = await db.query<{ max_tick: string }>(
+      `SELECT COALESCE(MAX(tick_no), 0)::text AS max_tick FROM public.tick_state`,
+    );
+    tickNo = Number(tRes.rows[0]?.max_tick ?? '0');
+  }
+
+  const unlockedOut: UnlockedAchievementItem[] = [];
+  for (const ach of newlyMatched) {
+    const insRes = await db.query<{ achievement_code: string }>(
+      `INSERT INTO public.player_achievements (player_id, achievement_code, unlocked_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (player_id, achievement_code) DO NOTHING
+       RETURNING achievement_code`,
+      [pid, ach.code],
+    );
+    if (insRes.rows.length === 0) {
+      continue;
+    }
+
+    const rewardBig = BigInt(ach.reward_coins ?? '0');
+    if (rewardBig > 0n) {
+      const upkRes = await db.query<{ unflushed_upkeep: string }>(
+        `SELECT unflushed_upkeep::text FROM public.players WHERE id = $1 FOR UPDATE`,
+        [pid],
+      );
+      const unflushed = BigInt(upkRes.rows[0]?.unflushed_upkeep ?? '0');
+      if (unflushed > 0n) {
+        await db.query(
+          `INSERT INTO public.ledger (player_id, tick_no, delta, reason, meta)
+           VALUES ($1, $2, $3, 'upkeep', $4::jsonb)`,
+          [
+            pid,
+            tickNo,
+            (-unflushed).toString(),
+            JSON.stringify({ flushed_at_tick: tickNo }),
+          ],
+        );
+        await db.query(
+          `UPDATE public.players SET unflushed_upkeep = 0 WHERE id = $1`,
+          [pid],
+        );
+      }
+
+      const portRes = await db.query<{ id: number }>(
+        `SELECT id FROM public.ports WHERE id <= 6 AND treasury >= $1 ORDER BY id ASC LIMIT 1 FOR UPDATE`,
+        [rewardBig.toString()],
+      );
+      const treasuryPortId = portRes.rows[0]?.id ?? 1;
+
+      await db.query(
+        `UPDATE public.ports SET treasury = treasury - $1 WHERE id = $2`,
+        [rewardBig.toString(), treasuryPortId],
+      );
+      await db.query(
+        `UPDATE public.players SET coins = coins + $1 WHERE id = $2`,
+        [rewardBig.toString(), pid],
+      );
+      await db.query(
+        `INSERT INTO public.ledger (player_id, tick_no, delta, reason, meta)
+         VALUES ($1, $2, $3, 'sell', $4::jsonb)`,
+        [
+          pid,
+          tickNo,
+          rewardBig.toString(),
+          JSON.stringify({
+            achievement_reward: true,
+            achievement_code: ach.code,
+            title: ach.title,
+          }),
+        ],
+      );
+    }
+
+    unlockedOut.push({
+      code: ach.code,
+      title: ach.title,
+      description: ach.description,
+      icon_emoji: ach.icon_emoji,
+      requirement_type: ach.requirement_type,
+      requirement_value: Number(ach.requirement_value),
+      reward_coins: Number(rewardBig),
+    });
+  }
+
+  return unlockedOut;
+}
+
 export function createApiServer(
   pool: pg.Pool,
   options?: ApiServerOptions,
@@ -948,7 +1273,7 @@ export function createApiServer(
         : rawPath;
 
     // Fase 9 Langkah 1: Middleware Rate Limit pada semua endpoint /v1/*
-    // Batas: Maksimal 100 request per 15 menit per IP Address
+    // Batas: Maksimal 1000 request per menit per IP Address
     if (isV1Endpoint) {
       const v1Rule = {
         windowMs: options?.v1RateLimitWindowMs ?? V1_RATE_LIMIT_WINDOW_MS,
@@ -1053,17 +1378,28 @@ export function createApiServer(
         } as unknown as T);
       }
 
+      if (method === 'GET' && path === '/world/npc-captains') {
+        return makeJson(
+          200,
+          NPC_CAPTAINS_CATALOG as unknown as T,
+          undefined,
+          ifNoneMatch,
+        );
+      }
+
       // 2. Auth endpoints (/auth/*)
       if (path.startsWith('/auth/')) {
-        const rl = rateLimiter.check('auth', clientIp, RATE_LIMIT_GROUPS.auth);
-        if (!rl.allowed) {
-          return makeError(
-            429,
-            'RATE_LIMITED',
-            'Terlalu banyak permintaan autentikasi. Silakan tunggu sebentar.',
-            [],
-            { 'retry-after': String(rl.retryAfterSec) },
-          );
+        if (path === '/auth/login' || path === '/auth/register') {
+          const rl = rateLimiter.check('auth', clientIp, RATE_LIMIT_GROUPS.auth);
+          if (!rl.allowed) {
+            return makeError(
+              429,
+              'RATE_LIMITED',
+              'Terlalu banyak permintaan autentikasi. Silakan tunggu sebentar.',
+              [],
+              { 'retry-after': String(rl.retryAfterSec) },
+            );
+          }
         }
 
         if (method === 'POST' && path === '/auth/register') {
@@ -2658,6 +2994,358 @@ export function createApiServer(
         );
       }
 
+      if (method === 'POST' && path === '/me/change-password') {
+        const oldPassword =
+          typeof bodyObj['old_password'] === 'string'
+            ? bodyObj['old_password']
+            : '';
+        const newPassword =
+          typeof bodyObj['new_password'] === 'string'
+            ? bodyObj['new_password']
+            : '';
+
+        if (!oldPassword) {
+          return makeError(
+            400,
+            'VALIDATION_ERROR',
+            'Kata sandi lama wajib diisi.',
+          );
+        }
+        if (newPassword.length < 8 || newPassword.length > 128) {
+          return makeError(
+            400,
+            'VALIDATION_ERROR',
+            'Kata sandi baru minimal 8 karakter.',
+          );
+        }
+
+        const pRes = await pool.query<{
+          id: string;
+          password_hash: string;
+        }>(
+          `SELECT id::text, password_hash FROM public.players WHERE id = $1 AND is_deleted = false LIMIT 1`,
+          [authUser.sub],
+        );
+        const pRow = pRes.rows[0];
+        if (!pRow) {
+          return makeError(404, 'NOT_FOUND', 'Pemain tidak ditemukan.');
+        }
+
+        const isValidOld = await verifyPassword(oldPassword, pRow.password_hash);
+        if (!isValidOld) {
+          return makeError(
+            400,
+            'INVALID_PASSWORD',
+            'Kata sandi lama tidak sesuai.',
+          );
+        }
+
+        const newHash = await hashPassword(newPassword);
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          await client.query(
+            `UPDATE public.players SET password_hash = $1 WHERE id = $2`,
+            [newHash, authUser.sub],
+          );
+          await client.query(
+            `UPDATE public.refresh_tokens SET revoked = true WHERE player_id = $1`,
+            [authUser.sub],
+          );
+          await client.query('COMMIT');
+        } catch (err) {
+          await client.query('ROLLBACK');
+          throw err;
+        } finally {
+          client.release();
+        }
+
+        return makeJson(
+          200,
+          {
+            ok: true,
+            message: 'Kata sandi berhasil diubah. Silakan masuk kembali.',
+          } as unknown as T,
+          tickHeaders,
+        );
+      }
+
+      if (method === 'GET' && path === '/me/daily-reward') {
+        const pRes = await pool.query<{
+          last_daily_claim_at: Date | null;
+        }>(
+          `SELECT last_daily_claim_at FROM public.players WHERE id = $1 AND is_deleted = false LIMIT 1`,
+          [authUser.sub],
+        );
+        const pRow = pRes.rows[0];
+        if (!pRow) {
+          return makeError(404, 'NOT_FOUND', 'Pemain tidak ditemukan.');
+        }
+
+        const logRes = await pool.query<{ day_streak: number }>(
+          `SELECT day_streak FROM public.daily_rewards_log WHERE player_id = $1 ORDER BY claimed_at DESC, id DESC LIMIT 1`,
+          [authUser.sub],
+        );
+        const lastStreak = Number(logRes.rows[0]?.day_streak ?? 0);
+        const lastClaimAt = pRow.last_daily_claim_at
+          ? new Date(pRow.last_daily_claim_at)
+          : null;
+        const elapsedMs = lastClaimAt
+          ? Date.now() - lastClaimAt.getTime()
+          : Number.POSITIVE_INFINITY;
+
+        const hours24Ms = 24 * 60 * 60 * 1000;
+        const hours48Ms = 48 * 60 * 60 * 1000;
+        const claimedToday = elapsedMs < hours24Ms;
+        const streakReset = !lastClaimAt || elapsedMs > hours48Ms;
+
+        let currentStreak = 0;
+        let nextStreak = 1;
+        if (claimedToday) {
+          currentStreak = lastStreak >= 1 ? lastStreak : 1;
+          nextStreak = (currentStreak % 7) + 1;
+        } else if (streakReset) {
+          currentStreak = 0;
+          nextStreak = 1;
+        } else {
+          currentStreak = lastStreak;
+          nextStreak = (lastStreak % 7) + 1;
+        }
+
+        const nextRewardCoins =
+          DAILY_REWARD_SCHEDULE[nextStreak - 1] ?? DAILY_REWARD_SCHEDULE[0]!;
+
+        return makeJson(
+          200,
+          {
+            claimed_today: claimedToday,
+            has_claimed_today: claimedToday,
+            current_streak: currentStreak,
+            next_streak: nextStreak,
+            next_reward_coins: nextRewardCoins,
+            rewards_schedule: DAILY_REWARD_SCHEDULE,
+            last_daily_claim_at: lastClaimAt ? lastClaimAt.toISOString() : null,
+          } as unknown as T,
+          tickHeaders,
+        );
+      }
+
+      if (method === 'POST' && path === '/me/daily-reward/claim') {
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+
+          const pRes = await client.query<{
+            id: string;
+            coins: string;
+            last_daily_claim_at: Date | null;
+          }>(
+            `SELECT id::text, coins::text, last_daily_claim_at
+             FROM public.players
+             WHERE id = $1 AND is_deleted = false
+             FOR UPDATE`,
+            [authUser.sub],
+          );
+          const pRow = pRes.rows[0];
+          if (!pRow) {
+            await client.query('ROLLBACK');
+            return makeError(404, 'NOT_FOUND', 'Pemain tidak ditemukan.');
+          }
+
+          const lastClaimAt = pRow.last_daily_claim_at
+            ? new Date(pRow.last_daily_claim_at)
+            : null;
+          const elapsedMs = lastClaimAt
+            ? Date.now() - lastClaimAt.getTime()
+            : Number.POSITIVE_INFINITY;
+
+          const hours24Ms = 24 * 60 * 60 * 1000;
+          const hours48Ms = 48 * 60 * 60 * 1000;
+          if (elapsedMs < hours24Ms) {
+            await client.query('ROLLBACK');
+            return makeError(
+              400,
+              'ALREADY_CLAIMED_TODAY',
+              'Hadiah harian sudah diklaim dalam 24 jam terakhir.',
+            );
+          }
+
+          const logRes = await client.query<{ day_streak: number }>(
+            `SELECT day_streak FROM public.daily_rewards_log WHERE player_id = $1 ORDER BY claimed_at DESC, id DESC LIMIT 1`,
+            [authUser.sub],
+          );
+          const lastStreak = Number(logRes.rows[0]?.day_streak ?? 0);
+          const dayStreak =
+            !lastClaimAt || elapsedMs > hours48Ms
+              ? 1
+              : (lastStreak % 7) + 1;
+
+          const coinsAwardedBig = BigInt(
+            DAILY_REWARD_SCHEDULE[dayStreak - 1] ?? 100,
+          );
+
+          await flushPlayerUpkeepInTx(client, authUser.sub, tickNo);
+
+          const portRes = await client.query<{ id: number }>(
+            `SELECT id FROM public.ports WHERE id <= 6 AND treasury >= $1 ORDER BY id ASC LIMIT 1 FOR UPDATE`,
+            [coinsAwardedBig.toString()],
+          );
+          const treasuryPortId = portRes.rows[0]?.id ?? 1;
+
+          await client.query(
+            `UPDATE public.ports SET treasury = treasury - $1 WHERE id = $2`,
+            [coinsAwardedBig.toString(), treasuryPortId],
+          );
+          await client.query(
+            `UPDATE public.players
+             SET coins = coins + $1,
+                 last_daily_claim_at = NOW()
+             WHERE id = $2`,
+            [coinsAwardedBig.toString(), authUser.sub],
+          );
+          await client.query(
+            `INSERT INTO public.daily_rewards_log (player_id, day_streak, coins_awarded, claimed_at)
+             VALUES ($1, $2, $3, NOW())`,
+            [authUser.sub, dayStreak, coinsAwardedBig.toString()],
+          );
+          await client.query(
+            `INSERT INTO public.ledger (player_id, tick_no, delta, reason, meta)
+             VALUES ($1, $2, $3, 'sell', $4::jsonb)`,
+            [
+              authUser.sub,
+              tickNo,
+              coinsAwardedBig.toString(),
+              JSON.stringify({
+                daily_reward: true,
+                day_streak: dayStreak,
+              }),
+            ],
+          );
+
+          let bonusShipAwarded = false;
+          let bonusShipName: string | null = null;
+          if (dayStreak === 7) {
+            const cntRes = await client.query<{ cnt: string }>(
+              `SELECT COUNT(*)::text AS cnt FROM public.ships WHERE player_id = $1`,
+              [authUser.sub],
+            );
+            const shipCount = Number(cntRes.rows[0]?.cnt ?? '0');
+            if (shipCount < MAX_SHIPS_PER_PLAYER) {
+              const tier2Spec =
+                SHIP_TIERS_CATALOG.find((t) => t.tier === 2) ??
+                SHIP_TIERS_CATALOG[1]!;
+              const candidateName = `Pencalang Kejayaan #${shipCount + 1}`;
+              await client.query(
+                `INSERT INTO public.ships (player_id, name, capacity, status, port_id)
+                 VALUES ($1, $2, $3, 'docked', 1)
+                 ON CONFLICT DO NOTHING`,
+                [authUser.sub, candidateName, tier2Spec.capacity],
+              );
+              bonusShipAwarded = true;
+              bonusShipName = candidateName;
+            }
+          }
+
+          const newlyUnlocked = await checkAchievements(
+            authUser.sub,
+            client,
+            tickNo,
+          );
+
+          const updatedPl = await client.query<{ coins: string }>(
+            `SELECT coins::text FROM public.players WHERE id = $1`,
+            [authUser.sub],
+          );
+
+          await client.query('COMMIT');
+          return makeJson(
+            200,
+            {
+              ok: true,
+              day_streak: dayStreak,
+              coins_awarded: Number(coinsAwardedBig),
+              bonus_ship_awarded: bonusShipAwarded,
+              bonus_ship_name: bonusShipName,
+              unlocked_achievements: newlyUnlocked,
+              coins: Number(updatedPl.rows[0]?.coins ?? 0),
+            } as unknown as T,
+            tickHeaders,
+          );
+        } catch (err) {
+          await client.query('ROLLBACK');
+          throw err;
+        } finally {
+          client.release();
+        }
+      }
+
+      if (method === 'GET' && path === '/me/achievements') {
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          await checkAchievements(authUser.sub, client, tickNo);
+          await client.query('COMMIT');
+        } catch (err) {
+          await client.query('ROLLBACK');
+          throw err;
+        } finally {
+          client.release();
+        }
+
+        const achRes = await pool.query<{
+          code: string;
+          title: string;
+          description: string;
+          icon_emoji: string;
+          requirement_type: string;
+          requirement_value: string;
+          reward_coins: string;
+          unlocked_at: Date | null;
+        }>(
+          `SELECT
+             a.code,
+             a.title,
+             a.description,
+             a.icon_emoji,
+             a.requirement_type,
+             a.requirement_value::text,
+             a.reward_coins::text,
+             pa.unlocked_at
+           FROM public.achievements a
+           LEFT JOIN public.player_achievements pa
+             ON pa.achievement_code = a.code AND pa.player_id = $1
+           ORDER BY
+             CASE WHEN pa.unlocked_at IS NOT NULL THEN 0 ELSE 1 END ASC,
+             a.reward_coins ASC,
+             a.code ASC`,
+          [authUser.sub],
+        );
+
+        const items = achRes.rows.map((r) => ({
+          code: r.code,
+          title: r.title,
+          description: r.description,
+          icon_emoji: r.icon_emoji,
+          requirement_type: r.requirement_type,
+          requirement_value: Number(r.requirement_value),
+          reward_coins: Number(r.reward_coins),
+          is_unlocked: r.unlocked_at !== null,
+          unlocked_at: r.unlocked_at
+            ? new Date(r.unlocked_at).toISOString()
+            : null,
+        }));
+
+        return makeJson(
+          200,
+          {
+            unlocked_count: items.filter((i) => i.is_unlocked).length,
+            total_count: items.length,
+            items,
+          } as unknown as T,
+          tickHeaders,
+        );
+      }
+
       if (method === 'POST' && path === '/tutorial/advance') {
         const requestedStep =
           typeof bodyObj['step'] === 'number'
@@ -2985,6 +3673,14 @@ export function createApiServer(
           // Hapus sesi, intel, keanggotaan serikat, log aksi, aturan, memori kapal, kargo, order P2P, dan kapal
           await client.query(
             `DELETE FROM public.refresh_tokens WHERE player_id = $1`,
+            [pRow.id],
+          );
+          await client.query(
+            `DELETE FROM public.daily_rewards_log WHERE player_id = $1`,
+            [pRow.id],
+          );
+          await client.query(
+            `DELETE FROM public.player_achievements WHERE player_id = $1`,
             [pRow.id],
           );
           await client.query(
@@ -4055,6 +4751,8 @@ export function createApiServer(
             [gRow.id, authUser.sub],
           );
 
+          await checkAchievements(authUser.sub, client, tickNo);
+
           const remainingCoins = currentCoins - feeToPay;
 
           await client.query('COMMIT');
@@ -4190,6 +4888,8 @@ export function createApiServer(
           const remainingCoins = currentCoins - donateAmount;
           const newTreasury = BigInt(updatedGuild.treasury_coins);
 
+          await checkAchievements(authUser.sub, client, tickNo);
+
           await client.query('COMMIT');
           return makeJson(
             200,
@@ -4302,6 +5002,8 @@ export function createApiServer(
              VALUES ($1, $2, 'member')`,
             [gRow.id, authUser.sub],
           );
+
+          await checkAchievements(authUser.sub, client, tickNo);
 
           await client.query('COMMIT');
           return makeJson(
@@ -4549,6 +5251,7 @@ export function createApiServer(
 
           if (defeated) {
             await incrementQuestProgress(client, authUser.sub, 'combat_win', 1);
+            await checkAchievements(authUser.sub, client, tickNo);
           }
 
           await client.query('COMMIT');
@@ -4731,10 +5434,79 @@ export function createApiServer(
 
       if (method === 'GET' && path === '/contracts') {
         const statusFilter = parsedUrl.searchParams.get('status') ?? 'open';
+
+        if (statusFilter === 'open') {
+          const openCntRes = await pool.query<{ cnt: string }>(
+            `SELECT COUNT(*)::text AS cnt FROM public.trade_contracts WHERE status = 'open'`,
+          );
+          if (Number(openCntRes.rows[0]?.cnt ?? '0') === 0) {
+            const findPortId = (code: string, fallback: number): number =>
+              PORTS_SEED.find((p) => p.code === code)?.id ?? fallback;
+            const findComId = (code: string, fallback: number): number =>
+              COMMODITIES_SEED.find((c) => c.code === code)?.id ?? fallback;
+
+            const defaultNpcContracts = [
+              {
+                issuerName: 'Gubernur Batavia',
+                portId: findPortId('batavia', 6),
+                commodityId: findComId('garam', 3),
+                qty: 50,
+                rewardCoins: 2000,
+              },
+              {
+                issuerName: 'Sultan Malaka',
+                portId: findPortId('malaka', 5),
+                commodityId: findComId('kain', 4),
+                qty: 30,
+                rewardCoins: 1800,
+              },
+              {
+                issuerName: 'Syahbandar Banda',
+                portId: findPortId('banda', 1),
+                commodityId: findComId('pala', 1),
+                qty: 25,
+                rewardCoins: 2200,
+              },
+              {
+                issuerName: 'Sultan Ternate',
+                portId: findPortId('ternate', 2),
+                commodityId: findComId('cengkeh', 2),
+                qty: 20,
+                rewardCoins: 2100,
+              },
+              {
+                issuerName: 'Adipati Surabaya',
+                portId: findPortId('surabaya', 4),
+                commodityId: findComId('garam', 3),
+                qty: 40,
+                rewardCoins: 1600,
+              },
+            ];
+
+            for (const spec of defaultNpcContracts) {
+              await pool.query(
+                `INSERT INTO public.trade_contracts (
+                   creator_id, issuer_name, port_id, commodity_id, qty, reward_coins, status, created_tick
+                 )
+                 VALUES (NULL, $1, $2, $3, $4, $5, 'open', $6)`,
+                [
+                  spec.issuerName,
+                  spec.portId,
+                  spec.commodityId,
+                  spec.qty,
+                  spec.rewardCoins,
+                  tickNo,
+                ],
+              );
+            }
+          }
+        }
+
         const cRes = await pool.query<{
           id: string;
-          creator_id: string;
+          creator_id: string | null;
           creator_name: string;
+          issuer_name: string | null;
           port_id: number;
           port_code: string;
           commodity_id: number;
@@ -4747,7 +5519,8 @@ export function createApiServer(
           `SELECT
              tc.id::text,
              tc.creator_id::text,
-             p.display_name AS creator_name,
+             COALESCE(tc.issuer_name, p.display_name, 'Syahbandar Nusantara') AS creator_name,
+             tc.issuer_name,
              tc.port_id,
              pr.code AS port_code,
              tc.commodity_id,
@@ -4757,7 +5530,7 @@ export function createApiServer(
              tc.status,
              tc.created_tick::text
            FROM public.trade_contracts tc
-           JOIN public.players p ON p.id = tc.creator_id
+           LEFT JOIN public.players p ON p.id = tc.creator_id
            JOIN public.ports pr ON pr.id = tc.port_id
            JOIN public.commodities cm ON cm.id = tc.commodity_id
            WHERE tc.status = $1
@@ -4769,19 +5542,28 @@ export function createApiServer(
         return makeJson(
           200,
           {
-            items: cRes.rows.map((r) => ({
-              id: Number(r.id),
-              creator_id: Number(r.creator_id),
-              creator_name: r.creator_name,
-              port_id: Number(r.port_id),
-              port_code: r.port_code,
-              commodity_id: Number(r.commodity_id),
-              commodity_code: r.commodity_code,
-              qty: Number(r.qty),
-              reward_coins: Number(r.reward_coins),
-              status: r.status,
-              created_tick: Number(r.created_tick),
-            })),
+            items: cRes.rows.map((r) => {
+              const comLabel =
+                r.commodity_code.charAt(0).toUpperCase() +
+                r.commodity_code.slice(1);
+              return {
+                id: Number(r.id),
+                creator_id:
+                  r.creator_id !== null ? Number(r.creator_id) : 0,
+                creator_name: r.creator_name,
+                issuer_name: r.issuer_name ?? r.creator_name,
+                is_npc: r.creator_id === null,
+                port_id: Number(r.port_id),
+                port_code: r.port_code,
+                commodity_id: Number(r.commodity_id),
+                commodity_code: r.commodity_code,
+                qty: Number(r.qty),
+                reward_coins: Number(r.reward_coins),
+                description: `${r.creator_name} minta ${Number(r.qty)} ${comLabel} → ${Number(r.reward_coins)} koin`,
+                status: r.status,
+                created_tick: Number(r.created_tick),
+              };
+            }),
           } as unknown as T,
           tickHeaders,
           ifNoneMatch,
@@ -5046,6 +5828,7 @@ export function createApiServer(
           );
 
           await incrementQuestProgress(client, authUser.sub, 'trade', Number(needQty));
+          await checkAchievements(authUser.sub, client, tickNo);
 
           await client.query('COMMIT');
           return makeJson(
@@ -5531,6 +6314,7 @@ export function createApiServer(
           );
 
           await seedPortIntelInTx(client, authUser.sub, portId, tickNo);
+          await checkAchievements(authUser.sub, client, tickNo);
 
           await client.query('COMMIT');
           return makeJson(
@@ -5758,6 +6542,7 @@ export function createApiServer(
 
             // Fase 7: Progres Misi Harian "Kode Pertama" (save_dsl)
             await incrementQuestProgress(client, authUser.sub, 'save_dsl', 1);
+            await checkAchievements(authUser.sub, client, tickNo);
 
             await client.query('COMMIT');
 

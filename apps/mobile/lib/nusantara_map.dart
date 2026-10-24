@@ -294,6 +294,7 @@ class MapShipMarker {
   final int? departTick;
   final int? arriveTick;
   final int tier;
+  final bool isPrimary;
 
   const MapShipMarker({
     required this.id,
@@ -306,6 +307,7 @@ class MapShipMarker {
     this.departTick,
     this.arriveTick,
     this.tier = 1,
+    this.isPrimary = false,
   })  : portId = portId ?? currentPortId,
         destPortId = destPortId ?? destinationPortId;
 
@@ -328,6 +330,7 @@ class MapShipMarker {
       departTick: (json['depart_tick'] as num?)?.toInt(),
       arriveTick: (json['arrive_tick'] as num?)?.toInt(),
       tier: (json['tier'] as num?)?.toInt() ?? 1,
+      isPrimary: (json['is_primary'] as bool?) ?? false,
     );
   }
 }
@@ -543,6 +546,7 @@ class NusantaraMapWidget extends StatefulWidget {
   final String selectedPortCode;
   final List<MapPortNode> ports;
   final List<MapShipMarker> ships;
+  final List<Offset> npcPositions;
   final Set<int> eventPortIds;
   final int currentTick;
   final double height;
@@ -555,6 +559,7 @@ class NusantaraMapWidget extends StatefulWidget {
     super.key,
     required this.selectedPortCode,
     required this.ships,
+    this.npcPositions = const <Offset>[],
     this.ports = kNusantaraPortNodes,
     this.eventPortIds = const <int>{},
     this.currentTick = 100,
@@ -860,6 +865,7 @@ class _NusantaraMapWidgetState extends State<NusantaraMapWidget>
                               selectedPortCode: widget.selectedPortCode,
                               ports: activePorts,
                               ships: widget.ships,
+                              npcPositions: widget.npcPositions,
                               eventPortIds: widget.eventPortIds,
                               currentTick: _currentAnimatedTick,
                               mapStyle: mapStyle,
@@ -936,6 +942,7 @@ class NusantaraMapPainter extends CustomPainter {
   final String selectedPortCode;
   final List<MapPortNode> ports;
   final List<MapShipMarker> ships;
+  final List<Offset> npcPositions;
   final Set<int> eventPortIds;
   final double currentTick;
   final MapStyle mapStyle;
@@ -947,6 +954,7 @@ class NusantaraMapPainter extends CustomPainter {
     required this.selectedPortCode,
     required this.ports,
     required this.ships,
+    this.npcPositions = const <Offset>[],
     required this.eventPortIds,
     this.currentTick = 100.0,
     this.mapStyle = MapStyle.vintageColor,
@@ -1269,9 +1277,63 @@ class NusantaraMapPainter extends CustomPainter {
       );
     }
 
-    // 6. Pergerakan Kapal Multi-Segmen (Melewati Waypoint Choke Points Dunia Nyata)
+    // 5b. Gambar Ikon Kapal Kecil NPC (Warna Abu-abu / Biru Redup) di Setiap Posisi NPC
+    for (final npcPos in npcPositions) {
+      final double nx =
+          (npcPos.dx >= 0.0 && npcPos.dx <= 1.0) ? npcPos.dx * size.width : npcPos.dx;
+      final double ny =
+          (npcPos.dy >= 0.0 && npcPos.dy <= 1.0) ? npcPos.dy * size.height : npcPos.dy;
+      final Offset npcCenter = Offset(nx, ny);
+
+      canvas.drawCircle(
+        npcCenter,
+        5.5,
+        Paint()
+          ..isAntiAlias = true
+          ..color = const Color(0x66475569),
+      );
+      canvas.drawCircle(
+        npcCenter,
+        5.5,
+        Paint()
+          ..isAntiAlias = true
+          ..color = const Color(0x9993C5FD)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.9,
+      );
+
+      final Path hullPath = Path()
+        ..moveTo(nx - 3.5, ny + 1.0)
+        ..lineTo(nx + 3.5, ny + 1.0)
+        ..lineTo(nx + 2.2, ny + 3.0)
+        ..lineTo(nx - 2.2, ny + 3.0)
+        ..close();
+      canvas.drawPath(
+        hullPath,
+        Paint()
+          ..isAntiAlias = true
+          ..color = const Color(0xCC94A3B8),
+      );
+
+      final Path sailPath = Path()
+        ..moveTo(nx, ny - 3.5)
+        ..lineTo(nx + 2.6, ny + 0.6)
+        ..lineTo(nx - 0.5, ny + 0.6)
+        ..close();
+      canvas.drawPath(
+        sailPath,
+        Paint()
+          ..isAntiAlias = true
+          ..color = const Color(0xCC60A5FA),
+      );
+    }
+
+    // 6. Pergerakan Seluruh Armada Kapal Pemain (Highlight Emas untuk Primary Ship)
+    final bool anyExplicitPrimary = ships.any((m) => m.isPrimary);
     for (int idx = 0; idx < ships.length; idx++) {
       final sh = ships[idx];
+      final bool isPrimaryShip =
+          sh.isPrimary || (!anyExplicitPrimary && idx == 0);
       final originPortId = sh.currentPortId ?? sh.portId ?? 1;
       final originNode = portById[originPortId] ?? displayPorts.first;
       final targetPortId = sh.destinationPortId ?? sh.destPortId;
@@ -1369,22 +1431,33 @@ class NusantaraMapPainter extends CustomPainter {
             _buildCurvedRoutePath(wakePoints, curvature: 0.10);
         canvas.drawPath(wakePath, wakePaint);
       } else {
-        final double multiShipOffset = idx == 0 ? 0.0 : ((idx * 8.0) - 4.0);
+        final double multiShipOffset = idx == 0 ? 0.0 : ((idx * 10.0) - 5.0);
         currentX = startX + multiShipOffset;
         currentY = startY;
       }
 
       final shipOffset = Offset(currentX, currentY);
 
-      // Efek Glow (cahaya) ekstra pada ikon kapal jika kualitas grafis di-set Ultra
-      if (isUltra) {
+      // Highlight Emas Khusus untuk Kapal Utama (Primary Ship)
+      if (isPrimaryShip) {
         canvas.drawCircle(
           shipOffset,
-          17.0,
+          isUltra ? 17.0 : 14.0,
           Paint()
             ..isAntiAlias = true
             ..color = const Color(0x66FFD700)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7.0),
+            ..maskFilter = isUltra
+                ? const MaskFilter.blur(BlurStyle.normal, 7.0)
+                : null,
+        );
+        canvas.drawCircle(
+          shipOffset,
+          12.0,
+          Paint()
+            ..isAntiAlias = true
+            ..color = const Color(0xFFFFD700)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.2,
         );
       }
 
@@ -1393,22 +1466,26 @@ class NusantaraMapPainter extends CustomPainter {
         10.0,
         Paint()
           ..isAntiAlias = true
-          ..color = isNight
-              ? const Color(0x3394A3B8)
-              : (isSailing
-                  ? const Color(0x55FFD700)
-                  : const Color(0x4434D399)),
+          ..color = isPrimaryShip
+              ? const Color(0x66FFD700)
+              : (isNight
+                  ? const Color(0x3394A3B8)
+                  : (isSailing
+                      ? const Color(0x55FFD700)
+                      : const Color(0x4434D399))),
       );
       canvas.drawCircle(
         shipOffset,
         10.0,
         Paint()
           ..isAntiAlias = true
-          ..color = isNight
-              ? const Color(0x8894A3B8)
-              : const Color(0xCCFFD700)
+          ..color = isPrimaryShip
+              ? const Color(0xFFFFD700)
+              : (isNight
+                  ? const Color(0x8894A3B8)
+                  : const Color(0xCC34D399))
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.1,
+          ..strokeWidth = isPrimaryShip ? 1.8 : 1.1,
       );
 
       canvas.save();
@@ -1426,7 +1503,7 @@ class NusantaraMapPainter extends CustomPainter {
         text: TextSpan(
           text: '⛵',
           style: TextStyle(
-            fontSize: 15,
+            fontSize: isPrimaryShip ? 15.5 : 14.0,
             color: isNight ? const Color(0xB3CBD5E1) : null,
             shadows: <Shadow>[
               const Shadow(
@@ -1434,7 +1511,7 @@ class NusantaraMapPainter extends CustomPainter {
                 blurRadius: 4,
                 offset: Offset(0, 1),
               ),
-              if (isUltra)
+              if (isPrimaryShip || isUltra)
                 const Shadow(
                   color: Color(0xFFFFD700),
                   blurRadius: 10,
@@ -1474,6 +1551,7 @@ class NusantaraMapPainter extends CustomPainter {
         oldDelegate.currentTick != currentTick ||
         oldDelegate.ports != ports ||
         oldDelegate.ships != ships ||
+        oldDelegate.npcPositions != npcPositions ||
         oldDelegate.eventPortIds != eventPortIds;
   }
 }
